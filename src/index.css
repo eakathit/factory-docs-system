@@ -1,3 +1,23 @@
+/* 1. นำเข้าฟอนต์จาก Google (Prompt และ Sarabun) */
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+
+/* 2. โหลด Tailwind (ของเดิม) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 3. สั่งให้ทั้งเว็บใช้ฟอนต์ Prompt */
+body {
+  font-family: 'Prompt', sans-serif;
+  background-color: #f8fafc; /* พื้นหลังสีเทาอ่อน */
+  color: #1e293b; /* สีตัวอักษรเทาเข้ม */
+}
+
+/* (แถม) เอฟเฟกต์ปุ่มกด */
+.btn-press {
+  transition: all 0.2s;
+}
+.btn-press:active {
+  transform: scale(0.95);
+}

@@ -7,6 +7,7 @@ import ContractorForm from './ContractorForm'
 import History from './History'
 import OrderPrint from './OrderPrint'
 import ReceiptForm from './ReceiptForm' // <--- 1. นำเข้าไฟล์ใหม่ที่เพิ่งสร้าง
+import ReceiptPrint from './ReceiptPrint'
 
 // หน้าหลัก (Dashboard)
 const Home = () => (
@@ -94,10 +95,8 @@ function App() {
             <Route path="/contractor-order" element={<ContractorForm />} />
             <Route path="/history" element={<History />} />
             <Route path="/print/:orderId" element={<OrderPrint />} />
-
-            {/* Route ใหม่ที่เพิ่งเพิ่ม <--- 2. เพิ่มเส้นทางนี้ */}
             <Route path="/receipt-form" element={<ReceiptForm />} />
-            
+            <Route path="/receipt-print/:id" element={<ReceiptPrint />} />
           </Routes>
         </div>
       </div>

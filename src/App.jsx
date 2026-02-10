@@ -1,133 +1,190 @@
+// src/App.jsx
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
-import { FileText, User, Calendar, Receipt, ChevronRight, LayoutGrid, Clock, LogOut } from 'lucide-react'
+import { 
+  FileText, User, Calendar, Receipt, ChevronRight, 
+  LayoutGrid, Clock, Sparkles, TrendingUp 
+} from 'lucide-react'
 
-// นำเข้าไฟล์หน้าต่างๆ
+// นำเข้าไฟล์หน้าต่างๆ (คงเดิมไว้)
 import ContractorForm from './ContractorForm'
 import History from './History'
 import OrderPrint from './OrderPrint'
 import ReceiptForm from './ReceiptForm'
 import ReceiptPrint from './ReceiptPrint'
 
-// --- Component: การ์ดเมนูสวยๆ ---
-const MenuCard = ({ to, title, subtitle, icon: Icon, colorClass, iconBgClass }) => (
-  <Link to={to} className="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 btn-press overflow-hidden">
-    {/* Background Pattern ตกแต่ง */}
-    <div className={`absolute top-0 right-0 w-24 h-24 rounded-full opacity-10 -mr-6 -mt-6 transition-transform group-hover:scale-150 ${iconBgClass}`}></div>
+// --- Component: Quick Stat Widget (ตัวเลขสรุป) ---
+const StatWidget = ({ icon: Icon, label, value, trend, color }) => (
+  <div className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-slate-100 flex-1 min-w-[140px]">
+    <div className="flex items-start justify-between mb-2">
+      <div className={`p-2 rounded-xl ${color} bg-opacity-10 text-${color.split('-')[1]}-600`}>
+        <Icon size={18} />
+      </div>
+      {trend && (
+        <span className="text-xs font-medium text-emerald-600 flex items-center bg-emerald-50 px-2 py-0.5 rounded-full">
+          +{trend}% <TrendingUp size={10} className="ml-1" />
+        </span>
+      )}
+    </div>
+    <div className="text-2xl font-bold text-slate-800">{value}</div>
+    <div className="text-xs text-slate-500 font-medium">{label}</div>
+  </div>
+)
+
+// --- Component: การ์ดเมนูแบบใหม่ ---
+const MenuCard = ({ to, title, subtitle, icon: Icon, gradient, delay }) => (
+  <Link 
+    to={to} 
+    className="group relative overflow-hidden bg-white rounded-3xl p-6 shadow-sm hover:shadow-xl hover:shadow-blue-200/50 transition-all duration-300 transform hover:-translate-y-1 border border-slate-50 fade-in-up"
+    style={{ animationDelay: `${delay}ms` }}
+  >
+    {/* พื้นหลัง Gradient จางๆ เวลา Hover */}
+    <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 bg-gradient-to-br ${gradient}`}></div>
     
-    <div className="relative z-10 flex items-start justify-between">
-      <div className="flex flex-col gap-3">
-        {/* Icon */}
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md ${colorClass}`}>
-          <Icon size={24} strokeWidth={2.5} />
+    <div className="relative z-10 flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        {/* Icon Box */}
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg bg-gradient-to-br ${gradient} group-hover:scale-110 transition-transform duration-300`}>
+          <Icon size={28} strokeWidth={2} />
         </div>
         
         {/* Text */}
-        <div>
-          <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors">{title}</h3>
-          <p className="text-sm text-slate-400 font-light">{subtitle}</p>
+        <div className="flex flex-col">
+          <h3 className="text-lg font-bold text-slate-700 group-hover:text-slate-900 transition-colors">
+            {title}
+          </h3>
+          <p className="text-sm text-slate-400 group-hover:text-slate-500 font-light">
+            {subtitle}
+          </p>
         </div>
       </div>
 
-      {/* Arrow Icon */}
-      <div className="text-slate-300 group-hover:text-blue-500 transition-colors">
-        <ChevronRight size={24} />
+      {/* Arrow */}
+      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+        <ChevronRight size={18} />
       </div>
     </div>
   </Link>
 )
 
-// --- หน้าหลัก (Dashboard) ดีไซน์ใหม่ ---
-const Home = ({ user }) => (
-  <div className="pb-20">
-    {/* Header Section พร้อมพื้นหลัง Gradient */}
-    <div className="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-8 rounded-b-[2.5rem] shadow-xl mb-6 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-      
-      <div className="relative z-10">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <p className="text-slate-400 text-sm mb-1">ยินดีต้อนรับ,</p>
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-white">
-              {user?.displayName || 'พนักงาน'}
-            </h1>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20">
-            <User size={24} className="text-blue-200" />
-          </div>
-        </div>
-
-        {/* Quick Stats (ตัวอย่างตัวเลข) */}
-        <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
-           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 min-w-[100px] border border-white/10">
-              <div className="text-slate-400 text-xs mb-1 flex items-center gap-1"><Clock size={12}/> วันนี้</div>
-              <div className="text-xl font-bold">12 <span className="text-xs font-normal opacity-70">รายการ</span></div>
-           </div>
-           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 min-w-[100px] border border-white/10">
-              <div className="text-slate-400 text-xs mb-1 flex items-center gap-1"><LayoutGrid size={12}/> เดือนนี้</div>
-              <div className="text-xl font-bold">45 <span className="text-xs font-normal opacity-70">รายการ</span></div>
-           </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Menu Grid */}
-    <div className="px-6">
-      <h2 className="text-slate-800 font-bold mb-4 flex items-center gap-2">
-        <span className="w-1 h-6 bg-blue-600 rounded-full block"></span>
-        เมนูหลัก
-      </h2>
-      
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* 1. ใบสั่งจ้าง (สีน้ำเงิน) */}
-        <MenuCard 
-          to="/contractor-order"
-          title="ใบสั่งจ้างผู้รับเหมา"
-          subtitle="สร้างเอกสารจ้างงานใหม่"
-          icon={FileText}
-          colorClass="bg-gradient-to-br from-blue-500 to-blue-600"
-          iconBgClass="bg-blue-500"
-        />
-
-        {/* 2. ใบรับรองแทนใบเสร็จ (สีเขียว) */}
-        <MenuCard 
-          to="/receipt-form"
-          title="ใบรับรองแทนใบเสร็จ"
-          subtitle="เบิกค่าใช้จ่าย (ไม่มีบิล)"
-          icon={Receipt}
-          colorClass="bg-gradient-to-br from-emerald-500 to-emerald-600"
-          iconBgClass="bg-emerald-500"
-        />
-
-        {/* 3. ประวัติ (สีส้ม) */}
-        <MenuCard 
-          to="/history"
-          title="ประวัติเอกสาร"
-          subtitle="ตรวจสอบสถานะย้อนหลัง"
-          icon={Calendar}
-          colorClass="bg-gradient-to-br from-orange-400 to-orange-500"
-          iconBgClass="bg-orange-400"
-        />
-      </div>
-
-      <div className="mt-8 text-center text-xs text-slate-400 font-light">
-        Haru System Development (Thailand) Co.,Ltd. <br/> v1.0.0
-      </div>
-    </div>
-  </div>
-)
-
-function App() {
-  const [user, setUser] = useState(null)
+const Home = ({ user }) => {
+  const [greeting, setGreeting] = useState('สวัสดี')
 
   useEffect(() => {
-    // จำลอง User (เดี๋ยวอนาคตดึงจาก LIFF)
-    setUser({ displayName: 'คุณเอกอาทิตย์' })
+    const hour = new Date().getHours()
+    if (hour < 12) setGreeting('สวัสดีตอนเช้า ☀️')
+    else if (hour < 17) setGreeting('สวัสดีตอนบ่าย 🌤️')
+    else setGreeting('สวัสดีตอนเย็น 🌙')
   }, [])
 
   return (
+    <div className="pb-10 max-w-lg mx-auto md:max-w-4xl">
+      {/* Header Profile Section */}
+      <header className="pt-8 pb-6 px-6 flex justify-between items-end">
+        <div>
+          <p className="text-slate-500 text-sm font-medium mb-1 flex items-center gap-1">
+             {greeting}
+          </p>
+          <h1 className="text-3xl font-bold text-slate-800">
+            {user?.displayName || 'คุณเอกอาทิตย์'}
+          </h1>
+          <p className="text-xs text-blue-500 font-medium mt-1 bg-blue-50 inline-block px-2 py-0.5 rounded-md">
+            Developer & Admin
+          </p>
+        </div>
+        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-[2px] shadow-lg shadow-blue-200">
+          <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+             <User className="text-slate-400" size={24} />
+             {/* <img src="URL_รูปโปรไฟล์" alt="Profile" className="w-full h-full object-cover" /> */}
+          </div>
+        </div>
+      </header>
+
+      {/* Stats Area */}
+      <section className="px-6 mb-8 flex gap-4 overflow-x-auto pb-4 no-scrollbar fade-in-up">
+        <StatWidget 
+          icon={FileText} 
+          label="ใบสั่งจ้างเดือนนี้" 
+          value="12" 
+          trend="8.5"
+          color="bg-blue-500" 
+        />
+        <StatWidget 
+          icon={Receipt} 
+          label="ยอดเบิกจ่ายรวม" 
+          value="฿45k" 
+          color="bg-emerald-500" 
+        />
+        <StatWidget 
+          icon={Clock} 
+          label="รออนุมัติ" 
+          value="3" 
+          color="bg-orange-500" 
+        />
+      </section>
+
+      {/* Main Menu */}
+      <section className="px-6 space-y-4">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2">
+            <LayoutGrid size={20} className="text-blue-500" />
+            เมนูการจัดการ
+          </h2>
+          <span className="text-xs text-slate-400">เข้าถึงด่วน</span>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <MenuCard 
+            to="/contractor-order"
+            title="สั่งจ้างผู้รับเหมา"
+            subtitle="ออกใบสั่งจ้าง / Technicial Record"
+            icon={FileText}
+            gradient="from-blue-500 to-indigo-600"
+            delay="100"
+          />
+
+          <MenuCard 
+            to="/receipt-form"
+            title="เบิกค่าใช้จ่าย"
+            subtitle="ใบรับรองแทนใบเสร็จ (ไม่มีบิล)"
+            icon={Receipt}
+            gradient="from-emerald-500 to-teal-500"
+            delay="200"
+          />
+
+          <MenuCard 
+            to="/history"
+            title="ประวัติเอกสาร"
+            subtitle="ดูรายการย้อนหลัง / สถานะ"
+            icon={Calendar}
+            gradient="from-orange-400 to-pink-500"
+            delay="300"
+          />
+          
+          {/* ปุ่มเสริม (ถ้ามี) */}
+          <button className="group relative overflow-hidden bg-slate-100 rounded-3xl p-6 shadow-inner hover:bg-slate-200 transition-colors duration-300 border border-dashed border-slate-300 flex items-center justify-center gap-2 fade-in-up" style={{animationDelay: '400ms'}}>
+             <span className="text-slate-400 font-medium group-hover:text-slate-600">
+               + เพิ่มเมนูใหม่เร็วๆ นี้
+             </span>
+          </button>
+        </div>
+      </section>
+
+      <div className="mt-12 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm text-xs text-slate-400">
+          HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function App() {
+  const [user, setUser] = useState({ displayName: 'คุณเอกอาทิตย์' }) // จำลองข้อมูล
+
+  return (
     <Router>
-      <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+      <div className="min-h-screen text-slate-800 selection:bg-blue-100 selection:text-blue-600">
         <Routes>
           <Route path="/" element={<Home user={user} />} />
           <Route path="/contractor-order" element={<ContractorForm />} />

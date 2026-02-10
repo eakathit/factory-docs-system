@@ -106,13 +106,12 @@ const Home = ({ user }) => {
           icon={FileText} 
           label="ใบสั่งจ้างเดือนนี้" 
           value="12" 
-          trend="8.5"
           color="bg-blue-500" 
         />
         <StatWidget 
           icon={Receipt} 
-          label="ยอดเบิกจ่ายรวม" 
-          value="฿45k" 
+          label="ใบรับรองเเทนใบเสร็จ" 
+          value="20" 
           color="bg-emerald-500" 
         />
         <StatWidget 
@@ -130,13 +129,12 @@ const Home = ({ user }) => {
             <LayoutGrid size={20} className="text-blue-500" />
             เมนูการจัดการ
           </h2>
-          <span className="text-xs text-slate-400">เข้าถึงด่วน</span>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <MenuCard 
             to="/contractor-order"
-            title="สั่งจ้างผู้รับเหมา"
+            title="ใบสั่งจ้างผู้รับเหมา"
             subtitle="ออกใบสั่งจ้าง / Technicial Record"
             icon={FileText}
             gradient="from-blue-500 to-indigo-600"
@@ -145,8 +143,8 @@ const Home = ({ user }) => {
 
           <MenuCard 
             to="/receipt-form"
-            title="เบิกค่าใช้จ่าย"
-            subtitle="ใบรับรองแทนใบเสร็จ (ไม่มีบิล)"
+            title="ใบรับรองเเทนใบเสร็จรับเงิน"
+            subtitle="ใบรับรองแทนใบเสร็จ"
             icon={Receipt}
             gradient="from-emerald-500 to-teal-500"
             delay="200"

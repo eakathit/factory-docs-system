@@ -16,40 +16,22 @@ const FactoryPortal = () => {
     {
       id: 1,
       title: "ระบบลงเวลาทำงาน (Time Tracking)", // โปรเจกต์ Firebase 1
-      description: "ระบบบันทึกเวลาเข้า-ออกงาน และคำนวณ OT พนักงาน (PWA)",
-      url: "https://your-firebase-project-1.web.app", // 🔴 ใส่ Link จริงตรงนี้
+      description: "ระบบบันทึกเวลาเข้า-ออกงาน",
+      url: "https://timetracker-f1e11.web.app/", // 🔴 ใส่ Link จริงตรงนี้
       icon: Clock,
-      color: "bg-orange-500",
-      gradient: "from-orange-500 to-red-500"
+      color: "bg-orange-300",
+      gradient: "from-orange-400 to-red-400"
     },
     {
       id: 2,
-      title: "ระบบแจ้งซ่อมออนไลน์ (E-Maintenance)", // โปรเจกต์ Firebase 2
-      description: "แจ้งซ่อมเครื่องจักร ติดตามสถานะงานซ่อมแบบ Real-time",
-      url: "https://your-firebase-project-2.web.app", // 🔴 ใส่ Link จริงตรงนี้
+      title: "ระบบสต๊อกสินค้า (StockCheck)", // โปรเจกต์ Firebase 2
+      description: "ระะบบเช็คสต๊อกสินค้าในโรงงาน",
+      url: "https://stockapppwa.web.app/", // 🔴 ใส่ Link จริงตรงนี้
       icon: Wrench,
       color: "bg-blue-600",
       gradient: "from-blue-600 to-indigo-600"
     },
-    // ตัวอย่างระบบอื่นๆ ในอนาคต (หรือระบบที่มีอยู่แล้ว)
-    {
-      id: 3,
-      title: "ระบบความปลอดภัย (Safety)",
-      description: "รายงานอุบัติเหตุ และตรวจสอบความปลอดภัยประจำวัน (JSA)",
-      url: "#", 
-      icon: ShieldCheck,
-      color: "bg-emerald-500",
-      gradient: "from-emerald-500 to-teal-500"
-    },
-    {
-      id: 4,
-      title: "คลังข้อมูลบริษัท (Data Center)",
-      description: "เข้าถึงไฟล์เอกสารกลาง ระเบียบปฏิบัติงาน และคู่มือ",
-      url: "#",
-      icon: Database,
-      color: "bg-slate-500",
-      gradient: "from-slate-500 to-slate-700"
-    }
+
   ]
 
   return (
@@ -88,7 +70,7 @@ const FactoryPortal = () => {
               {/* Icon & Title */}
               <div className="relative z-10 flex-1">
                 <div className="flex justify-between items-start mb-4">
-                  <div className={`w-14 h-14 rounded-2xl ${app.gradient} flex items-center justify-center text-white shadow-lg shadow-gray-200`}>
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${app.gradient} flex items-center justify-center text-white shadow-lg shadow-gray-200`}>
                     <app.icon size={28} />
                   </div>
                   <div className="p-2 bg-slate-50 rounded-full text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">

@@ -77,104 +77,139 @@ const Home = ({ user }) => {
     else setGreeting('สวัสดีตอนเย็น 🌙')
   }, [])
 
-  return (
-    <div className="pb-10 max-w-lg mx-auto md:max-w-4xl">
-      {/* Header Profile Section */}
-      <header className="pt-8 pb-6 px-6 flex justify-between items-end">
+  // ใน src/App.jsx (Component Home)
+
+return (
+  <div className="min-h-screen bg-slate-50/50 pb-10"> {/* เพิ่มสีพื้นหลังจางๆ ให้ดูมีมิติ */}
+    
+    {/* เปลี่ยน max-w-7xl เป็น max-w-screen-2xl และเพิ่ม padding ด้านข้างอีกนิด (lg:px-12) */}
+  <div className="w-full max-w-[96%] mx-auto px-4 sm:px-6 lg:px-8">
+      
+      {/* 1. Header (แสดงเต็มความกว้างเหมือนเดิม) */}
+      <header className="pt-8 pb-8 flex justify-between items-end">
         <div>
-          <p className="text-slate-500 text-sm font-medium mb-1 flex items-center gap-1">
-             {greeting}
-          </p>
-          <h1 className="text-3xl font-bold text-slate-800">
-            {user?.displayName || 'คุณเอกอาทิตย์'}
+          <h1 className="text-3xl font-bold text-slate-800 bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">
+            สวัสดี, {user?.email?.split('@')[0] || 'User'} 👋
           </h1>
-          <p className="text-xs text-blue-500 font-medium mt-1 bg-blue-50 inline-block px-2 py-0.5 rounded-md">
-            Developer & Admin
+          <p className="text-slate-500 mt-2 text-base">
+            ระบบจัดการเอกสารโรงงาน
           </p>
         </div>
-        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-[2px] shadow-lg shadow-blue-200">
-          <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
-             <User className="text-slate-400" size={24} />
-             {/* <img src="URL_รูปโปรไฟล์" alt="Profile" className="w-full h-full object-cover" /> */}
-          </div>
+        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+          <User size={24} />
         </div>
       </header>
 
-      {/* Stats Area */}
-      <section className="px-6 mb-8 flex gap-4 overflow-x-auto pb-4 no-scrollbar fade-in-up">
-        <StatWidget 
-          icon={FileText} 
-          label="ใบสั่งจ้างเดือนนี้" 
-          value="12" 
-          color="bg-blue-500" 
-        />
-        <StatWidget 
-          icon={Receipt} 
-          label="ใบรับรองเเทนใบเสร็จ" 
-          value="20" 
-          color="bg-emerald-500" 
-        />
-        <StatWidget 
-          icon={Clock} 
-          label="รออนุมัติ" 
-          value="3" 
-          color="bg-orange-500" 
-        />
-      </section>
-
-      {/* Main Menu */}
-      <section className="px-6 space-y-4">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2">
-            <LayoutGrid size={20} className="text-blue-500" />
-            เมนูการจัดการ
-          </h2>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <MenuCard 
-            to="/contractor-order"
-            title="ใบสั่งจ้างผู้รับเหมา"
-            subtitle="ออกใบสั่งจ้าง / Technicial Record"
-            icon={FileText}
-            gradient="from-blue-500 to-indigo-600"
-            delay="100"
-          />
-
-          <MenuCard 
-            to="/receipt-form"
-            title="ใบรับรองเเทนใบเสร็จรับเงิน"
-            subtitle="ใบรับรองแทนใบเสร็จ"
-            icon={Receipt}
-            gradient="from-emerald-500 to-teal-500"
-            delay="200"
-          />
-
-          <MenuCard 
-            to="/history"
-            title="ประวัติเอกสาร"
-            subtitle="ดูรายการย้อนหลัง / สถานะ"
-            icon={Calendar}
-            gradient="from-orange-400 to-pink-500"
-            delay="300"
-          />
+      {/* --- ส่วนที่ปรับปรุงใหม่: แบ่ง Grid ซ้าย-ขวา --- */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* LEFT COLUMN: สถิติ (จะไปอยู่ด้านซ้ายเมื่อจอใหญ่) */}
+        {/* ใช้ lg:col-span-4 แปลว่ากินพื้นที่ 4/12 หรือ 1 ใน 3 ของจอ */}
+        <div className="lg:col-span-4 space-y-6">
+          <h3 className="text-lg font-semibold text-slate-700 hidden lg:block px-1">
+            ภาพรวมเดือนนี้
+          </h3>
           
-          {/* ปุ่มเสริม (ถ้ามี) */}
-          <button className="group relative overflow-hidden bg-slate-100 rounded-3xl p-6 shadow-inner hover:bg-slate-200 transition-colors duration-300 border border-dashed border-slate-300 flex items-center justify-center gap-2 fade-in-up" style={{animationDelay: '400ms'}}>
-             <span className="text-slate-400 font-medium group-hover:text-slate-600">
-               + เพิ่มเมนูใหม่เร็วๆ นี้
-             </span>
-          </button>
+          {/* ในมือถือ: เลื่อนแนวนอน (overflow-x-auto) */}
+          {/* ใน Desktop: เรียงลงมาแนวตั้ง (lg:flex-col) */}
+          <div className="flex gap-4 overflow-x-auto pb-4 lg:pb-0 lg:overflow-visible lg:flex-col lg:gap-5">
+            <StatWidget 
+              icon={FileText} 
+              label="ใบสั่งจ้าง" 
+              value="12" 
+              color="bg-blue-500" 
+            />
+            <StatWidget 
+              icon={Receipt} 
+              label="ใบรับรองฯ" 
+              value="20" 
+              color="bg-emerald-500" 
+            />
+            <StatWidget 
+              icon={Clock} 
+              label="รออนุมัติ" 
+              value="3" 
+              color="bg-orange-500" 
+            />
+            
+            {/* เพิ่ม Card พิเศษสำหรับ Desktop เพื่อให้ฝั่งซ้ายดูไม่โล่งเกินไป */}
+            <div className="hidden lg:block bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-4">
+               <h4 className="text-slate-800 font-medium mb-2 flex items-center gap-2">
+                 <Calendar className="w-4 h-4 text-blue-500"/> ปฏิทินงาน
+               </h4>
+               <p className="text-sm text-slate-500">
+                 วันนี้ 11 ก.พ. 2026<br/>
+                 ไม่มีนัดหมายเร่งด่วน
+               </p>
+            </div>
+          </div>
         </div>
-      </section>
 
-      <div className="mt-12 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm text-xs text-slate-400">
-          HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.
+        {/* RIGHT COLUMN: เมนูหลัก (จะไปอยู่ด้านขวาเมื่อจอใหญ่) */}
+        {/* ใช้ lg:col-span-8 แปลว่ากินพื้นที่ 8/12 หรือ 2 ใน 3 ของจอ */}
+        <div className="lg:col-span-8">
+           <h3 className="text-lg font-semibold text-slate-700 mb-4 hidden lg:block px-1">
+             เมนูใช้งาน
+           </h3>
+           
+           {/* ปรับ Grid ของเมนูให้ใหญ่ขึ้น */}
+           <div className="grid gap-5 sm:grid-cols-2">
+            <MenuCard 
+              to="/contractor-order"
+              title="ใบสั่งจ้างผู้รับเหมา"
+              subtitle="ออกใบสั่งจ้าง / Technicial Record"
+              icon={FileText}
+              gradient="from-blue-500 to-indigo-600"
+              delay="100"
+            />
+
+            <MenuCard 
+              to="/receipt-form"
+              title="ใบรับรองเเทนใบเสร็จ"
+              subtitle="ใบรับรองแทนใบเสร็จรับเงิน"
+              icon={Receipt}
+              gradient="from-emerald-500 to-teal-500"
+              delay="200"
+            />
+
+            <MenuCard 
+              to="/history"
+              title="ประวัติเอกสาร"
+              subtitle="ดูรายการย้อนหลัง / สถานะ"
+              icon={Calendar}
+              gradient="from-orange-400 to-pink-500"
+              delay="300"
+            />
+            
+            <button className="group h-full min-h-[120px] relative overflow-hidden bg-white/50 rounded-3xl p-6 hover:bg-white transition-all duration-300 border-2 border-dashed border-slate-200 hover:border-blue-300 flex flex-col items-center justify-center gap-3 fade-in-up shadow-sm hover:shadow-md" style={{animationDelay: '400ms'}}>
+               <div className="w-12 h-12 rounded-full bg-slate-100 group-hover:bg-blue-50 flex items-center justify-center transition-colors">
+                  <span className="text-2xl text-slate-400 group-hover:text-blue-500">+</span>
+               </div>
+               <span className="text-slate-400 font-medium group-hover:text-slate-600">
+                 เพิ่มเมนูใหม่
+               </span>
+            </button>
+          </div>
+
+          {/* Tips: ส่วนเสริมสำหรับ Desktop */}
+          <div className="mt-8 hidden lg:block p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-start gap-4">
+             <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                <FileText size={20}/>
+             </div>
+             <div>
+                <h4 className="font-medium text-blue-900">เคล็ดลับการใช้งาน</h4>
+                <p className="text-sm text-blue-700/80 mt-1">
+                  คุณสามารถดูประวัติเอกสารย้อนหลังได้สูงสุด 30 วัน หากต้องการข้อมูลเก่ากว่านั้นให้ติดต่อแผนก IT
+                </p>
+             </div>
+          </div>
+
         </div>
+
       </div>
     </div>
-  )
+  </div>
+)
 }
 
 function App() {

@@ -18,13 +18,32 @@ export default function OrderPrint() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      const { data } = await supabase.from('doc_contractor_orders').select('*').eq('id', orderId).single()
-      if (data) setOrder(data)
-      setLoading(false)
+    if (order) { // ถ้าโหลดข้อมูลเสร็จแล้ว (มี order)
+      const timer = setTimeout(() => {
+        window.print() // สั่งพิมพ์ทันที
+      }, 800) // รอ 0.8 วินาที ให้รูป/ฟอนต์โหลดครบ
+      return () => clearTimeout(timer)
     }
-    fetchOrder()
-  }, [orderId])
+  }, [order])
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        // ใช้ระบบ Share ของมือถือ (Android/iOS)
+        await navigator.share({
+          title: 'ใบรับรองแทนใบเสร็จ',
+          text: `เอกสารใบรับรองเลขที่ ${doc.doc_no}`,
+          url: window.location.href,
+        })
+      } else {
+        // ถ้า Share ไม่ได้ ให้ Copy Link แทน
+        await navigator.clipboard.writeText(window.location.href)
+        alert('คัดลอกลิงก์แล้ว! \nกรุณานำไปเปิดใน Chrome หรือ Safari เพื่อสั่งพิมพ์/บันทึก PDF')
+      }
+    } catch (error) {
+      console.log('Error sharing:', error)
+    }
+  }
 
   if (loading) return <div className="text-center p-10">กำลังโหลด...</div>
   if (!order) return <div className="text-center p-10">ไม่พบข้อมูล</div>
@@ -72,19 +91,55 @@ export default function OrderPrint() {
       </style>
 
       {/* ปุ่มกด (ซ่อนตอนปริ้นท์) */}
-      <div className="w-[210mm] mb-6 flex justify-between items-center no-print px-4 md:px-0 sticky left-0">
-        <Link to="/history" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200">
+      <div className="w-[210mm] mb-6 flex flex-wrap justify-between items-center gap-4 no-print px-4 md:px-0 sticky left-0 z-50">
+        
+        {/* ปุ่มย้อนกลับ */}
+        <Link to="/history" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 transition-colors">
           <ArrowLeft size={20} /> กลับ
         </Link>
-        <div className="text-xs text-gray-500 hidden md:block">
+        
+        {/* คำแนะนำ (ซ่อนในมือถือ) */}
+        <div className="text-xs text-gray-500 hidden lg:block">
             *ตั้งค่า Margins: <b>None</b> | Scale: <b>100</b>
         </div>
-        <button 
-          onClick={() => window.print()} 
-          className="bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg flex gap-2 hover:bg-blue-700 font-bold items-center transition-transform active:scale-95"
-        >
-          <Printer size={20} /> พิมพ์
-        </button>
+
+        {/* กลุ่มปุ่มด้านขวา (แชร์ + พิมพ์) */}
+        <div className="flex gap-2">
+          {/* ✅ ปุ่มแชร์ / คัดลอกลิงก์ (เพิ่มใหม่) */}
+          <button 
+            onClick={async () => {
+              try {
+                if (navigator.share) {
+                  await navigator.share({
+                    title: 'เอกสารออนไลน์',
+                    text: 'ลิงก์เอกสารสำหรับพิมพ์',
+                    url: window.location.href,
+                  })
+                } else {
+                  await navigator.clipboard.writeText(window.location.href)
+                  alert('คัดลอกลิงก์เรียบร้อย! \nนำไปเปิดใน Chrome/Safari เพื่อบันทึก PDF')
+                }
+              } catch (err) {
+                console.error('Share failed:', err)
+              }
+            }}
+            className="bg-orange-500 text-white px-4 py-2 rounded-full shadow-lg flex gap-2 hover:bg-orange-600 font-bold items-center transition-transform active:scale-95"
+            title="แชร์ หรือ คัดลอกลิงก์ไปเปิดใน Browser อื่น"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span className="hidden sm:inline">แชร์</span>
+          </button>
+
+          {/* ปุ่มพิมพ์เดิม */}
+          <button 
+            onClick={() => window.print()} 
+            className="bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg flex gap-2 hover:bg-blue-700 font-bold items-center transition-transform active:scale-95"
+          >
+            <Printer size={20} /> 
+            <span className="hidden sm:inline">พิมพ์</span>
+          </button>
+        </div>
+
       </div>
 
       {/* เนื้อหาเอกสาร (Wrapper) */}

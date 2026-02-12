@@ -8,6 +8,7 @@ export default function ReceiptPrint() {
   const [doc, setDoc] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // 1. ดึงข้อมูล
   useEffect(() => {
     const fetchDoc = async () => {
       const { data, error } = await supabase
@@ -22,6 +23,35 @@ export default function ReceiptPrint() {
     fetchDoc()
   }, [id])
 
+  // ✅ 2. เพิ่ม Auto-Print: สั่งพิมพ์อัตโนมัติเมื่อข้อมูลพร้อม
+  useEffect(() => {
+    if (doc) {
+      const timer = setTimeout(() => {
+        window.print()
+      }, 1000) // รอ 1 วินาที ให้โหลดข้อมูล/รูปเซ็นเสร็จ
+      return () => clearTimeout(timer)
+    }
+  }, [doc])
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        // ใช้ระบบ Share ของมือถือ (Android/iOS)
+        await navigator.share({
+          title: 'ใบรับรองแทนใบเสร็จ',
+          text: `เอกสารใบรับรองเลขที่ ${doc.doc_no}`,
+          url: window.location.href,
+        })
+      } else {
+        // ถ้า Share ไม่ได้ ให้ Copy Link แทน
+        await navigator.clipboard.writeText(window.location.href)
+        alert('คัดลอกลิงก์แล้ว! \nกรุณานำไปเปิดใน Chrome หรือ Safari เพื่อสั่งพิมพ์/บันทึก PDF')
+      }
+    } catch (error) {
+      console.log('Error sharing:', error)
+    }
+  }
+  
   if (loading) return <div className="text-center p-10">กำลังโหลด...</div>
   if (!doc) return <div className="text-center p-10">ไม่พบเอกสาร</div>
 
@@ -30,7 +60,7 @@ export default function ReceiptPrint() {
     return new Date(dateString).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
   }
 
-  // logic เลือกวันที่ที่จะแสดง: ถ้ามีวันที่โอนให้ใช้ ถ้าไม่มี(เช่น เงินสด) ให้ใช้วันที่ของรายการแรกแทน
+  // logic เลือกวันที่ที่จะแสดง
   const paymentDate = doc.transfer_date || (doc.items && doc.items.length > 0 ? doc.items[0].date : null);
 
   return (
@@ -59,11 +89,11 @@ export default function ReceiptPrint() {
           <ArrowLeft size={20} /> กลับ
         </Link>
         <button onClick={() => window.print()} className="bg-blue-600 text-white px-6 py-2 rounded shadow flex gap-2 hover:bg-blue-700 font-bold">
-          <Printer size={20} /> พิมพ์เอกสาร
+          <Printer size={20} /> พิมพ์ใบรับรอง
         </button>
       </div>
 
-      {/* กระดาษ A4 */}
+      {/* กระดาษ A4 (Layout เดิมของคุณ) */}
       <div className="print-container max-w-[210mm] mx-auto bg-white p-[20mm] shadow-lg print:shadow-none font-sarabun text-[16px] leading-relaxed relative min-h-[297mm]">
         
         {/* Header */}

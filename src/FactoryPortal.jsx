@@ -17,7 +17,7 @@ const FactoryPortal = () => {
       id: 1,
       title: "ระบบลงเวลาทำงาน (Time Tracking)", // โปรเจกต์ Firebase 1
       description: "ระบบบันทึกเวลาเข้า-ออกงาน",
-      url: "https://timetracker-f1e11.web.app/", // 🔴 ใส่ Link จริงตรงนี้
+      url: "https://timetracker-f1e11.web.app/?openExternalBrowser=1", // 🔴 ใส่ Link จริงตรงนี้
       icon: Clock,
       color: "bg-orange-300",
       gradient: "from-orange-400 to-red-400"

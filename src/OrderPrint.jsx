@@ -35,61 +35,85 @@ export default function OrderPrint() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 print:p-0 print:bg-white font-sans text-black">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-8 print:p-0 print:bg-white print:block overflow-x-auto">
       <style>
         {`@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
           .font-sarabun { font-family: 'Sarabun', sans-serif; }
           
-          /* 1. สั่ง Browser ว่าไม่ต้องมีขอบ */
+          /* บังคับตั้งค่าหน้ากระดาษ A4 ขอบ 0 */
           @page { 
-            size: auto;   /* ให้ปรับตามกระดาษ */
-            margin: 0mm;  /* ขอบ 0 */
+            size: A4;
+            margin: 0mm; 
           }
           
           @media print { 
-            body { margin: 0; padding: 0; }
+            html, body {
+              width: 210mm;
+              height: 297mm;
+              background: white;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            
             .no-print { display: none !important; }
 
-            /* 2. บังคับให้เนื้อหา กว้าง 100% ของพื้นที่ที่ปริ้นท์ได้ */
+            /* บังคับ Container ให้พอดีกระดาษเป๊ะๆ */
             .print-container {
-                width: 100% !important; 
-                max-width: none !important;
-                padding: 15mm 20mm !important; /* เว้นขอบด้วย Padding แทน */
+                width: 210mm !important;
+                height: 297mm !important; /* บังคับความสูงเต็มหน้า */
+                padding: 15mm 20mm !important; /* ระยะขอบกระดาษจริง */
                 margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                overflow: hidden !important; /* ตัดส่วนเกินป้องกันหน้า 2 */
             }
           }
         `}
       </style>
 
       {/* ปุ่มกด (ซ่อนตอนปริ้นท์) */}
-      <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center no-print">
-        <Link to="/history" className="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+      <div className="w-[210mm] mb-6 flex justify-between items-center no-print px-4 md:px-0 sticky left-0">
+        <Link to="/history" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200">
           <ArrowLeft size={20} /> กลับ
         </Link>
-        <div className="text-sm text-gray-500">
-            *ตั้งค่า Margins: <b>None</b> | Scale: <b>100 (หรือปรับเพิ่มตามชอบ)</b>
+        <div className="text-xs text-gray-500 hidden md:block">
+            *ตั้งค่า Margins: <b>None</b> | Scale: <b>100</b>
         </div>
-        <button onClick={() => window.print()} className="bg-blue-600 text-white px-6 py-2 rounded shadow flex gap-2 hover:bg-blue-700 font-bold">
-          <Printer size={20} /> พิมพ์เอกสาร
+        <button 
+          onClick={() => window.print()} 
+          className="bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg flex gap-2 hover:bg-blue-700 font-bold items-center transition-transform active:scale-95"
+        >
+          <Printer size={20} /> พิมพ์
         </button>
       </div>
 
-      {/* เนื้อหาเอกสาร */}
-      <div className="print-container max-w-[210mm] mx-auto bg-white p-[20mm] shadow-lg print:shadow-none font-sarabun text-sm leading-normal">
-        
-        {/* HEADER */}
-        <div className="text-center mb-6">
-          <h1 className="font-bold text-lg">HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</h1>
-          <p className="text-xs text-gray-600">47/20 M.1, KLONGPRAWET, BANPHO, CHACHOENGSAO 24140</p>
-          <div className="mt-3 border-2 border-black p-2 relative mx-auto w-full">
-            <h2 className="text-xl font-bold">ใบสั่งจ้างผู้รับเหมา / Technician supporter record</h2>
-            <div className="absolute top-2 right-2 text-xs font-normal">
-              วันที่ {formatDate(order.created_at)}
+      {/* เนื้อหาเอกสาร (Wrapper) */}
+      <div className="print:w-auto print:block">
+        {/* ตัวกระดาษ A4 (Fixed Size) */}
+        <div 
+          className="print-container bg-white shadow-2xl print:shadow-none font-sarabun text-sm leading-normal relative"
+          style={{
+            width: '210mm',      // บังคับกว้างเท่า A4
+            minWidth: '210mm',   // ห้ามหดในมือถือ (ทำให้ Scroll ได้)
+            minHeight: '297mm',  // สูงเท่า A4
+            padding: '20mm',     // Padding สำหรับดูในจอ
+            margin: '0 auto'
+          }}
+        >
+          
+          {/* HEADER */}
+          <div className="text-center mb-6">
+            <h1 className="font-bold text-lg">HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</h1>
+            <p className="text-xs text-gray-600">47/20 M.1, KLONGPRAWET, BANPHO, CHACHOENGSAO 24140</p>
+            <div className="mt-3 border-2 border-black p-2 relative mx-auto w-full">
+              <h2 className="text-xl font-bold">ใบสั่งจ้างผู้รับเหมา / Technician supporter record</h2>
+              <div className="absolute top-2 right-2 text-xs font-normal">
+                วันที่ {formatDate(order.created_at)}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* SECTION 1: ข้อมูล */}
+          {/* SECTION 1: ข้อมูล */}
         <div className="mb-4">
           <div className="flex justify-between mb-2">
             <div className="w-[60%]">
@@ -256,6 +280,7 @@ export default function OrderPrint() {
         </div>
 
       </div>
+    </div>
     </div>
   )
 }

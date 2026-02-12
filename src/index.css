@@ -30,3 +30,36 @@ body {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0mm; /* บังคับขอบกระดาษเป็น 0 */
+  }
+  
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background-color: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* ซ่อน Elements ที่ไม่จำเป็นตอนพิมพ์ */
+  .no-print {
+    display: none !important;
+  }
+
+  /* บังคับให้ Container หลักพอดีกับหน้า A4 */
+  .print-area {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 20px !important; /* ปรับลด padding ได้ถ้าเนื้อหาล้น */
+    box-shadow: none !important;
+    border: none !important;
+    overflow: hidden !important; /* ตัดส่วนเกินป้องกันหน้า 2 */
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}

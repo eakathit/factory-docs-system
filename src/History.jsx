@@ -1,142 +1,287 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
-import { ArrowLeft, FileText, Calendar, Printer, Receipt } from 'lucide-react' // เพิ่มไอคอน Receipt
 import { Link } from 'react-router-dom'
+import { 
+  FileText, 
+  Search, 
+  Filter, 
+  Calendar, 
+  User, 
+  ArrowUpRight,
+  Printer,
+  Receipt,
+  FileCheck,
+  ChevronLeft // <--- เพิ่มไอคอนลูกศรย้อนกลับ
+} from 'lucide-react'
 
-export default function History() {
-  const [documents, setDocuments] = useState([])
+// ฟังก์ชันเลือกสีป้ายสถานะ
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'อนุมัติแล้ว': 
+    case 'เสร็จสิ้น':
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200'
+    case 'รออนุมัติ': return 'bg-amber-100 text-amber-700 border-amber-200'
+    case 'แก้ไข': return 'bg-orange-100 text-orange-700 border-orange-200'
+    case 'ยกเลิก': return 'bg-slate-100 text-slate-600 border-slate-200'
+    default: return 'bg-blue-100 text-blue-700 border-blue-200'
+  }
+}
+
+const History = () => {
+  const [docs, setDocs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterType, setFilterType] = useState('All')
 
-  const fetchDocuments = async () => {
+  useEffect(() => {
+    fetchHistory()
+  }, [])
+
+  const fetchHistory = async () => {
     try {
       setLoading(true)
       
-      // 1. ดึงใบสั่งจ้าง
-      const { data: orders, error: errorOrders } = await supabase
+      // 1. ดึงข้อมูลใบสั่งจ้าง
+      const reqOrders = supabase
         .from('doc_contractor_orders')
         .select('*')
-      
-      // 2. ดึงใบรับรองแทนใบเสร็จ
-      const { data: receipts, error: errorReceipts } = await supabase
+        .order('created_at', { ascending: false })
+
+      // 2. ดึงข้อมูลใบรับรองแทนใบเสร็จ
+      const reqReceipts = supabase
         .from('doc_substitute_receipts')
         .select('*')
+        .order('created_at', { ascending: false })
 
-      if (errorOrders || errorReceipts) throw new Error('Error fetching data')
+      const [resOrders, resReceipts] = await Promise.all([reqOrders, reqReceipts])
 
-      // 3. แปลงร่างข้อมูลให้มีหน้าตาเหมือนกัน (Standardize) เพื่อเอามาแสดงผลรวมกัน
-      const formattedOrders = (orders || []).map(item => ({
-        id: item.id,
-        type: 'order', // ระบุประเภท
-        title: `จ้างเหมา: ${item.contractor_name}`,
-        subtitle: `ค่าจ้าง: ${item.wage_rate?.toLocaleString()} บาท`,
-        date: item.created_at,
-        status: item.contractor_signature ? 'เซ็นแล้ว' : 'รอเซ็น',
-        link: `/print/${item.id}` // ลิงก์ไปหน้า Print (ของใครของมัน)
+      if (resOrders.error) console.error('Error Orders:', resOrders.error)
+      if (resReceipts.error) console.error('Error Receipts:', resReceipts.error)
+
+      // 3. แปลงข้อมูล
+      const orders = (resOrders.data || []).map(item => ({
+        ...item,
+        doc_type: 'order',
+        display_title: item.contractor_name,
+        display_subtitle: `ใบสั่งจ้าง: ${item.payment_type === 'daily' ? 'รายวัน' : 'เหมา'}`,
+        display_amount: item.wage_rate,
+        display_person: item.supervisor_name,
+        display_status: item.status || 'รอดำเนินการ',
+        link_print: `/print/${item.id}`
       }))
 
-      const formattedReceipts = (receipts || []).map(item => ({
-        id: item.id,
-        type: 'receipt', // ระบุประเภท
-        title: `ใบรับรอง: ${item.payer_name}`,
-        subtitle: `ยอดรวม: ${item.total_amount?.toLocaleString()} บาท`,
-        date: item.created_at,
-        status: item.payer_signature ? 'อนุมัติแล้ว' : 'รอนุมัติ',
-        link: `/receipt-print/${item.id}` // ⚠️ เดี๋ยวเราต้องไปสร้างหน้านี้เพิ่ม
+      const receipts = (resReceipts.data || []).map(item => ({
+        ...item,
+        doc_type: 'receipt',
+        display_title: item.payer_name,
+        display_subtitle: `ใบรับรองฯ: ${item.doc_no}`,
+        display_amount: item.total_amount,
+        display_person: item.position,
+        display_status: 'เสร็จสิ้น',
+        link_print: `/receipt-print/${item.id}`
       }))
 
-      // 4. เอามารวมกันแล้วเรียงตามวันที่ (ใหม่สุดขึ้นก่อน)
-      const allDocs = [...formattedOrders, ...formattedReceipts].sort((a, b) => 
-        new Date(b.date) - new Date(a.date)
+      // 4. รวมและเรียงลำดับ
+      const allDocs = [...orders, ...receipts].sort((a, b) => 
+        new Date(b.created_at) - new Date(a.created_at)
       )
 
-      setDocuments(allDocs)
+      setDocs(allDocs)
 
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error fetching history:', error.message)
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => {
-    fetchDocuments()
-  }, [])
+  // Filter Logic
+  const filteredDocs = docs.filter(doc => {
+    const matchesSearch = 
+      (doc.display_title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (doc.display_subtitle || '').toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesType = filterType === 'All' || 
+                        (filterType === 'Order' && doc.doc_type === 'order') ||
+                        (filterType === 'Receipt' && doc.doc_type === 'receipt')
+
+    return matchesSearch && matchesType
+  })
 
   return (
-    <div className="max-w-md mx-auto p-4 bg-gray-50 min-h-screen">
-      <div className="mb-4 flex justify-between items-center">
-        <Link to="/" className="text-gray-500 flex items-center gap-1 text-sm hover:text-blue-600">
-          <ArrowLeft size={16} /> กลับหน้าหลัก
-        </Link>
-        <h1 className="font-bold text-lg text-gray-800">ประวัติเอกสารทั้งหมด</h1>
+    <div className="min-h-screen bg-slate-50 pb-20">
+      
+      {/* --- Header Section --- */}
+      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            {/* Title & Back Button */}
+            <div className="flex items-center gap-3">
+              {/* ✅ 1. ปุ่มย้อนกลับ */}
+              <Link to="/" className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
+                <ChevronLeft size={28} />
+              </Link>
+
+              <div>
+                <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                  <FileCheck className="text-blue-600" />
+                  ประวัติเอกสาร
+                </h1>
+                <p className="text-slate-500 text-sm mt-1">
+                  รายการเอกสารทั้งหมด {docs.length} รายการ
+                </p>
+              </div>
+            </div>
+
+            {/* Search & Filter Bar */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <div className="relative flex-grow md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <input 
+                  type="text" 
+                  placeholder="ค้นหาชื่อ, เลขที่..." 
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <div className="relative md:w-40">
+                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <select 
+                  className="w-full pl-10 pr-8 py-2 rounded-xl border border-slate-200 appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                >
+                  <option value="All">ทุกประเภท</option>
+                  <option value="Order">ใบสั่งจ้าง</option>
+                  <option value="Receipt">ใบรับรองฯ</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                  ▼
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {loading ? (
-        <div className="text-center p-10 text-gray-400">กำลังโหลดข้อมูล...</div>
-      ) : documents.length === 0 ? (
-        <div className="text-center p-10 bg-white rounded-xl border border-dashed">
-          <p className="text-gray-400">ไม่พบประวัติเอกสาร</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {documents.map((doc) => (
-            <div key={`${doc.type}-${doc.id}`} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition relative group">
-              
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-3">
-                  {/* แยกสีไอคอนตามประเภทเอกสาร */}
-                  <div className={`p-3 rounded-lg transition ${
-                    doc.type === 'order' 
-                      ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' 
-                      : 'bg-green-50 text-green-600 group-hover:bg-green-600 group-hover:text-white'
-                  }`}>
-                    {doc.type === 'order' ? <FileText size={20} /> : <Receipt size={20} />}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-800 text-sm">{doc.title}</h3>
-                    <p className="text-xs text-gray-500 mt-1">{doc.subtitle}</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-end gap-2">
-                  {/* ปุ่ม Print */}
-                  {doc.type === 'order' ? (
-                     <Link to={doc.link} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition">
-                       <Printer size={18} />
-                     </Link>
-                  ) : (
-                     // ถ้าเป็นใบรับรอง เดี๋ยวเราค่อยมาทำปุ่ม Print ทีหลัง
-                    <Link to={doc.link} className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-full transition">
-                      <Printer size={18} />
-                  </Link>
-                  )}
-
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
-                    doc.status.includes('แล้ว') 
-                      ? 'bg-green-100 text-green-700 border-green-200' 
-                      : 'bg-yellow-100 text-yellow-700 border-yellow-200'
-                  }`}>
-                    {doc.status}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center text-xs text-gray-400 border-t pt-3 mt-2">
-                <div className="flex items-center gap-1">
-                  <Calendar size={14} /> 
-                  {new Date(doc.date).toLocaleDateString('th-TH', {
-                    day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute:'2-digit'
-                  })}
-                </div>
-                <div className="uppercase text-[10px] tracking-wide font-semibold text-gray-300">
-                  {doc.type === 'order' ? 'ใบสั่งจ้าง' : 'ใบรับรอง'}
-                </div>
-              </div>
-
+      {/* --- Content Section --- */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        {loading ? (
+          <div className="text-center py-20 text-slate-400 animate-pulse">
+            กำลังโหลดข้อมูล...
+          </div>
+        ) : filteredDocs.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText className="text-slate-400" size={32} />
             </div>
-          ))}
-        </div>
-      )}
+            <h3 className="text-lg font-medium text-slate-600">ไม่พบเอกสาร</h3>
+            <p className="text-slate-400">ลองปรับคำค้นหาหรือตัวกรองดูใหม่</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            
+            {/* --- Desktop Table Header --- */}
+            <div className="hidden md:grid grid-cols-12 gap-4 bg-slate-50 px-6 py-4 border-b border-slate-100 text-sm font-semibold text-slate-600">
+              <div className="col-span-2">วันที่</div>
+              <div className="col-span-3">ชื่อ / หัวข้อ</div>
+              <div className="col-span-3">รายละเอียด</div>
+              <div className="col-span-2 text-center">สถานะ</div>
+              <div className="col-span-2 text-right">จัดการ</div>
+            </div>
+
+            {/* --- Document List --- */}
+            <div className="divide-y divide-slate-100">
+              {filteredDocs.map((doc) => (
+                <div 
+                  key={`${doc.doc_type}-${doc.id}`} 
+                  className="group hover:bg-slate-50 transition-colors duration-200"
+                >
+                  <div className="p-4 md:px-6 md:py-4 flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center">
+                    
+                    {/* 1. วันที่ & Icon */}
+                    <div className="flex justify-between md:block md:col-span-2 mb-2 md:mb-0">
+                      <div className="flex items-center gap-2 text-slate-500 text-sm">
+                        {doc.doc_type === 'order' ? (
+                           <FileText size={16} className="text-blue-500" />
+                        ) : (
+                           <Receipt size={16} className="text-emerald-500" />
+                        )}
+                        <span className="font-medium text-slate-700">
+                          {new Date(doc.created_at).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
+                        </span>
+                      </div>
+                      {/* ✅ 2. ลบส่วนที่แสดง UUID ออกไปแล้ว (ตรงนี้เคยมี #doc.id) */}
+                    </div>
+
+                    {/* 2. ชื่อ (Title) */}
+                    <div className="md:col-span-3 mb-1 md:mb-0">
+                      <h4 className="font-bold text-slate-800 text-base md:text-sm truncate">
+                        {doc.display_title || 'ไม่ระบุชื่อ'}
+                      </h4>
+                      <div className="flex items-center gap-1 text-xs text-slate-500 md:hidden">
+                        <User size={12}/> {doc.display_person || '-'}
+                      </div>
+                    </div>
+
+                    {/* 3. รายละเอียด */}
+                    <div className="md:col-span-3 mb-3 md:mb-0">
+                      <p className="text-sm text-slate-600 line-clamp-1">
+                        {doc.display_subtitle}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1 truncate font-medium">
+                        💰 {Number(doc.display_amount || 0).toLocaleString()} บาท
+                        {doc.display_person && <span className="hidden md:inline text-slate-400 font-normal"> • {doc.display_person}</span>}
+                      </p>
+                    </div>
+
+                    {/* 4. สถานะ */}
+                    <div className="md:col-span-2 flex md:justify-center mb-3 md:mb-0">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(doc.display_status)}`}>
+                        {doc.display_status}
+                      </span>
+                    </div>
+
+                    {/* 5. ปุ่ม Actions */}
+                    <div className="md:col-span-2 flex items-center justify-end gap-2 mt-2 md:mt-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                      <Link 
+                        to={doc.link_print}
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="พิมพ์เอกสาร"
+                      >
+                        <Printer size={18} />
+                      </Link>
+
+                      <Link 
+                        to={doc.link_print}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-all shadow-sm active:scale-95"
+                      >
+                        <span>เปิดดู</span>
+                        <ArrowUpRight size={16} />
+                      </Link>
+                    </div>
+
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Floating Action Button (Optional) */}
+      <Link 
+        to="/"
+        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-slate-800 text-white rounded-full shadow-lg shadow-slate-800/30 flex items-center justify-center active:scale-90 transition-transform z-50"
+      >
+        <span className="text-2xl font-light">+</span>
+      </Link>
     </div>
   )
 }
+
+export default History

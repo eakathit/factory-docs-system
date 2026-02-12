@@ -51,7 +51,7 @@ export default function ReceiptForm() {
       let signatureUrl = null
       if (sigPad.current && !sigPad.current.isEmpty()) {
         // ใช้ getTrimmedCanvas เพื่อให้ได้ภาพเฉพาะส่วนที่เซ็น (ตัดขอบว่างออก)
-        const canvas = sigPad.current.getTrimmedCanvas()
+        const canvas = sigPad.current.getCanvas()
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
         const fileName = `receipt-sig-${Date.now()}.png`
         

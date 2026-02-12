@@ -7,16 +7,16 @@ import {
   Calendar, 
   Clock, 
   User, 
-  Menu, 
-  X, 
+  // Menu,  <-- ไม่ได้ใช้
+  // X,     <-- ไม่ได้ใช้
   ChevronRight, 
-  Banknote, // ไอคอนใหม่: ใบสำคัญรับเงิน
-  ClipboardList, // ไอคอนใหม่: Op Report
-  FileCheck, // ไอคอนใหม่: Completion Report
-  LayoutGrid // ไอคอนใหม่: รวม App
+  Banknote, 
+  ClipboardList, 
+  FileCheck, 
+  LayoutGrid 
 } from 'lucide-react'
 
-// นำเข้าไฟล์หน้าต่างๆ (คงเดิมไว้)
+// นำเข้าไฟล์หน้าต่างๆ
 import ContractorForm from './ContractorForm'
 import History from './History'
 import OrderPrint from './OrderPrint'
@@ -40,50 +40,75 @@ const StatWidget = ({ icon: Icon, label, value, color }) => (
     </div>
   </div>
 )
-// --- Component: การ์ดเมนูแบบใหม่ ---
-const MenuCard = ({ to, title, subtitle, icon: Icon, gradient, delay }) => (
-  <Link to={to} className="block group">
+
+// --- Component: การ์ดเมนูแบบใหม่ (อัปเดตให้รองรับ disabled) ---
+const MenuCard = ({ to, title, subtitle, icon: Icon, gradient, delay, disabled }) => {
+  const CardContent = (
     <div 
-      className={`h-full bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden fade-in-up`}
+      className={`h-full rounded-3xl p-6 border relative overflow-hidden fade-in-up transition-all duration-300
+        ${disabled 
+          ? 'bg-slate-50 border-slate-200 opacity-70 grayscale cursor-not-allowed' 
+          : 'bg-white border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1'
+        }
+      `}
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${gradient} opacity-10 rounded-bl-[100px] -mr-10 -mt-10 group-hover:scale-110 transition-transform duration-500`} />
+      {/* Background Gradient Effect (ซ่อนถ้า disabled) */}
+      {!disabled && (
+        <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${gradient} opacity-10 rounded-bl-[100px] -mr-10 -mt-10 group-hover:scale-110 transition-transform duration-500`} />
+      )}
       
       <div className="relative z-10 flex flex-col h-full justify-between">
         <div>
-          <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white mb-6 shadow-lg transform group-hover:rotate-6 transition-transform duration-300`}>
+          {/* Icon Box */}
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg transition-transform duration-300
+            ${disabled 
+              ? 'bg-slate-400 shadow-none' 
+              : `bg-gradient-to-br ${gradient} transform group-hover:rotate-6`
+            }
+          `}>
             <Icon size={28} />
           </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
+
+          {/* Title */}
+          <h3 className={`text-xl font-bold mb-2 transition-colors
+            ${disabled ? 'text-slate-500' : 'text-slate-800 group-hover:text-blue-600'}
+          `}>
             {title}
           </h3>
+
+          {/* Subtitle */}
           <p className="text-slate-500 text-sm leading-relaxed">
             {subtitle}
           </p>
         </div>
         
-        <div className="mt-6 flex items-center text-sm font-semibold text-slate-400 group-hover:text-blue-600 transition-colors">
-          <span>เข้าสู่เมนู</span>
-          <ChevronRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+        {/* Footer Link */}
+        <div className={`mt-6 flex items-center text-sm font-semibold transition-colors
+          ${disabled ? 'text-slate-400' : 'text-slate-400 group-hover:text-blue-600'}
+        `}>
+          <span>{disabled ? 'เร็วๆ นี้ (Coming Soon)' : 'เข้าสู่เมนู'}</span>
+          {!disabled && <ChevronRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />}
         </div>
       </div>
     </div>
-  </Link>
-)
+  )
+
+  // ถ้า disabled ให้ return div ธรรมดา ไม่ต้องมี Link
+  if (disabled) {
+    return <div className="block group select-none">{CardContent}</div>
+  }
+
+  // ถ้าปกติ ให้ใช้ Link
+  return (
+    <Link to={to} className="block group">
+      {CardContent}
+    </Link>
+  )
+}
 
 const Home = ({ user }) => {
-  const [greeting, setGreeting] = useState('สวัสดี')
-
-  useEffect(() => {
-    const hour = new Date().getHours()
-    if (hour < 12) setGreeting('สวัสดีตอนเช้า ☀️')
-    else if (hour < 17) setGreeting('สวัสดีตอนบ่าย 🌤️')
-    else setGreeting('สวัสดีตอนเย็น 🌙')
-  }, [])
-
-  // ใน src/App.jsx (Component Home)
-
-return (
+  return (
     <div className="min-h-screen bg-slate-50/50 pb-10">
       
       <div className="w-full max-w-[96%] mx-auto px-4 sm:px-6 lg:px-12">
@@ -91,7 +116,7 @@ return (
         <header className="pt-8 pb-8 flex justify-between items-end">
           <div>
             <h1 className="text-3xl font-bold text-slate-800 bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">
-              สวัสดี, {user?.email?.split('@')[0] || 'User'} 👋
+              สวัสดี, {user?.displayName || 'User'} 👋
             </h1>
             <p className="text-slate-500 mt-2 text-base">
               ระบบจัดการเอกสารโรงงาน
@@ -130,13 +155,12 @@ return (
                 color="bg-orange-500" 
               />
               
-              {/* Card เพิ่มเติมสำหรับ Desktop */}
               <div className="hidden lg:block bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-4">
                 <h4 className="text-slate-800 font-medium mb-2 flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-blue-500"/> ปฏิทินงาน
                 </h4>
                 <p className="text-sm text-slate-500">
-                  วันนี้ 11 ก.พ. 2026<br/>    
+                  วันนี้ {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}<br/>    
                 </p>
               </div>
             </div>
@@ -148,10 +172,10 @@ return (
                เมนูใช้งาน
             </h3>
             
-            {/* Grid 3 คอลัมน์ (วาง 6 เมนู = 2 แถวพอดี) */}
+            {/* Grid 3 คอลัมน์ */}
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               
-              {/* 1. ใบสั่งจ้าง (เดิม) */}
+              {/* 1. ใบสั่งจ้าง */}
               <MenuCard 
                 to="/contractor-order"
                 title="ใบสั่งจ้างผู้รับเหมา"
@@ -161,7 +185,7 @@ return (
                 delay="100"
               />
 
-              {/* 2. ใบรับรองแทนใบเสร็จ (เดิม) */}
+              {/* 2. ใบรับรองแทนใบเสร็จ */}
               <MenuCard 
                 to="/receipt-form"
                 title="ใบรับรองเเทนใบเสร็จ"
@@ -171,8 +195,9 @@ return (
                 delay="150"
               />
 
-              {/* 3. ใบสำคัญรับเงิน (ใหม่) */}
+              {/* 3. ใบสำคัญรับเงิน (Disabled) */}
               <MenuCard 
+                disabled={true} // <--- ปิดการใช้งาน
                 to="/payment-voucher"
                 title="ใบสำคัญรับเงิน"
                 subtitle="ใบสำคัญรับเงิน / Receipt Voucher"
@@ -181,8 +206,9 @@ return (
                 delay="200"
               />
 
-              {/* 4. Operation Report (ใหม่) */}
+              {/* 4. Operation Report (Disabled) */}
               <MenuCard 
+                disabled={true} // <--- ปิดการใช้งาน
                 to="/operation-report"
                 title="Operation Report"
                 subtitle="รายงานการปฏิบัติงานประจำวัน"
@@ -191,8 +217,9 @@ return (
                 delay="250"
               />
 
-              {/* 5. Completion Report (ใหม่) */}
+              {/* 5. Completion Report (Disabled) */}
               <MenuCard 
+                disabled={true} // <--- ปิดการใช้งาน
                 to="/completion-report"
                 title="Completion Report"
                 subtitle="รายงานเสร็จสิ้นโครงการ / Completion Report"
@@ -201,17 +228,17 @@ return (
                 delay="300"
               />
 
-              {/* history document */}
+              {/* 6. ประวัติเอกสาร */}
               <MenuCard 
-              to="/history"
-              title="ประวัติเอกสาร"
-              subtitle="ตรวจสอบ / ย้อนดูรายการเก่า"
-              icon={Calendar}
-              gradient="from-cyan-500 to-blue-500"
-              delay="350"
+                to="/history"
+                title="ประวัติเอกสาร"
+                subtitle="ตรวจสอบ / ย้อนดูรายการเก่า"
+                icon={Calendar}
+                gradient="from-cyan-500 to-blue-500"
+                delay="350"
               />
 
-              {/* 6. รวมแอปพลิเคชัน (ใหม่) */}
+              {/* 7. รวมแอปพลิเคชัน */}
               <MenuCard 
                 to="/factory-portal"
                 title="รวมเว็บแอปฯ (Portal)"
@@ -231,7 +258,7 @@ return (
 }
 
 function App() {
-  const [user, setUser] = useState({ displayName: 'คุณเอกอาทิตย์' }) // จำลองข้อมูล
+  const [user, setUser] = useState({ displayName: '' })
 
   return (
     <Router>

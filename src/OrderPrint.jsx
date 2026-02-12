@@ -90,58 +90,57 @@ export default function OrderPrint() {
         `}
       </style>
 
-      {/* ปุ่มกด (ซ่อนตอนปริ้นท์) */}
-      <div className="w-[210mm] mb-6 flex flex-wrap justify-between items-center gap-4 no-print px-4 md:px-0 sticky left-0 z-50">
+      {/* --- ส่วน Menu Bar (แก้ไขใหม่: แสดงผลตลอด ไม่ซ่อน) --- */}
+      <div className="w-[210mm] max-w-full mb-6 flex flex-wrap justify-between items-center gap-3 px-4 md:px-0 no-print sticky top-0 z-50 py-2 bg-gray-100/95 backdrop-blur-sm">
         
         {/* ปุ่มย้อนกลับ */}
-        <Link to="/history" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 transition-colors">
-          <ArrowLeft size={20} /> กลับ
+        <Link 
+          to="/history" 
+          className="flex items-center gap-2 text-gray-600 hover:text-blue-600 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200"
+        >
+          <ArrowLeft size={18} /> 
+          <span className="text-sm font-medium">กลับ</span>
         </Link>
         
-        {/* คำแนะนำ (ซ่อนในมือถือ) */}
-        <div className="text-xs text-gray-500 hidden lg:block">
-            *ตั้งค่า Margins: <b>None</b> | Scale: <b>100</b>
-        </div>
-
-        {/* กลุ่มปุ่มด้านขวา (แชร์ + พิมพ์) */}
-        <div className="flex gap-2">
-          {/* ✅ ปุ่มแชร์ / คัดลอกลิงก์ (เพิ่มใหม่) */}
+        {/* กลุ่มปุ่มขวา (แชร์ + พิมพ์) */}
+        <div className="flex items-center gap-2">
+          
+          {/* ปุ่มแชร์ / คัดลอกลิงก์ */}
           <button 
             onClick={async () => {
               try {
                 if (navigator.share) {
                   await navigator.share({
                     title: 'เอกสารออนไลน์',
-                    text: 'ลิงก์เอกสารสำหรับพิมพ์',
+                    text: 'ลิงก์เอกสาร',
                     url: window.location.href,
                   })
                 } else {
                   await navigator.clipboard.writeText(window.location.href)
-                  alert('คัดลอกลิงก์เรียบร้อย! \nนำไปเปิดใน Chrome/Safari เพื่อบันทึก PDF')
+                  alert('คัดลอกลิงก์แล้ว! (Copy Link)')
                 }
               } catch (err) {
                 console.error('Share failed:', err)
               }
             }}
-            className="bg-orange-500 text-white px-4 py-2 rounded-full shadow-lg flex gap-2 hover:bg-orange-600 font-bold items-center transition-transform active:scale-95"
-            title="แชร์ หรือ คัดลอกลิงก์ไปเปิดใน Browser อื่น"
+            className="bg-orange-500 text-white px-3 py-2 rounded-full shadow-sm flex items-center gap-2 hover:bg-orange-600 active:scale-95 transition-all"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            <span className="hidden sm:inline">แชร์</span>
+            {/* ไอคอน Share */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span className="text-sm font-bold">แชร์</span>
           </button>
 
-          {/* ปุ่มพิมพ์เดิม */}
+          {/* ปุ่มพิมพ์ */}
           <button 
             onClick={() => window.print()} 
-            className="bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg flex gap-2 hover:bg-blue-700 font-bold items-center transition-transform active:scale-95"
+            className="bg-blue-600 text-white px-4 py-2 rounded-full shadow-sm flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all"
           >
-            <Printer size={20} /> 
-            <span className="hidden sm:inline">พิมพ์</span>
+            <Printer size={18} /> 
+            <span className="text-sm font-bold">พิมพ์</span>
           </button>
         </div>
 
       </div>
-
       {/* เนื้อหาเอกสาร (Wrapper) */}
       <div className="print:w-auto print:block">
         {/* ตัวกระดาษ A4 (Fixed Size) */}

@@ -68,57 +68,44 @@ export default function ReceiptPrint() {
       <style>
         {`@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
           .font-sarabun { font-family: 'Sarabun', sans-serif; }
-
-          @page {
-            size: A4 portrait;
-            margin: 0;
+          
+          /* ตั้งค่าหน้ากระดาษเป็น A4 และลบขอบขาวอัตโนมัติของ Printer */
+          @page { 
+            size: A4 portrait; 
+            margin: 0; 
           }
-
-          @media print {
-            /* 1. ล้างค่าพื้นฐานทั้งหมด */
-            html, body {
-              width: 100%;
-              height: 100%;
-              margin: 0 !important;
-              padding: 0 !important;
-              overflow: hidden !important; /* ตัดส่วนเกินทิ้ง */
+          
+          @media print { 
+            /* บังคับ Body ให้กว้างเท่า A4 เสมอ เพื่อแก้ปัญหา Mobile บีบจอ */
+            body, html {
+              width: 210mm;
+              height: 297mm;
+              margin: 0;
+              padding: 0;
             }
 
-            /* 2. ซ่อนทุกอย่างในหน้าเว็บ */
-            body * {
-              visibility: hidden;
-            }
+            .no-print { display: none !important; }
 
-            /* 3. ดึงเฉพาะใบเสร็จกลับมา */
-            .print-container, .print-container * {
-              visibility: visible;
-            }
-
-            /* 4. เทคนิคไม้ตาย: Fixed Position + Scale */
+            /* จัดการ Container หลัก */
             .print-container {
-              position: fixed; /* หลุดจาก Flow เดิมโดยสมบูรณ์ (แก้หน้าว่างได้ดีที่สุด) */
-              left: 0;
-              top: 0;
-              width: 100% !important; /* ให้ยืดตามความกว้างกระดาษจริงของมือถือ */
-              height: 100% !important;
-              
-              /* ตั้งค่า Padding ให้ดูเหมือนกระดาษ A4 */
-              padding: 15mm !important;
-              box-sizing: border-box !important;
-              
-              background-color: white !important;
-              
-              /* ย่อลงเล็กน้อย (95%) เพื่อหลบขอบปริ้นเตอร์อัตโนมัติของมือถือ */
-              transform: scale(0.95); 
-              transform-origin: top center;
-              
-              /* บังคับไม่ให้ขึ้นหน้าใหม่ */
-              page-break-after: avoid !important;
-              page-break-before: avoid !important;
-              break-inside: avoid !important;
+                width: 210mm !important;      /* กว้างเท่า A4 */
+                min-height: 297mm !important; /* สูงเท่า A4 */
+                height: auto !important;
+                padding: 20mm !important;     /* ระยะขอบกระดาษ */
+                margin: 0 !important;
+                
+                /* เทคนิคแก้ Layout เพี้ยน */
+                position: relative;
+                box-shadow: none !important;
+                background-color: white !important;
+                
+                /* ป้องกันการตัดหน้ามั่วๆ */
+                page-break-after: avoid; 
+                page-break-inside: avoid;
             }
             
-            .no-print { display: none !important; }
+            /* ซ่อน Header/Footer ของ Browser (เช่น URL, วันที่) ถ้าทำได้ */
+            @page { margin: 0; }
           }
         `}
       </style>
@@ -181,13 +168,13 @@ export default function ReceiptPrint() {
              <tr className="h-10">
                 <td colSpan="2" className="align-middle px-2 py-2">
                    <div className="flex items-center w-full justify-end gap-2 pr-2">
-                      <span>รวมทั้งสิ้น (ตัวอักษร)</span>
+                      <span className="font-bold">รวมทั้งสิ้น (ตัวอักษร)</span>
                       <span className="border-b-2 border-dotted border-black min-w-[60%] text-center">
                         ( {doc.total_text || '-'} )
                       </span>
                    </div>
                 </td>
-                <td className="border border-black text-right px-2 align-middle bg-gray-50 text-lg">
+                <td className="border border-black text-right px-2 font-bold align-middle bg-gray-50 text-lg">
                    {doc.total_amount?.toLocaleString()}
                 </td>
                 <td className=""></td>
@@ -199,7 +186,7 @@ export default function ReceiptPrint() {
         <div className="mt-8 space-y-4 px-4">
           <div className="flex flex-wrap items-end gap-2 leading-loose">
              <span>ข้าพเจ้า</span>
-             <span className="border-b border-black border-dotted px-4 min-w-[200px] text-center">{doc.payer_name}</span>
+             <span className="border-b border-black border-dotted px-4 min-w-[200px] text-center font-bold">{doc.payer_name}</span>
              <span>(ผู้เบิกจ่าย)</span>
              
              <span className="ml-4">ตำแหน่ง</span>
@@ -208,7 +195,7 @@ export default function ReceiptPrint() {
 
           <p className="indent-8 leading-loose mt-2">
             ขอรับรองว่า รายจ่ายข้างต้นนี้ไม่อาจเรียกเก็บใบเสร็จรับเงินจากผู้รับได้ และข้าพเจ้าได้จ่ายไปในงานของทางบริษัท/ห้างหุ้นส่วน/ร้าน
-            <span className="mx-2">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนต์ (ไทยแลนด์) จำกัด</span> โดยแท้
+            <span className="font-bold mx-2">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนต์ (ไทยแลนด์) จำกัด</span> โดยแท้
           </p>
         </div>
 

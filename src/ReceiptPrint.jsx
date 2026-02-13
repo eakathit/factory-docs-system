@@ -69,16 +69,43 @@ export default function ReceiptPrint() {
         {`@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
           .font-sarabun { font-family: 'Sarabun', sans-serif; }
           
-          @page { size: A4; margin: 0; }
+          /* ตั้งค่าหน้ากระดาษเป็น A4 และลบขอบขาวอัตโนมัติของ Printer */
+          @page { 
+            size: A4 portrait; 
+            margin: 0; 
+          }
+          
           @media print { 
-            body { margin: 0; padding: 0; }
-            .no-print { display: none !important; }
-            .print-container {
-                width: 100% !important; 
-                height: 100vh;
-                padding: 20mm !important;
-                margin: 0 !important;
+            /* บังคับ Body ให้กว้างเท่า A4 เสมอ เพื่อแก้ปัญหา Mobile บีบจอ */
+            body, html {
+              width: 210mm;
+              height: 297mm;
+              margin: 0;
+              padding: 0;
             }
+
+            .no-print { display: none !important; }
+
+            /* จัดการ Container หลัก */
+            .print-container {
+                width: 210mm !important;      /* กว้างเท่า A4 */
+                min-height: 297mm !important; /* สูงเท่า A4 */
+                height: auto !important;
+                padding: 20mm !important;     /* ระยะขอบกระดาษ */
+                margin: 0 !important;
+                
+                /* เทคนิคแก้ Layout เพี้ยน */
+                position: relative;
+                box-shadow: none !important;
+                background-color: white !important;
+                
+                /* ป้องกันการตัดหน้ามั่วๆ */
+                page-break-after: avoid; 
+                page-break-inside: avoid;
+            }
+            
+            /* ซ่อน Header/Footer ของ Browser (เช่น URL, วันที่) ถ้าทำได้ */
+            @page { margin: 0; }
           }
         `}
       </style>

@@ -69,41 +69,55 @@ export default function ReceiptPrint() {
         {`@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
           .font-sarabun { font-family: 'Sarabun', sans-serif; }
 
-          @page { 
-            size: A4 portrait; 
-            margin: 0; 
+          @page {
+            size: A4 portrait;
+            margin: 0;
           }
-          
-          @media print { 
-            /* 1. สั่งซ่อนทุกอย่างใน Body ก่อน */
+
+          @media print {
+            /* 1. ล้างค่าพื้นฐานทั้งหมด */
+            html, body {
+              width: 100%;
+              height: 100%;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: hidden !important; /* ตัดส่วนเกินทิ้ง */
+            }
+
+            /* 2. ซ่อนทุกอย่างในหน้าเว็บ */
             body * {
               visibility: hidden;
             }
 
-            /* 2. ดึงเฉพาะส่วนที่จะพิมพ์กลับมาแสดง */
+            /* 3. ดึงเฉพาะใบเสร็จกลับมา */
             .print-container, .print-container * {
               visibility: visible;
             }
 
-            /* 3. จัดตำแหน่งแบบ Absolute/Fixed เพื่อหลุดจาก Flow เดิม */
+            /* 4. เทคนิคไม้ตาย: Fixed Position + Scale */
             .print-container {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 210mm !important;
-                
-                /* 🔴 ลดความสูงลงเหลือ 270mm (เผื่อที่ 2.7cm สำหรับ Header/Footer ของมือถือ) */
-                height: 270mm !important; 
-                
-                padding: 15mm 20mm !important; /* ปรับ Padding ให้เหมาะสม */
-                margin: 0 !important;
-                background-color: white !important;
-                
-                /* ตัดส่วนเกินทิ้งทันที */
-                overflow: hidden !important; 
+              position: fixed; /* หลุดจาก Flow เดิมโดยสมบูรณ์ (แก้หน้าว่างได้ดีที่สุด) */
+              left: 0;
+              top: 0;
+              width: 100% !important; /* ให้ยืดตามความกว้างกระดาษจริงของมือถือ */
+              height: 100% !important;
+              
+              /* ตั้งค่า Padding ให้ดูเหมือนกระดาษ A4 */
+              padding: 15mm !important;
+              box-sizing: border-box !important;
+              
+              background-color: white !important;
+              
+              /* ย่อลงเล็กน้อย (95%) เพื่อหลบขอบปริ้นเตอร์อัตโนมัติของมือถือ */
+              transform: scale(0.95); 
+              transform-origin: top center;
+              
+              /* บังคับไม่ให้ขึ้นหน้าใหม่ */
+              page-break-after: avoid !important;
+              page-break-before: avoid !important;
+              break-inside: avoid !important;
             }
             
-            /* ซ่อน UI อื่นๆ */
             .no-print { display: none !important; }
           }
         `}

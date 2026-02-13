@@ -23,6 +23,7 @@ import OrderPrint from './OrderPrint'
 import ReceiptForm from './ReceiptForm'
 import ReceiptPrint from './ReceiptPrint'
 import FactoryPortal from './FactoryPortal'
+import { Toaster } from 'react-hot-toast'
 
 // --- Component: Quick Stat Widget (ตัวเลขสรุป) ---
 const StatWidget = ({ icon: Icon, label, value, color }) => (
@@ -261,6 +262,16 @@ function App() {
   const [user, setUser] = useState({ displayName: '' })
 
   return (
+    <>
+    {/* 2. วางตัวแสดงผลไว้ตรงนี้ (บรรทัดบนสุดใน return) */}
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 2000,
+          style: { background: '#333', color: '#fff' },
+        }} 
+      />
+
     <Router>
       <div className="min-h-screen text-slate-800 selection:bg-blue-100 selection:text-blue-600">
         <Routes>
@@ -274,6 +285,7 @@ function App() {
         </Routes>
       </div>
     </Router>
+    </>
   )
 }
 

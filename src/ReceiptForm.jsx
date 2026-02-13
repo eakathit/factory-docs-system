@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import SignatureCanvas from 'react-signature-canvas'
+import toast from 'react-hot-toast'
 import { 
   ArrowLeft, Save, Plus, Trash2, FileText, 
   User, CreditCard, Calendar, Briefcase, 
@@ -20,7 +21,7 @@ const InputGroup = ({ label, icon: Icon, fullWidth, ...props }) => (
       />
     </div>
   )
-  
+
 export default function ReceiptForm() {
   const navigate = useNavigate()
   const sigPad = useRef({})
@@ -100,7 +101,16 @@ export default function ReceiptForm() {
 
       // ได้ ID มาแล้ว พาไปหน้าพิมพ์ทันที
       const newId = insertedData[0].id
-      alert('✅ บันทึกเรียบร้อย! กำลังไปหน้าพิมพ์เอกสาร...')
+
+      // toast.success('บันทึกข้อมูลเรียบร้อย! \nกำลังไปหน้าพิมพ์เอกสาร...', {
+      //   duration: 2000, // แสดง 2 วินาที
+      //   icon: '✅',
+      // })
+      
+      // หน่วงเวลา 1.5 วินาที ให้ผู้ใช้เห็นแจ้งเตือนก่อน แล้วค่อยเปลี่ยนหน้า
+      setTimeout(() => {
+        navigate(`/receipt-print/${newId}`) 
+      }, 1500)
       
       // เปลี่ยนเส้นทางไปหน้าพิมพ์ (ตาม Route ที่ตั้งไว้ใน App.jsx)
       navigate(`/receipt-print/${newId}`) 
@@ -109,7 +119,7 @@ export default function ReceiptForm() {
       console.error(error)
       alert('เกิดข้อผิดพลาด: ' + error.message)
     } finally {
-      setLoading(false)
+      // setLoading(false)
     }
   }
 

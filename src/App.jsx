@@ -24,6 +24,7 @@ import ReceiptForm from './ReceiptForm'
 import ReceiptPrint from './ReceiptPrint'
 import FactoryPortal from './FactoryPortal'
 import { Toaster } from 'react-hot-toast'
+import ReceiptVoucherForm from './ReceiptVoucherForm'
 
 // --- Component: Quick Stat Widget (ตัวเลขสรุป) ---
 const StatWidget = ({ icon: Icon, label, value, color }) => (
@@ -198,8 +199,7 @@ const Home = ({ user }) => {
 
               {/* 3. ใบสำคัญรับเงิน (Disabled) */}
               <MenuCard 
-                disabled={true} // <--- ปิดการใช้งาน
-                to="/payment-voucher"
+                to="/ReceiptVoucherForm"
                 title="ใบสำคัญรับเงิน"
                 subtitle="ใบสำคัญรับเงิน / Receipt Voucher"
                 icon={Banknote}
@@ -282,6 +282,8 @@ function App() {
           <Route path="/print/:orderId" element={<OrderPrint />} />
           <Route path="/receipt-form" element={<ReceiptForm />} />
           <Route path="/receipt-print/:id" element={<ReceiptPrint />} />
+          <Route path="/receipt-voucher" element={<ReceiptVoucherForm />} />
+          <Route path="/ReceiptVoucherForm" element={<ReceiptVoucherForm />} />
         </Routes>
       </div>
     </Router>

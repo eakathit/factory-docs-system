@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 import { Printer, ArrowLeft } from "lucide-react";
+import html2pdf from 'html2pdf.js';
 
 // Component ย่อยสำหรับ Checkbox
 const CheckBox = ({ checked, label }) => (
@@ -12,6 +13,23 @@ const CheckBox = ({ checked, label }) => (
     <span className="whitespace-nowrap pt-0.5">{label}</span>
   </div>
 );
+
+const handleDownloadPDF = () => {
+  // เลือก Element ที่ต้องการเอาไปทำ PDF (ในที่นี้คือส่วนที่มี class print-container)
+  const element = document.querySelector('.print-container');
+  
+  // ตั้งค่า PDF
+  const opt = {
+    margin:       0,
+    filename:     `Order_${order.id}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true }, // scale 2 เพื่อความคมชัด
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  // สั่งสร้างและดาวน์โหลด
+  html2pdf().set(opt).from(element).save();
+};
 
 export default function OrderPrint() {
   const { orderId } = useParams();
@@ -62,80 +80,42 @@ export default function OrderPrint() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center pt-24 pb-8 print:p-0 print:bg-white print:block overflow-x-auto">
-      <style>
-        {`@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
-          .font-sarabun { font-family: 'Sarabun', sans-serif; }
-          
-          @page { 
-            size: A4;
-            margin: 0mm; 
-          }
-          
-          @media print { 
-            html, body {
-              width: 210mm;
-              height: 297mm;
-              background: white;
-              margin: 0 !important;
-              padding: 0 !important;
-            }
-            
-            .no-print { display: none !important; }
-
-            .print-container {
-                width: 210mm !important;
-                height: 297mm !important;
-                padding: 15mm 20mm !important;
-                margin: 0 !important;
-                box-shadow: none !important;
-                border: none !important;
-                overflow: hidden !important;
-            }
-          }
-        `}
-      </style>
-
-      {/* --- ส่วน Menu Bar (Fixed Top) --- */}
-      // วางทับส่วน Menu Bar ใน OrderPrint.jsx
-<div className="fixed top-0 left-0 right-0 z-[999] bg-white shadow-md border-b border-gray-200 px-4 py-3 no-print">
-  <div className="max-w-7xl mx-auto flex justify-between items-center">
+  <div className="min-h-screen bg-gray-100 flex flex-col items-center pt-24 pb-8 print:p-0">
     
-    <Link to="/history" className="flex items-center gap-2 text-gray-600 hover:text-blue-600">
-      <ArrowLeft size={20} /> <span className="font-bold">กลับ</span>
-    </Link>
-    
-    <div className="flex items-center gap-3">
-      {/* ปุ่มแชร์ (สีส้ม) ต้องเห็นปุ่มนี้แน่นอน */}
-      <button 
-        onClick={async () => {
-          if (navigator.share) {
-            try {
-              await navigator.share({
-                title: 'เอกสารออนไลน์',
-                url: window.location.href,
-              });
-            } catch (err) { console.log(err); }
-          } else {
-            navigator.clipboard.writeText(window.location.href);
-            alert('คัดลอกลิงก์แล้ว! กรุณาวางใน Chrome/Safari');
-          }
-        }}
-        className="bg-orange-500 text-white px-4 py-2 rounded-full shadow-sm flex items-center gap-2 hover:bg-orange-600"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        <span className="font-bold text-sm">แชร์ / เปิดบราวเซอร์</span>
-      </button>
+    {/* --- ส่วนนี้ย้ายมาไว้นอก loading เพื่อให้เห็นปุ่ม "กลับ" และ "แชร์" ทันที --- */}
+    <div className="fixed top-0 left-0 right-0 z-[100] bg-white shadow-md border-b px-4 py-3 no-print">
+      <div className="max-w-7xl mx-auto flex justify-between items-center">
+        <Link to="/history" className="flex items-center gap-2 text-gray-600">
+          <ArrowLeft size={20} /> <span className="font-bold">กลับหน้าประวัติ</span>
+        </Link>
+        
+        <div className="flex gap-2">
+          {/* ปุ่มแชร์/เปิดบราวเซอร์ */}
+          <button 
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({ title: 'Print Doc', url: window.location.href });
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('คัดลอกลิงก์แล้ว! กรุณาเปิดใน Chrome');
+              }
+            }}
+            className="bg-orange-500 text-white px-4 py-2 rounded-full flex gap-2 items-center"
+          >
+            แชร์ / เปิดบราวเซอร์
+          </button>
 
-      <button 
-        onClick={() => window.print()} 
-        className="bg-blue-600 text-white px-5 py-2 rounded-full shadow-sm flex items-center gap-2 hover:bg-blue-700"
-      >
-        <Printer size={18} /> <span className="font-bold text-sm">พิมพ์</span>
-      </button>
+          {/* ปุ่มพิมพ์ (จะใช้งานได้เมื่อ order มาครบ) */}
+          <button 
+            onClick={() => window.print()} 
+            disabled={!order}
+            className={`px-4 py-2 rounded-full flex gap-2 items-center text-white ${!order ? 'bg-gray-400' : 'bg-blue-600'}`}
+          >
+            <Printer size={18} /> พิมพ์
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
       {/* --- ส่วนเนื้อหา (Content) --- */}
       {loading ? (

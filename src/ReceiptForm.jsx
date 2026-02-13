@@ -8,6 +8,19 @@ import {
   Hash, DollarSign, PenTool, Eraser
 } from 'lucide-react'
 
+const InputGroup = ({ label, icon: Icon, fullWidth, ...props }) => (
+    <div className={`space-y-1.5 ${fullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
+      <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+        {Icon && <Icon size={16} className="text-blue-500" />}
+        {label}
+      </label>
+      <input
+        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-slate-700"
+        {...props}
+      />
+    </div>
+  )
+  
 export default function ReceiptForm() {
   const navigate = useNavigate()
   const sigPad = useRef({})
@@ -99,20 +112,6 @@ export default function ReceiptForm() {
       setLoading(false)
     }
   }
-
-  // Helper Component สำหรับ Input สวยๆ
-  const InputGroup = ({ label, icon: Icon, fullWidth, ...props }) => (
-    <div className={`space-y-1.5 ${fullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
-      <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-        {Icon && <Icon size={16} className="text-blue-500" />}
-        {label}
-      </label>
-      <input
-        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-slate-700"
-        {...props}
-      />
-    </div>
-  )
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">

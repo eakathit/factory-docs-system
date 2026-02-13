@@ -68,37 +68,43 @@ export default function ReceiptPrint() {
       <style>
         {`@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
           .font-sarabun { font-family: 'Sarabun', sans-serif; }
-          
+
           @page { 
             size: A4 portrait; 
-            margin: 0; /* สั่ง Browser ไม่ให้มีขอบ */
+            margin: 0; 
           }
           
           @media print { 
-            /* 1. บังคับ Body ให้พอดีเป๊ะ และซ่อนส่วนเกิน */
-            body, html {
-              width: 210mm;
-              height: 297mm;
-              margin: 0;
-              padding: 0;
-              overflow: hidden; /* <--- คีย์สำคัญ! ตัดส่วนที่เกินทิ้งทันที */
+            /* 1. สั่งซ่อนทุกอย่างใน Body ก่อน */
+            body * {
+              visibility: hidden;
             }
 
-            .no-print { display: none !important; }
+            /* 2. ดึงเฉพาะส่วนที่จะพิมพ์กลับมาแสดง */
+            .print-container, .print-container * {
+              visibility: visible;
+            }
 
-            /* 2. ปรับ Container ให้สั้นกว่า A4 นิดเดียว (1mm) เพื่อกัน Error */
+            /* 3. จัดตำแหน่งแบบ Absolute/Fixed เพื่อหลุดจาก Flow เดิม */
             .print-container {
+                position: absolute;
+                left: 0;
+                top: 0;
                 width: 210mm !important;
-                height: 296mm !important; /* ลดจาก 297 เหลือ 296 เพื่อความปลอดภัย */
-                padding: 20mm !important;
+                
+                /* 🔴 ลดความสูงลงเหลือ 270mm (เผื่อที่ 2.7cm สำหรับ Header/Footer ของมือถือ) */
+                height: 270mm !important; 
+                
+                padding: 15mm 20mm !important; /* ปรับ Padding ให้เหมาะสม */
                 margin: 0 !important;
                 background-color: white !important;
-                position: relative;
                 
-                /* สั่งไม่ให้มีการตัดหน้า */
-                page-break-after: avoid;
-                page-break-before: avoid;
+                /* ตัดส่วนเกินทิ้งทันที */
+                overflow: hidden !important; 
             }
+            
+            /* ซ่อน UI อื่นๆ */
+            .no-print { display: none !important; }
           }
         `}
       </style>
@@ -161,13 +167,13 @@ export default function ReceiptPrint() {
              <tr className="h-10">
                 <td colSpan="2" className="align-middle px-2 py-2">
                    <div className="flex items-center w-full justify-end gap-2 pr-2">
-                      <span className="font-bold">รวมทั้งสิ้น (ตัวอักษร)</span>
+                      <span>รวมทั้งสิ้น (ตัวอักษร)</span>
                       <span className="border-b-2 border-dotted border-black min-w-[60%] text-center">
                         ( {doc.total_text || '-'} )
                       </span>
                    </div>
                 </td>
-                <td className="border border-black text-right px-2 font-bold align-middle bg-gray-50 text-lg">
+                <td className="border border-black text-right px-2 align-middle bg-gray-50 text-lg">
                    {doc.total_amount?.toLocaleString()}
                 </td>
                 <td className=""></td>
@@ -179,7 +185,7 @@ export default function ReceiptPrint() {
         <div className="mt-8 space-y-4 px-4">
           <div className="flex flex-wrap items-end gap-2 leading-loose">
              <span>ข้าพเจ้า</span>
-             <span className="border-b border-black border-dotted px-4 min-w-[200px] text-center font-bold">{doc.payer_name}</span>
+             <span className="border-b border-black border-dotted px-4 min-w-[200px] text-center">{doc.payer_name}</span>
              <span>(ผู้เบิกจ่าย)</span>
              
              <span className="ml-4">ตำแหน่ง</span>
@@ -188,7 +194,7 @@ export default function ReceiptPrint() {
 
           <p className="indent-8 leading-loose mt-2">
             ขอรับรองว่า รายจ่ายข้างต้นนี้ไม่อาจเรียกเก็บใบเสร็จรับเงินจากผู้รับได้ และข้าพเจ้าได้จ่ายไปในงานของทางบริษัท/ห้างหุ้นส่วน/ร้าน
-            <span className="font-bold mx-2">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนต์ (ไทยแลนด์) จำกัด</span> โดยแท้
+            <span className="mx-2">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนต์ (ไทยแลนด์) จำกัด</span> โดยแท้
           </p>
         </div>
 

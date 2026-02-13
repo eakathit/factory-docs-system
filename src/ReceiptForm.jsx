@@ -47,11 +47,12 @@ export default function ReceiptForm() {
       const formData = new FormData(e.target)
       const data = Object.fromEntries(formData.entries())
 
-      // 1. อัปโหลดลายเซ็น
+      // 1. อัปโหลดลายเซ็น (ส่วนนี้เหมือนเดิม)
       let signatureUrl = null
       if (sigPad.current && !sigPad.current.isEmpty()) {
-        // ใช้ getTrimmedCanvas เพื่อให้ได้ภาพเฉพาะส่วนที่เซ็น (ตัดขอบว่างออก)
-        const canvas = sigPad.current.getCanvas()
+        const canvas = sigPad.current.getCanvas() // ใช้ getCanvas() ปกติ หรือ getTrimmedCanvas() ตาม library
+        
+        // แปลงเป็น Blob
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
         const fileName = `receipt-sig-${Date.now()}.png`
         
@@ -64,25 +65,32 @@ export default function ReceiptForm() {
         signatureUrl = urlData.publicUrl
       }
 
-      // 2. บันทึกข้อมูล (ตาม Structure เดิมของคุณ)
-      const { error: insertError } = await supabase.from('doc_substitute_receipts').insert([
-        {
-          doc_no: data.doc_no,
-          payer_name: data.payer_name,
-          position: data.position,
-          items: items,
-          total_amount: totalAmount,
-          total_text: data.total_text,
-          payment_method: data.payment_method,
-          transfer_date: data.payment_method === 'transfer' ? data.transfer_date : null,
-          payer_signature: signatureUrl
-        }
-      ])
+      // 2. บันทึกข้อมูล (แก้ไขตรงนี้)
+      const { data: insertedData, error: insertError } = await supabase
+        .from('doc_substitute_receipts')
+        .insert([
+          {
+            doc_no: data.doc_no,
+            payer_name: data.payer_name,
+            position: data.position,
+            items: items,
+            total_amount: totalAmount,
+            total_text: data.total_text,
+            payment_method: data.payment_method,
+            transfer_date: data.payment_method === 'transfer' ? data.transfer_date : null,
+            payer_signature: signatureUrl
+          }
+        ])
+        .select() // [สำคัญ] ต้องใส่ .select() เพื่อเอา ID กลับมา
 
       if (insertError) throw insertError
 
-      alert('✅ บันทึกใบรับรองฯ เรียบร้อย!')
-      navigate('/') 
+      // ได้ ID มาแล้ว พาไปหน้าพิมพ์ทันที
+      const newId = insertedData[0].id
+      alert('✅ บันทึกเรียบร้อย! กำลังไปหน้าพิมพ์เอกสาร...')
+      
+      // เปลี่ยนเส้นทางไปหน้าพิมพ์ (ตาม Route ที่ตั้งไว้ใน App.jsx)
+      navigate(`/receipt-print/${newId}`) 
 
     } catch (error) {
       console.error(error)

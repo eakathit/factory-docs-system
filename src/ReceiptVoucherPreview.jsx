@@ -31,7 +31,7 @@ export default function ReceiptVoucherPreview({ data }) {
          {/* Row 1 */}
          <div className="flex flex-wrap items-end gap-2">
             <span>ข้าพเจ้า</span>
-            <div className="border-b border-dotted border-black flex-1 text-center font-bold text-blue-800 relative h-6 min-w-[200px]">
+            <div className="border-b border-dotted border-black flex-1 text-center text-black relative h-6 min-w-[200px]">
                <span className="absolute bottom-0 left-0 w-full">{data.receiver_name}</span>
             </div>
             <span>ผู้มีถิ่นฐานอยู่ตามบัตรประชาชนเลขที่</span>
@@ -116,7 +116,7 @@ export default function ReceiptVoucherPreview({ data }) {
          </tbody>
          <tfoot>
             <tr className="h-10">
-               <td colSpan="2" className="border border-black px-2 font-bold text-right">รวมเป็นเงิน / Total</td>
+               <td colSpan="2" className="border border-black px-2 text-center">รวมเป็นเงิน / Total</td>
                <td colSpan="4" className="border border-black px-2 text-right text-lg">
                   {parseFloat(data.total_amount || 0).toLocaleString()}
                </td>

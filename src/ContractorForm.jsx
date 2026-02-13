@@ -26,10 +26,56 @@ export default function ContractorForm() {
     name: "daily_items"
   });
 
-  const onSubmit = (data) => {
-    console.log('บันทึกข้อมูล:', data)
-    alert('ระบบกำลังบันทึก (รอเชื่อม Supabase)...')
-    // ตรงนี้เดี๋ยวเราใส่ Code บันทึกลง Supabase ทีหลังได้ครับ
+  const [loading, setLoading] = useState(false) 
+
+  const onSubmit = async (data) => {
+    setLoading(true)
+    try {
+      // เตรียมข้อมูลสำหรับส่งเข้า Supabase
+      // แปลงค่า true/false ของ checkbox หรือ number ให้ตรงกับ DB
+      const payload = {
+        created_at: data.created_at,
+        doc_no: data.doc_no,
+        contractor_name: data.contractor_name,
+        id_card: data.id_card,
+        supervisor_name: data.supervisor_name,
+        
+        wage_type: data.wage_type,
+        wage_rate: parseFloat(data.wage_rate || 0),
+        has_ot: data.has_ot, // 'yes' or 'no'
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
+        
+        // ส่ง Array ไปเป็น JSONB ได้เลย
+        daily_items: data.daily_items, 
+        
+        // แปลงค่าใช้จ่ายเป็นตัวเลข
+        accom_cost: parseFloat(data.accom_cost || 0),
+        travel_cost: parseFloat(data.travel_cost || 0),
+        deduct_tax: data.deduct_tax || false, // boolean
+        
+        // คำนวณยอดรวมคร่าวๆ (Grand Total) เพื่อเก็บลง DB
+        // (หรือจะปล่อยเป็น 0 แล้วไปคำนวณตอน query ก็ได้ แต่นิยมเก็บค่าสุดท้ายไว้)
+        // grand_total: ... (คำนวณถ้าต้องการ)
+      }
+
+      const { data: inserted, error } = await supabase
+        .from('doc_contractor_orders')
+        .insert([payload])
+        .select()
+
+      if (error) throw error
+
+      // บันทึกสำเร็จ -> ไปหน้า Print (เดี๋ยวเราค่อยทำหน้า Print ต่อ)
+      alert('✅ บันทึกใบสั่งจ้างเรียบร้อย!')
+      // navigate(`/contractor-print/${inserted[0].id}`) // เปิดบรรทัดนี้เมื่อสร้างหน้า Print เสร็จ
+
+    } catch (error) {
+      console.error('Error:', error)
+      alert('เกิดข้อผิดพลาด: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -164,9 +210,13 @@ export default function ContractorForm() {
               </div>
 
               {/* ปุ่มบันทึก (ด้านล่างสุด) */}
-              <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 flex justify-center items-center gap-2">
-                 <Save /> บันทึกใบสั่งจ้าง
-              </button>
+              <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 flex justify-center items-center gap-2 disabled:opacity-50"
+            >
+              {loading ? 'กำลังบันทึก...' : <><Save /> บันทึกใบสั่งจ้าง</>}
+            </button>
 
            </form>
         </div>

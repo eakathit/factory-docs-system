@@ -201,7 +201,7 @@ export default function ReceiptPrint() {
                  <span>ลงชื่อ</span>
                  <span>( {doc.payer_name} )</span>
               </div>
-              <div className="text-sm text-gray-600">(ผู้เบิกจ่าย)</div>
+              <div className="text-sm text-black">(ผู้เบิกจ่าย)</div>
            </div>
 
            <div className="flex flex-col items-center w-64">
@@ -213,7 +213,7 @@ export default function ReceiptPrint() {
                  <span>ลงชื่อ</span>
                  <span>(...................................................)</span>
               </div>
-              <div className="text-sm text-gray-600">(ผู้อนุมัติ)</div>
+              <div className="text-sm text-black">(ผู้อนุมัติ)</div>
            </div>
         </div>
 

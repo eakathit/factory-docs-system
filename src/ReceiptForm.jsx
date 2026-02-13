@@ -91,7 +91,7 @@ export default function ReceiptForm() {
             total_amount: totalAmount,
             total_text: data.total_text,
             payment_method: data.payment_method,
-            transfer_date: data.payment_method === 'transfer' ? data.transfer_date : null,
+            payment_date: data.payment_date || null,
             payer_signature: signatureUrl
           }
         ])
@@ -329,7 +329,7 @@ export default function ReceiptForm() {
                   </label>
                   <input 
                     type="date" 
-                    name="transfer_date" 
+                    name="payment_date" 
                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-blue-500" 
                   />
                 </div>

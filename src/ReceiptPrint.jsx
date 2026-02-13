@@ -64,51 +64,42 @@ export default function ReceiptPrint() {
   const paymentDate = doc.transfer_date || (doc.items && doc.items.length > 0 ? doc.items[0].date : null);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 print:p-0 print:bg-white font-sans text-black">
+    <div className="min-h-screen bg-gray-100 p-4 print:p-0 print:bg-white print:min-h-0 print:overflow-hidden font-sans text-black">
       <style>
-        {`@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
-          .font-sarabun { font-family: 'Sarabun', sans-serif; }
-          
-          /* ตั้งค่าหน้ากระดาษเป็น A4 และลบขอบขาวอัตโนมัติของ Printer */
-          @page { 
-            size: A4 portrait; 
-            margin: 0; 
-          }
-          
-          @media print { 
-            /* บังคับ Body ให้กว้างเท่า A4 เสมอ เพื่อแก้ปัญหา Mobile บีบจอ */
-            body, html {
-              width: 210mm;
-              height: 297mm;
-              margin: 0;
-              padding: 0;
-            }
+{`
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+  .font-sarabun { font-family: 'Sarabun', sans-serif; }
+  
+  @page { 
+    size: A4 portrait; 
+    margin: 0; 
+  }
+  
+  @media print { 
+    /* ล้างค่าทุกอย่างของ Body */
+    body, html {
+      width: 210mm;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* ตัดส่วนเกินทิ้งทันที ป้องกันหน้า 2 */
+    }
 
-            .no-print { display: none !important; }
+    .no-print { display: none !important; }
 
-            /* จัดการ Container หลัก */
-            .print-container {
-                width: 210mm !important;      /* กว้างเท่า A4 */
-                min-height: 297mm !important; /* สูงเท่า A4 */
-                height: auto !important;
-                padding: 20mm !important;     /* ระยะขอบกระดาษ */
-                margin: 0 !important;
-                
-                /* เทคนิคแก้ Layout เพี้ยน */
-                position: relative;
-                box-shadow: none !important;
-                background-color: white !important;
-                
-                /* ป้องกันการตัดหน้ามั่วๆ */
-                page-break-after: avoid; 
-                page-break-inside: avoid;
-            }
-            
-            /* ซ่อน Header/Footer ของ Browser (เช่น URL, วันที่) ถ้าทำได้ */
-            @page { margin: 0; }
-          }
-        `}
-      </style>
+    /* ปรับ Container ให้สั้นกว่า A4 นิดนึง (296mm) เพื่อกัน Browser ปัดเศษเกิน */
+    .print-container {
+        width: 210mm !important;
+        height: 296mm !important; /* Fix ความสูงไว้ที่ 296mm */
+        padding: 20mm !important;
+        margin: 0 !important;
+        background-color: white !important;
+        position: relative;
+        page-break-after: avoid; 
+    }
+  }
+`}
+</style>
 
       {/* ปุ่มควบคุม */}
       <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center no-print">

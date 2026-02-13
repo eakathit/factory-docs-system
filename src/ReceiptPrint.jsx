@@ -159,13 +159,13 @@ export default function ReceiptPrint() {
              <tr className="h-10">
                 <td colSpan="2" className="align-middle px-2 py-2">
                    <div className="flex items-center w-full justify-end gap-2 pr-2">
-                      <span className="font-bold">รวมทั้งสิ้น (ตัวอักษร)</span>
+                      <span >รวมทั้งสิ้น (ตัวอักษร)</span>
                       <span className="border-b-2 border-dotted border-black min-w-[60%] text-center">
                         ( {doc.total_text || '-'} )
                       </span>
                    </div>
                 </td>
-                <td className="border border-black text-right px-2 font-bold align-middle bg-gray-50 text-lg">
+                <td className="border border-black text-right px-2 align-middle bg-gray-50 text-lg">
                    {doc.total_amount?.toLocaleString()}
                 </td>
                 <td className=""></td>
@@ -177,7 +177,7 @@ export default function ReceiptPrint() {
         <div className="mt-8 space-y-4 px-4">
           <div className="flex flex-wrap items-end gap-2 leading-loose">
              <span>ข้าพเจ้า</span>
-             <span className="border-b border-black border-dotted px-4 min-w-[200px] text-center font-bold">{doc.payer_name}</span>
+             <span className="border-b border-black border-dotted px-4 min-w-[200px] text-center">{doc.payer_name}</span>
              <span>(ผู้เบิกจ่าย)</span>
              
              <span className="ml-4">ตำแหน่ง</span>
@@ -186,7 +186,7 @@ export default function ReceiptPrint() {
 
           <p className="indent-8 leading-loose mt-2">
             ขอรับรองว่า รายจ่ายข้างต้นนี้ไม่อาจเรียกเก็บใบเสร็จรับเงินจากผู้รับได้ และข้าพเจ้าได้จ่ายไปในงานของทางบริษัท/ห้างหุ้นส่วน/ร้าน
-            <span className="font-bold mx-2">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนต์ (ไทยแลนด์) จำกัด</span> โดยแท้
+            <span className="mx-2">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนต์ (ไทยแลนด์) จำกัด</span> โดยแท้
           </p>
         </div>
 

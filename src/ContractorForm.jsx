@@ -1,175 +1,196 @@
-import { useState, useRef } from 'react'
-import { supabase } from './supabaseClient'
-import SignatureCanvas from 'react-signature-canvas'
-import { ArrowLeft, Save, Trash2 } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useForm, useFieldArray } from 'react-hook-form'
+import { Link } from 'react-router-dom'
+import { ArrowLeft, Plus, Trash2, Eye, Save } from 'lucide-react'
+import ContractorPreview from './ContractorPreview' // เรียกใช้ตัวอย่างที่สร้างเมื่อกี้
 
-// ⚠️ สำคัญมาก: ต้องมีคำว่า export default นำหน้า function
 export default function ContractorForm() {
-  const navigate = useNavigate()
-  const sigPad = useRef({}) // ตัวเก็บลายเซ็น
-  const [loading, setLoading] = useState(false)
+  const [showPreview, setShowPreview] = useState(false) // สำหรับมือถือ
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-
-    try {
-      // 1. ดึงข้อมูลจากฟอร์ม
-      const formData = new FormData(e.target)
-      const data = Object.fromEntries(formData.entries())
-
-      // 2. จัดการลายเซ็น (ถ้ามีการเซ็น)
-      let signatureUrl = null
-      
-      // เช็คว่ามี ref และไม่ได้ว่างเปล่า
-      if (sigPad.current && !sigPad.current.isEmpty()) {
-        // *** แก้ไขตรงนี้: ต้องดึง getCanvas() ออกมาก่อน ***
-        const canvas = sigPad.current.getCanvas()
-        
-        // แปลงลายเซ็นเป็นไฟล์รูปภาพ (Blob)
-        const blob = await new Promise(resolve => {
-          canvas.toBlob(resolve, 'image/png')
-        })
-
-        const fileName = `sig-${Date.now()}.png`
-        
-        // อัปโหลดขึ้น Supabase Storage (Bucket: signatures)
-        const { error: uploadError } = await supabase.storage
-          .from('signatures')
-          .upload(fileName, blob, {
-            contentType: 'image/png',
-            upsert: false
-          })
-
-        if (uploadError) throw uploadError
-
-        // ขอ URL รูปภาพมาเก็บใน Database
-        const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(fileName)
-        signatureUrl = urlData.publicUrl
-      }
-
-      // 3. บันทึกข้อมูลลง Database
-      const { error: insertError } = await supabase.from('doc_contractor_orders').insert([
-        {
-          contractor_name: data.contractor_name,
-          id_card_number: data.id_card_number,
-          payment_type: data.payment_type,
-          wage_rate: parseFloat(data.wage_rate || 0),
-          start_date: data.start_date || null,
-          end_date: data.end_date || null,
-          supervisor_name: data.supervisor_name,
-          contractor_signature: signatureUrl,
-        }
-      ])
-
-      if (insertError) throw insertError
-
-      alert('✅ บันทึกใบสั่งจ้างเรียบร้อย!')
-      navigate('/') // กลับหน้าหลัก
-
-    } catch (error) {
-      console.error('Error:', error)
-      alert('เกิดข้อผิดพลาด: ' + error.message)
-    } finally {
-      setLoading(false)
+  // Setup Form
+  const { register, control, watch, handleSubmit } = useForm({
+    defaultValues: {
+      created_at: new Date().toISOString().split('T')[0],
+      wage_type: 'daily',
+      has_ot: 'no',
+      daily_items: [{ date: '', start_time: '08:00', end_time: '17:00' }]
     }
+  })
+
+  // ตัวแปรนี้จะเปลี่ยนค่าทันทีที่ User พิมพ์ (Realtime)
+  const formData = watch()
+  
+  // จัดการตาราง (เพิ่ม/ลบแถว)
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "daily_items"
+  });
+
+  const onSubmit = (data) => {
+    console.log('บันทึกข้อมูล:', data)
+    alert('ระบบกำลังบันทึก (รอเชื่อม Supabase)...')
+    // ตรงนี้เดี๋ยวเราใส่ Code บันทึกลง Supabase ทีหลังได้ครับ
   }
 
   return (
-    <div className="max-w-md mx-auto p-4 bg-gray-50 min-h-screen">
-      <div className="mb-4">
-        <Link to="/" className="text-gray-500 flex items-center gap-1 text-sm hover:text-blue-600">
-          <ArrowLeft size={16} /> กลับหน้าหลัก
-        </Link>
-      </div>
-
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h1 className="text-xl font-bold text-gray-800 mb-6 border-b pb-2">
-          📝 ใบสั่งจ้างผู้รับเหมา
-        </h1>
+    <div className="flex h-screen bg-gray-100 overflow-hidden font-sans">
+      
+      {/* ---------------- ฝั่งซ้าย: ฟอร์มกรอกข้อมูล ---------------- */}
+      <div className="w-full lg:w-1/2 flex flex-col h-full border-r border-gray-300 bg-slate-50">
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* ชื่อผู้รับเหมา */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้รับเหมา</label>
-            <input required name="contractor_name" type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="นาย ก." />
-          </div>
-
-          {/* เลขบัตรประชาชน */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">เลขบัตรประชาชน</label>
-            <input name="id_card_number" type="text" className="w-full p-2 border rounded-lg" placeholder="1-xxxx-xxxxx-xx-x" />
-          </div>
-
-          {/* ประเภทค่าจ้าง (Radio) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ประเภทการจ้าง</label>
-            <div className="flex gap-4 mt-1">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="payment_type" value="daily" defaultChecked /> รายวัน
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="payment_type" value="project" /> เหมาโปรเจกต์
-              </label>
-            </div>
-          </div>
-
-          {/* ค่าจ้าง */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ค่าจ้าง (บาท)</label>
-            <input required name="wage_rate" type="number" className="w-full p-2 border rounded-lg" placeholder="เช่น 500" />
-          </div>
-
-          {/* วันที่เริ่ม-จบ */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">วันที่เริ่ม</label>
-              <input name="start_date" type="date" className="w-full p-2 border rounded-lg text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">วันสิ้นสุด</label>
-              <input name="end_date" type="date" className="w-full p-2 border rounded-lg text-sm" />
-            </div>
-          </div>
-
-          {/* ผู้ควบคุมงาน */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ผู้รับผิดชอบ (หัวหน้างาน)</label>
-            <input name="supervisor_name" type="text" className="w-full p-2 border rounded-lg" placeholder="ชื่อหัวหน้างาน" />
-          </div>
-
-          {/* ลายเซ็น */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ลายเซ็นผู้รับเหมา</label>
-            <div className="border rounded-lg overflow-hidden bg-gray-50 relative">
-              <SignatureCanvas 
-                ref={sigPad}
-                penColor="black"
-                canvasProps={{width: 320, height: 150, className: 'sigCanvas mx-auto'}} 
-              />
-              <button 
-                type="button" 
-                onClick={() => sigPad.current.clear()}
-                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 bg-white rounded-full p-1 shadow-sm"
-              >
-                <Trash2 size={16} />
+        {/* Header */}
+        <div className="p-4 bg-white border-b shadow-sm flex items-center gap-3">
+           <Link to="/" className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20}/></Link>
+           <h1 className="font-bold text-gray-800">ใบสั่งจ้างผู้รับเหมา</h1>
+           <div className="ml-auto lg:hidden">
+              <button onClick={() => setShowPreview(true)} className="flex items-center gap-1 text-sm bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full font-bold">
+                 <Eye size={16}/> ดูตัวอย่าง
               </button>
-            </div>
-            <p className="text-xs text-gray-400 mt-1 text-center">เซ็นชื่อในกรอบสี่เหลี่ยม</p>
-          </div>
+           </div>
+        </div>
 
-          {/* ปุ่ม Submit */}
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 mt-4"
-          >
-            {loading ? 'กำลังบันทึก...' : <><Save size={20} /> บันทึกเอกสาร</>}
-          </button>
-        </form>
+        {/* Form Content (Scrollable) */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24">
+           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
+              
+              {/* Card 1: ข้อมูลหลัก */}
+              <div className="bg-white p-5 rounded-xl shadow-sm border space-y-4">
+                 <h3 className="font-bold text-gray-700 border-b pb-2">1. ข้อมูลผู้รับเหมา</h3>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                       <label className="text-sm text-gray-500">วันที่เอกสาร</label>
+                       <input type="date" {...register('created_at')} className="w-full border p-2 rounded-lg" />
+                    </div>
+                    <div>
+                       <label className="text-sm text-gray-500">เลขที่โปรเจ็ค</label>
+                       <input {...register('doc_no')} placeholder="เช่น PJ-24001" className="w-full border p-2 rounded-lg" />
+                    </div>
+                    <div className="col-span-2">
+                       <label className="text-sm text-gray-500">ชื่อผู้รับเหมา</label>
+                       <input {...register('contractor_name')} className="w-full border p-2 rounded-lg" placeholder="นาย ก." />
+                    </div>
+                    <div>
+                       <label className="text-sm text-gray-500">เลขบัตร ปชช.</label>
+                       <input {...register('id_card')} className="w-full border p-2 rounded-lg" />
+                    </div>
+                    <div>
+                       <label className="text-sm text-gray-500">ผู้ดูแล</label>
+                       <input {...register('supervisor_name')} className="w-full border p-2 rounded-lg" />
+                    </div>
+                 </div>
+              </div>
+
+              {/* Card 2: ค่าจ้าง */}
+              <div className="bg-white p-5 rounded-xl shadow-sm border space-y-4">
+                 <h3 className="font-bold text-gray-700 border-b pb-2">2. ข้อตกลงค่าจ้าง</h3>
+                 <div className="flex gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                       <input type="radio" value="daily" {...register('wage_type')} className="w-5 h-5 accent-blue-600"/> รายวัน
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                       <input type="radio" value="project" {...register('wage_type')} className="w-5 h-5 accent-blue-600"/> เหมา
+                    </label>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                       <label className="text-sm text-gray-500">จำนวนเงิน (บาท)</label>
+                       <input type="number" {...register('wage_rate')} className="w-full border p-2 rounded-lg font-bold text-blue-600" placeholder="0.00" />
+                    </div>
+                    <div>
+                       <label className="text-sm text-gray-500">OT (ล่วงเวลา)</label>
+                       <select {...register('has_ot')} className="w-full border p-2 rounded-lg">
+                          <option value="no">ไม่มี</option>
+                          <option value="yes">มี</option>
+                       </select>
+                    </div>
+                    <div>
+                       <label className="text-sm text-gray-500">เริ่มวันที่</label>
+                       <input type="date" {...register('start_date')} className="w-full border p-2 rounded-lg" />
+                    </div>
+                    <div>
+                       <label className="text-sm text-gray-500">ถึงวันที่</label>
+                       <input type="date" {...register('end_date')} className="w-full border p-2 rounded-lg" />
+                    </div>
+                 </div>
+              </div>
+
+              {/* Card 3: ตารางงาน */}
+              <div className="bg-white p-5 rounded-xl shadow-sm border">
+                 <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-gray-700">3. ตารางลงเวลา</h3>
+                    <button type="button" onClick={() => append({ date: '', start_time: '08:00' })} className="text-sm text-blue-600 flex items-center gap-1 font-bold hover:bg-blue-50 px-2 py-1 rounded">
+                       <Plus size={16}/> เพิ่มวัน
+                    </button>
+                 </div>
+                 
+                 <div className="space-y-3">
+                    {fields.map((field, index) => (
+                       <div key={field.id} className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-lg border">
+                          <div className="col-span-4">
+                             <input type="date" {...register(`daily_items.${index}.date`)} className="w-full text-xs border p-1 rounded" />
+                          </div>
+                          <div className="col-span-3">
+                             <input type="time" {...register(`daily_items.${index}.start_time`)} className="w-full text-xs border p-1 rounded" />
+                          </div>
+                          <div className="col-span-4">
+                             <input type="text" placeholder="งานที่ทำ..." {...register(`daily_items.${index}.detail`)} className="w-full text-xs border p-1 rounded" />
+                          </div>
+                          <div className="col-span-1 text-center">
+                             <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Card 4: ค่าใช้จ่ายอื่น */}
+              <div className="bg-white p-5 rounded-xl shadow-sm border space-y-4">
+                 <h3 className="font-bold text-gray-700 border-b pb-2">4. เพิ่มเติม</h3>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-sm text-gray-500">ค่าที่พัก (บาท)</label>
+                        <input type="number" {...register('accom_cost')} className="w-full border p-2 rounded-lg" />
+                    </div>
+                    <div>
+                        <label className="text-sm text-gray-500">ค่าเดินทาง (บาท)</label>
+                        <input type="number" {...register('travel_cost')} className="w-full border p-2 rounded-lg" />
+                    </div>
+                    <div className="col-span-2 flex items-center gap-2">
+                        <input type="checkbox" {...register('deduct_tax')} className="w-5 h-5 rounded" />
+                        <span>หักภาษี ณ ที่จ่าย 3%</span>
+                    </div>
+                 </div>
+              </div>
+
+              {/* ปุ่มบันทึก (ด้านล่างสุด) */}
+              <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 flex justify-center items-center gap-2">
+                 <Save /> บันทึกใบสั่งจ้าง
+              </button>
+
+           </form>
+        </div>
       </div>
+
+      {/* ---------------- ฝั่งขวา: Preview Realtime ---------------- */}
+      <div className={`
+        fixed inset-0 z-50 bg-black/80 flex justify-center items-start pt-10 overflow-y-auto
+        lg:static lg:bg-gray-200 lg:w-1/2 lg:flex lg:items-center lg:justify-center lg:h-full lg:z-0 lg:pt-0
+        ${showPreview ? 'block' : 'hidden'}
+      `}>
+         
+         {/* ปุ่มปิด Preview (มือถือ) */}
+         <button onClick={() => setShowPreview(false)} className="lg:hidden absolute top-4 right-4 bg-white/20 text-white p-2 rounded-full backdrop-blur-md">
+            ✕ ปิด
+         </button>
+
+         {/* ตัวกระดาษ A4 (ย่อส่วนให้พอดีจอ) */}
+         <div className="transform scale-[0.6] sm:scale-[0.7] lg:scale-[0.65] xl:scale-[0.8] origin-top lg:origin-center shadow-2xl">
+             {/* ส่งข้อมูล formData ที่ watch มาไปแสดงผลทันที */}
+             <ContractorPreview data={formData} />
+         </div>
+      </div>
+
     </div>
   )
 }

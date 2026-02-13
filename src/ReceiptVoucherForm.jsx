@@ -52,7 +52,7 @@ export default function ReceiptVoucherForm() {
       // 1. Upload Signature (ถ้ามีเซ็น)
       let signatureUrl = null
       if (sigPad.current && !sigPad.current.isEmpty()) {
-        const canvas = sigPad.current.getTrimmedCanvas()
+        const canvas = sigPad.current.getCanvas()
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
         const fileName = `voucher-sig-${Date.now()}.png`
         const { error: uploadError } = await supabase.storage.from('signatures').upload(fileName, blob)
@@ -237,10 +237,4 @@ export default function ReceiptVoucherForm() {
 
     </div>
   )
-}ใบรับรองฯ
-
-20
-รออนุมัติ
-
-3
-ปฏิทินงาน
+}

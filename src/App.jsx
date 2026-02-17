@@ -26,7 +26,8 @@ import FactoryPortal from './FactoryPortal'
 import { Toaster } from 'react-hot-toast'
 import ReceiptVoucherForm from './ReceiptVoucherForm'
 import ReceiptVoucherPrint from './ReceiptVoucherPrint'
-
+import CompletionReportForm from './CompletionReportForm'
+import CompletionReportPrint from './CompletionReportPrint'
 // --- Component: Quick Stat Widget (ตัวเลขสรุป) ---
 const StatWidget = ({ icon: Icon, label, value, color }) => (
   <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 min-w-[200px] flex-1 fade-in-up hover:shadow-md transition-shadow">
@@ -221,7 +222,6 @@ const Home = ({ user }) => {
 
               {/* 5. Completion Report (Disabled) */}
               <MenuCard 
-                disabled={true} // <--- ปิดการใช้งาน
                 to="/completion-report"
                 title="Completion Report"
                 subtitle="รายงานเสร็จสิ้นโครงการ / Completion Report"
@@ -286,6 +286,8 @@ function App() {
           <Route path="/receipt-voucher" element={<ReceiptVoucherForm />} />
           <Route path="/ReceiptVoucherForm" element={<ReceiptVoucherForm />} />
           <Route path="/receipt-voucher-print/:id" element={<ReceiptVoucherPrint />} />
+          <Route path="/completion-report" element={<CompletionReportForm />} />
+          <Route path="/completion-report-print" element={<CompletionReportPrint />} />
         </Routes>
       </div>
     </Router>

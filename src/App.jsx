@@ -25,6 +25,7 @@ import ReceiptPrint from './ReceiptPrint'
 import FactoryPortal from './FactoryPortal'
 import { Toaster } from 'react-hot-toast'
 import ReceiptVoucherForm from './ReceiptVoucherForm'
+import ReceiptVoucherPrint from './ReceiptVoucherPrint'
 
 // --- Component: Quick Stat Widget (ตัวเลขสรุป) ---
 const StatWidget = ({ icon: Icon, label, value, color }) => (
@@ -284,6 +285,7 @@ function App() {
           <Route path="/receipt-print/:id" element={<ReceiptPrint />} />
           <Route path="/receipt-voucher" element={<ReceiptVoucherForm />} />
           <Route path="/ReceiptVoucherForm" element={<ReceiptVoucherForm />} />
+          <Route path="/receipt-voucher-print/:id" element={<ReceiptVoucherPrint />} />
         </Routes>
       </div>
     </Router>

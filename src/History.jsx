@@ -5,13 +5,12 @@ import {
   FileText,
   Search,
   Filter,
-  Calendar,
   User,
-  ArrowUpRight,
   Printer,
   Receipt,
   FileCheck,
-  ChevronLeft, // <--- เพิ่มไอคอนลูกศรย้อนกลับ
+  ChevronLeft,
+  Banknote, // <--- เพิ่มไอคอนสำหรับใบสำคัญรับเงิน
 } from "lucide-react";
 
 // ฟังก์ชันเลือกสีป้ายสถานะ
@@ -57,16 +56,25 @@ const History = () => {
         .select("*")
         .order("created_at", { ascending: false });
 
-      const [resOrders, resReceipts] = await Promise.all([
+      // 3. (ใหม่) ดึงข้อมูลใบสำคัญรับเงิน
+      const reqVouchers = supabase
+        .from("doc_receipt_vouchers")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      const [resOrders, resReceipts, resVouchers] = await Promise.all([
         reqOrders,
         reqReceipts,
+        reqVouchers,
       ]);
 
       if (resOrders.error) console.error("Error Orders:", resOrders.error);
-      if (resReceipts.error)
-        console.error("Error Receipts:", resReceipts.error);
+      if (resReceipts.error) console.error("Error Receipts:", resReceipts.error);
+      if (resVouchers.error) console.error("Error Vouchers:", resVouchers.error);
 
-      // 3. แปลงข้อมูล
+      // --- แปลงข้อมูล (Mapping) ---
+      
+      // ก. ใบสั่งจ้าง
       const orders = (resOrders.data || []).map((item) => ({
         ...item,
         doc_type: "order",
@@ -78,6 +86,7 @@ const History = () => {
         link_print: `/print/${item.id}`,
       }));
 
+      // ข. ใบรับรองแทนใบเสร็จ
       const receipts = (resReceipts.data || []).map((item) => ({
         ...item,
         doc_type: "receipt",
@@ -89,9 +98,22 @@ const History = () => {
         link_print: `/receipt-print/${item.id}`,
       }));
 
-      // 4. รวมและเรียงลำดับ
-      const allDocs = [...orders, ...receipts].sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      // ค. (ใหม่) ใบสำคัญรับเงิน
+      const vouchers = (resVouchers.data || []).map((item) => ({
+        ...item,
+        doc_type: "voucher",
+        display_title: item.receiver_name, // ชื่อผู้รับเงิน
+        display_subtitle: "ใบสำคัญรับเงิน (Receipt Voucher)",
+        display_amount: item.total_amount,
+        display_person: "บุคคลภายนอก",
+        display_status: "เสร็จสิ้น",
+        // หมายเหตุ: คุณต้องสร้าง Route นี้เพิ่มใน App.jsx ด้วย หรือชี้ไปที่หน้า Preview ชั่วคราว
+        link_print: `/receipt-voucher-print/${item.id}`, 
+      }));
+
+      // 4. รวมและเรียงลำดับตามวันที่ล่าสุด
+      const allDocs = [...orders, ...receipts, ...vouchers].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
       setDocs(allDocs);
@@ -102,20 +124,17 @@ const History = () => {
     }
   };
 
-  // Filter Logic
+  // Filter Logic (เพิ่มเงื่อนไข Voucher)
   const filteredDocs = docs.filter((doc) => {
     const matchesSearch =
-      (doc.display_title || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      (doc.display_subtitle || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      (doc.display_title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (doc.display_subtitle || "").toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesType =
       filterType === "All" ||
       (filterType === "Order" && doc.doc_type === "order") ||
-      (filterType === "Receipt" && doc.doc_type === "receipt");
+      (filterType === "Receipt" && doc.doc_type === "receipt") ||
+      (filterType === "Voucher" && doc.doc_type === "voucher"); // <--- เพิ่มตรงนี้
 
     return matchesSearch && matchesType;
   });
@@ -128,14 +147,12 @@ const History = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Title & Back Button */}
             <div className="flex items-center gap-3">
-              {/* ✅ 1. ปุ่มย้อนกลับ */}
               <Link
                 to="/"
                 className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
               >
                 <ChevronLeft size={28} />
               </Link>
-
               <div>
                 <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                   <FileCheck className="text-blue-600" />
@@ -150,10 +167,7 @@ const History = () => {
             {/* Search & Filter Bar */}
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
               <div className="relative flex-grow md:w-64">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  size={20}
-                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                 <input
                   type="text"
                   placeholder="ค้นหาชื่อ, เลขที่..."
@@ -163,11 +177,8 @@ const History = () => {
                 />
               </div>
 
-              <div className="relative md:w-40">
-                <Filter
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  size={18}
-                />
+              <div className="relative md:w-48">
+                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <select
                   className="w-full pl-10 pr-8 py-2 rounded-xl border border-slate-200 appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                   value={filterType}
@@ -176,10 +187,9 @@ const History = () => {
                   <option value="All">ทุกประเภท</option>
                   <option value="Order">ใบสั่งจ้าง</option>
                   <option value="Receipt">ใบรับรองฯ</option>
+                  <option value="Voucher">ใบสำคัญรับเงิน</option> {/* <--- เพิ่มตัวเลือก */}
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                  ▼
-                </div>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
               </div>
             </div>
           </div>
@@ -219,22 +229,23 @@ const History = () => {
                   className="group hover:bg-slate-50 transition-colors duration-200"
                 >
                   <div className="p-4 md:px-6 md:py-4 flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center">
+                    
                     {/* 1. วันที่ & Icon */}
                     <div className="flex justify-between md:block md:col-span-2 mb-2 md:mb-0">
                       <div className="flex items-center gap-2 text-slate-500 text-sm">
-                        {doc.doc_type === "order" ? (
-                          <FileText size={16} className="text-blue-500" />
-                        ) : (
-                          <Receipt size={16} className="text-emerald-500" />
-                        )}
+                        {/* Logic เลือก Icon ตามประเภทเอกสาร */}
+                        {doc.doc_type === "order" && <FileText size={16} className="text-blue-500" />}
+                        {doc.doc_type === "receipt" && <Receipt size={16} className="text-emerald-500" />}
+                        {doc.doc_type === "voucher" && <Banknote size={16} className="text-pink-500" />} 
+
                         <span className="font-medium text-slate-700">
-                          {new Date(doc.created_at).toLocaleDateString(
-                            "th-TH",
-                            { day: "2-digit", month: "short", year: "2-digit" },
-                          )}
+                          {new Date(doc.created_at).toLocaleDateString("th-TH", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "2-digit",
+                          })}
                         </span>
                       </div>
-                      {/* ✅ 2. ลบส่วนที่แสดง UUID ออกไปแล้ว (ตรงนี้เคยมี #doc.id) */}
                     </div>
 
                     {/* 2. ชื่อ (Title) */}
@@ -253,12 +264,10 @@ const History = () => {
                         {doc.display_subtitle}
                       </p>
                       <p className="text-xs text-slate-400 mt-1 truncate font-medium">
-                        💰 {Number(doc.display_amount || 0).toLocaleString()}{" "}
-                        บาท
+                        💰 {Number(doc.display_amount || 0).toLocaleString()} บาท
                         {doc.display_person && (
                           <span className="hidden md:inline text-slate-400 font-normal">
-                            {" "}
-                            • {doc.display_person}
+                            {" • "}{doc.display_person}
                           </span>
                         )}
                       </p>
@@ -267,38 +276,39 @@ const History = () => {
                     {/* 4. สถานะ */}
                     <div className="md:col-span-2 flex md:justify-center mb-3 md:mb-0">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(doc.display_status)}`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                          doc.display_status
+                        )}`}
                       >
                         {doc.display_status}
                       </span>
                     </div>
 
-                    {/* ค้นหาส่วน Actions ใน History.jsx แล้ววางทับด้วยโค้ดนี้ */}
-<div className="md:col-span-2 flex items-center justify-end gap-2 mt-2 md:mt-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
-  
-  {/* ปุ่ม PDF (สีแดง) */}
-  <Link 
-    to={doc.link_print}
-    className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center justify-center"
-    title="บันทึกเป็น PDF"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-      <polyline points="14 2 14 8 20 8"/>
-      <path d="M12 18v-6"/><path d="M9 15l3 3 3-3"/>
-    </svg>
-  </Link>
+                    {/* 5. ปุ่ม Actions */}
+                    <div className="md:col-span-2 flex items-center justify-end gap-2 mt-2 md:mt-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                      
+                      {/* ปุ่ม PDF (สีแดง) */}
+                      <Link 
+                        to={doc.link_print}
+                        className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center justify-center"
+                        title="บันทึกเป็น PDF"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <path d="M12 18v-6"/><path d="M9 15l3 3 3-3"/>
+                        </svg>
+                      </Link>
 
-
-  {/* ปุ่มพิมพ์ (สีน้ำเงิน) */}
-  <Link 
-    to={doc.link_print}
-    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm active:scale-95"
-  >
-    <Printer size={18} />
-    <span>พิมพ์</span>
-  </Link>
-</div>
+                      {/* ปุ่มพิมพ์ (สีน้ำเงิน) */}
+                      <Link
+                        to={doc.link_print}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm active:scale-95"
+                      >
+                        <Printer size={18} />
+                        <span>พิมพ์</span>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -307,7 +317,7 @@ const History = () => {
         )}
       </div>
 
-      {/* Floating Action Button (Optional) */}
+      {/* Floating Action Button (Mobile) */}
       <Link
         to="/"
         className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-slate-800 text-white rounded-full shadow-lg shadow-slate-800/30 flex items-center justify-center active:scale-90 transition-transform z-50"

@@ -127,7 +127,7 @@ const History = () => {
         ...item,
         doc_type: "completion",
         display_title: item.project_name,
-        display_subtitle: `Completion Report (รหัส: ${item.project_no || "-"})`,
+        display_subtitle: `Completion Report (Project: ${item.project_no || "-"})`,
         display_amount: null, // ไม่มีจำนวนเงิน
         display_person: item.location, // ใช้แสดงสถานที่แทน
         display_status: item.is_complete ? "Complete" : "Not Complete",
@@ -333,19 +333,6 @@ const History = () => {
 
                     {/* 5. ปุ่ม Actions */}
                     <div className="md:col-span-2 flex items-center justify-end gap-2 mt-2 md:mt-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
-                      
-                      {/* ปุ่ม PDF */}
-                      <Link 
-                        to={doc.link_print}
-                        className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center justify-center"
-                        title="บันทึกเป็น PDF"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                          <polyline points="14 2 14 8 20 8"/>
-                          <path d="M12 18v-6"/><path d="M9 15l3 3 3-3"/>
-                        </svg>
-                      </Link>
 
                       {/* ปุ่มพิมพ์ */}
                       <Link

@@ -1,3 +1,4 @@
+// src/History.jsx
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
 import { Link } from "react-router-dom";
@@ -11,6 +12,7 @@ import {
   FileCheck,
   ChevronLeft,
   Banknote,
+  ClipboardCheck // เพิ่มไอคอนใหม่
 } from "lucide-react";
 
 // ฟังก์ชันเลือกสีป้ายสถานะ
@@ -18,10 +20,12 @@ const getStatusColor = (status) => {
   switch (status) {
     case "อนุมัติแล้ว":
     case "เสร็จสิ้น":
+    case "Complete": // เพิ่มสถานะของ Completion Report
       return "bg-emerald-100 text-emerald-700 border-emerald-200";
     case "รออนุมัติ":
       return "bg-amber-100 text-amber-700 border-amber-200";
     case "แก้ไข":
+    case "Not Complete": // เพิ่มสถานะของ Completion Report
       return "bg-orange-100 text-orange-700 border-orange-200";
     case "ยกเลิก":
       return "bg-slate-100 text-slate-600 border-slate-200";
@@ -56,21 +60,29 @@ const History = () => {
         .select("*")
         .order("created_at", { ascending: false });
 
-      // 3. (ใหม่) ดึงข้อมูลใบสำคัญรับเงิน
+      // 3. ดึงข้อมูลใบสำคัญรับเงิน
       const reqVouchers = supabase
         .from("doc_receipt_vouchers")
         .select("*")
         .order("created_at", { ascending: false });
+        
+      // 4. (ใหม่) ดึงข้อมูล Completion Report
+      const reqCompletions = supabase
+        .from("doc_completion_reports")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      const [resOrders, resReceipts, resVouchers] = await Promise.all([
+      const [resOrders, resReceipts, resVouchers, resCompletions] = await Promise.all([
         reqOrders,
         reqReceipts,
         reqVouchers,
+        reqCompletions
       ]);
 
       if (resOrders.error) console.error("Error Orders:", resOrders.error);
       if (resReceipts.error) console.error("Error Receipts:", resReceipts.error);
       if (resVouchers.error) console.error("Error Vouchers:", resVouchers.error);
+      if (resCompletions.error) console.error("Error Completions:", resCompletions.error);
 
       // --- แปลงข้อมูล (Mapping) ---
       
@@ -98,21 +110,44 @@ const History = () => {
         link_print: `/receipt-print/${item.id}`,
       }));
 
-      // ค. (ใหม่) ใบสำคัญรับเงิน
+      // ค. ใบสำคัญรับเงิน
       const vouchers = (resVouchers.data || []).map((item) => ({
         ...item,
         doc_type: "voucher",
-        display_title: item.receiver_name, // ชื่อผู้รับเงิน
-        display_subtitle: "ใบสำคัญรับเงิน (Receipt Voucher)",
+        display_title: item.receiver_name,
+        display_subtitle: "ใบสำคัญรับเงิน",
         display_amount: item.total_amount,
         display_person: "",
         display_status: "เสร็จสิ้น",
-        // หมายเหตุ: คุณต้องสร้าง Route นี้เพิ่มใน App.jsx ด้วย หรือชี้ไปที่หน้า Preview ชั่วคราว
         link_print: `/receipt-voucher-print/${item.id}`, 
       }));
 
-      // 4. รวมและเรียงลำดับตามวันที่ล่าสุด
-      const allDocs = [...orders, ...receipts, ...vouchers].sort(
+      // ง. (ใหม่) Completion Report
+      const completions = (resCompletions.data || []).map((item) => ({
+        ...item,
+        doc_type: "completion",
+        display_title: item.project_name,
+        display_subtitle: `Completion Report (รหัส: ${item.project_no || "-"})`,
+        display_amount: null, // ไม่มีจำนวนเงิน
+        display_person: item.location, // ใช้แสดงสถานที่แทน
+        display_status: item.is_complete ? "Complete" : "Not Complete",
+        // ส่ง State ไปด้วย เพื่อให้หน้า Print แสดงข้อมูลได้ทันที (เพราะหน้า Print เราเขียนให้รับ State)
+        link_print: {
+            pathname: '/completion-report-print',
+            state: {
+                date: item.date,
+                projectName: item.project_name,
+                projectNo: item.project_no,
+                location: item.location,
+                finishTime: item.finish_time,
+                isComplete: item.is_complete,
+                remark: item.remark
+            }
+        }
+      }));
+
+      // 5. รวมและเรียงลำดับตามวันที่ล่าสุด
+      const allDocs = [...orders, ...receipts, ...vouchers, ...completions].sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
@@ -124,7 +159,7 @@ const History = () => {
     }
   };
 
-  // Filter Logic (เพิ่มเงื่อนไข Voucher)
+  // Filter Logic
   const filteredDocs = docs.filter((doc) => {
     const matchesSearch =
       (doc.display_title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -134,7 +169,8 @@ const History = () => {
       filterType === "All" ||
       (filterType === "Order" && doc.doc_type === "order") ||
       (filterType === "Receipt" && doc.doc_type === "receipt") ||
-      (filterType === "Voucher" && doc.doc_type === "voucher"); // <--- เพิ่มตรงนี้
+      (filterType === "Voucher" && doc.doc_type === "voucher") ||
+      (filterType === "Completion" && doc.doc_type === "completion"); // <--- เพิ่มตรงนี้
 
     return matchesSearch && matchesType;
   });
@@ -187,7 +223,8 @@ const History = () => {
                   <option value="All">ทุกประเภท</option>
                   <option value="Order">ใบสั่งจ้าง</option>
                   <option value="Receipt">ใบรับรองฯ</option>
-                  <option value="Voucher">ใบสำคัญรับเงิน</option> {/* <--- เพิ่มตัวเลือก */}
+                  <option value="Voucher">ใบสำคัญรับเงิน</option>
+                  <option value="Completion">Completion Report</option> {/* <--- เพิ่มตัวเลือก */}
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
               </div>
@@ -236,7 +273,8 @@ const History = () => {
                         {/* Logic เลือก Icon ตามประเภทเอกสาร */}
                         {doc.doc_type === "order" && <FileText size={16} className="text-blue-500" />}
                         {doc.doc_type === "receipt" && <Receipt size={16} className="text-emerald-500" />}
-                        {doc.doc_type === "voucher" && <Banknote size={16} className="text-pink-500" />} 
+                        {doc.doc_type === "voucher" && <Banknote size={16} className="text-pink-500" />}
+                        {doc.doc_type === "completion" && <ClipboardCheck size={16} className="text-orange-500" />} 
 
                         <span className="font-medium text-slate-700">
                           {new Date(doc.created_at).toLocaleDateString("th-TH", {
@@ -263,8 +301,17 @@ const History = () => {
                       <p className="text-sm text-slate-600 line-clamp-1">
                         {doc.display_subtitle}
                       </p>
+                      
+                      {/* Logic การแสดงผลส่วนจำนวนเงิน หรือ เวลา */}
                       <p className="text-xs text-slate-400 mt-1 truncate font-medium">
-                        💰 {Number(doc.display_amount || 0).toLocaleString()} บาท
+                        {doc.doc_type === "completion" ? (
+                            // สำหรับ Completion Report แสดงเวลาเสร็จแทนเงิน
+                            <span>🕒 เวลาเสร็จ: {doc.finish_time || "-"}</span>
+                        ) : (
+                            // สำหรับเอกสารอื่น แสดงเงิน
+                            <>💰 {Number(doc.display_amount || 0).toLocaleString()} บาท</>
+                        )}
+
                         {doc.display_person && (
                           <span className="hidden md:inline text-slate-400 font-normal">
                             {" • "}{doc.display_person}
@@ -287,7 +334,7 @@ const History = () => {
                     {/* 5. ปุ่ม Actions */}
                     <div className="md:col-span-2 flex items-center justify-end gap-2 mt-2 md:mt-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
                       
-                      {/* ปุ่ม PDF (สีแดง) */}
+                      {/* ปุ่ม PDF */}
                       <Link 
                         to={doc.link_print}
                         className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center justify-center"
@@ -300,7 +347,7 @@ const History = () => {
                         </svg>
                       </Link>
 
-                      {/* ปุ่มพิมพ์ (สีน้ำเงิน) */}
+                      {/* ปุ่มพิมพ์ */}
                       <Link
                         to={doc.link_print}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm active:scale-95"

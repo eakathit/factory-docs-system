@@ -49,18 +49,28 @@ const CompletionReportPrint = () => {
         
         {/* === HEADER === */}
         <div className="mb-6">
-          <div className="flex justify-between items-start mb-4">
+          <div className="flex justify-between items-center mb-4">
              {/* Logo / Company Name EN */}
-             <div>
-                <h1 className="font-bold text-lg">HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</h1>
-                <p className="text-sm">47/20 M.1. KLONPRAWET, BANPHO. CHACHOENGSAO 24140</p>
-                <p className="text-sm">TEL: 038-086-341, FAX: 038-086-342</p>
+             <div className="w-[40%]">
+                <h1 className="font-bold text-base">HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</h1>
+                <p className="text-xs">47/20 M.1. KLONPRAWET, BANPHO. CHACHOENGSAO 24140</p>
+                <p className="text-xs">TEL: 038-086-341, FAX: 038-086-342</p>
              </div>
+
+             {/* Center: Logo */}
+             <div className="w-[20%] flex justify-center items-center">
+                <img 
+                  src="/logo.png" 
+                  alt="Company Logo" 
+                  className="h-20 w-auto object-contain" 
+                />
+             </div>
+
              {/* Company Name TH */}
-             <div className="text-right">
-                <h2 className="font-bold text-lg">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนท์ (ไทยแลนด์) จำกัด</h2>
-                <p className="text-sm">47/20 หมู่ 1 ตำบลคลองประเวศ อำเภอบ้านโพธิ์ จังหวัดฉะเชิงเทรา 24140</p>
-                <p className="text-sm">โทร : 038-086-341, แฟ็กซ์ : 038-086-342</p>
+             <div className="w-[40%] text-right">
+                <h2 className="font-bold text-base">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนท์ (ไทยแลนด์) จำกัด</h2>
+                <p className="text-xs">47/20 หมู่ 1 ตำบลคลองประเวศ อำเภอบ้านโพธิ์ จังหวัดฉะเชิงเทรา 24140</p>
+                <p className="text-xs">โทร : 038-086-341, แฟ็กซ์ : 038-086-342</p>
              </div>
           </div>
 

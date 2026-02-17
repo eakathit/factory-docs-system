@@ -1,19 +1,20 @@
 // src/CompletionReportForm.jsx
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ChevronLeft, Printer, Save, FileCheck } from 'lucide-react'
+import { ChevronLeft, Printer, Save, FileCheck, Loader2 } from 'lucide-react'
+import { supabase } from './supabaseClient' // 1. Import Supabase
 
 const CompletionReportForm = () => {
   const navigate = useNavigate()
+  const [isSubmitting, setIsSubmitting] = useState(false) // State สำหรับสถานะกำลังบันทึก
   
-  // State สำหรับเก็บข้อมูลฟอร์ม
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0], // วันที่ปัจจุบัน
+    date: new Date().toISOString().split('T')[0],
     projectName: '',
     projectNo: '',
     location: '',
     finishTime: '',
-    isComplete: true, // true = Complete, false = Not Complete
+    isComplete: true,
     remark: ''
   })
 
@@ -25,11 +26,40 @@ const CompletionReportForm = () => {
     }))
   }
 
-  // ฟังก์ชันไปหน้าพิมพ์
-  const handlePrintPreview = (e) => {
+  // 2. ปรับฟังก์ชัน Submit ให้บันทึกลง Supabase ก่อน
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // ส่งข้อมูล state ไปยังหน้า Print
-    navigate('/completion-report-print', { state: formData })
+    setIsSubmitting(true)
+
+    try {
+      // แปลง key เป็น snake_case ให้ตรงกับ column ใน Supabase
+      const dbData = {
+        date: formData.date,
+        project_name: formData.projectName,
+        project_no: formData.projectNo,
+        location: formData.location,
+        finish_time: formData.finishTime,
+        is_complete: formData.isComplete,
+        remark: formData.remark
+      }
+
+      // ส่งข้อมูลไป Supabase (เปลี่ยนชื่อตารางตามที่คุณสร้างจริง)
+      const { data, error } = await supabase
+        .from('doc_completion_reports') 
+        .insert([dbData])
+        .select()
+
+      if (error) throw error
+
+      // บันทึกสำเร็จ -> ไปหน้า Print (ส่ง formData ไปแสดงผลเหมือนเดิม)
+      navigate('/completion-report-print', { state: formData })
+
+    } catch (error) {
+      console.error('Error saving report:', error)
+      alert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -51,10 +81,13 @@ const CompletionReportForm = () => {
         </div>
 
         {/* Form Card */}
-        <form onSubmit={handlePrintPreview} className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+        {/* เปลี่ยน onSubmit เป็น handleSubmit ใหม่ */}
+        <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             
+            {/* ... (ส่วน Input เหมือนเดิมทั้งหมด) ... */}
+
             {/* วันที่ */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">วันที่ (Date)</label>
@@ -170,13 +203,21 @@ const CompletionReportForm = () => {
 
           {/* ปุ่ม Action */}
           <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
-             {/* ปุ่มนี้ถ้าจะทำ Backend ให้เปิดใช้ */}
-            {/* <button type="button" className="flex items-center gap-2 px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-medium hover:bg-slate-200 transition-colors">
-              <Save size={20} /> บันทึกร่าง
-            </button> */}
             
-            <button type="submit" className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 transition-all">
-              <Printer size={20} /> สร้างใบรายงาน
+            <button 
+                type="submit" 
+                disabled={isSubmitting} // ห้ามกดซ้ำขณะบันทึก
+                className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" /> กำลังบันทึก...
+                  </>
+              ) : (
+                  <>
+                    <Printer size={20} /> บันทึกและสร้างใบรายงาน
+                  </>
+              )}
             </button>
           </div>
 

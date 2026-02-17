@@ -63,3 +63,13 @@ body {
     page-break-inside: avoid !important;
   }
 }
+
+@media print {
+  @page {
+    size: auto;
+    margin: 0mm; /* บังคับขอบเป็น 0 เพื่อไม่ให้มีหน้าเปล่า */
+  }
+  body {
+    margin: 0px;
+  }
+}

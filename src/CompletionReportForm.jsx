@@ -94,7 +94,7 @@ const CompletionReportForm = () => {
             
             {/* วันที่ */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">วันที่ (Date)</label>
+              <label className="text-sm font-medium text-slate-700">วันที่ / Date / 記入日</label>
               <input 
                 type="date" 
                 name="date"
@@ -107,7 +107,7 @@ const CompletionReportForm = () => {
 
             {/* เวลา */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">เวลาที่เสร็จ (Time)</label>
+              <label className="text-sm font-medium text-slate-700">เวลา / Time / 終わた時間</label>
               <input 
                 type="time" 
                 name="finishTime"
@@ -119,7 +119,7 @@ const CompletionReportForm = () => {
 
             {/* ชื่อโครงการ */}
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-700">ชื่อโครงการ (Project Name)</label>
+              <label className="text-sm font-medium text-slate-700">ชื่อโครงการ / Project Name / 工事名</label>
               <input 
                 type="text" 
                 name="projectName"
@@ -133,20 +133,20 @@ const CompletionReportForm = () => {
 
             {/* รหัสโครงการ */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">รหัสโครงการ (Project No.)</label>
+              <label className="text-sm font-medium text-slate-700">รหัส / Project No. / 工事番号</label>
               <input 
                 type="text" 
                 name="projectNo"
                 value={formData.projectNo}
                 onChange={handleChange}
-                placeholder="Ex. P-2024-001"
+                placeholder="ระบุรหัสโครงการ..."
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
               />
             </div>
 
             {/* สถานที่ */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">สถานที่ (Place)</label>
+              <label className="text-sm font-medium text-slate-700">สถานที่ / Place / 工事場所</label>
               <input 
                 type="text" 
                 name="location"
@@ -159,7 +159,7 @@ const CompletionReportForm = () => {
 
             {/* หมายเหตุ */}
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-700">หมายเหตุ (Remark)</label>
+              <label className="text-sm font-medium text-slate-700">หมายเหตุ / Remark / 備考</label>
               <textarea 
                 name="remark"
                 value={formData.remark}

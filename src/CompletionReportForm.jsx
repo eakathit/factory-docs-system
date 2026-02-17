@@ -1,14 +1,16 @@
 // src/CompletionReportForm.jsx
-import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { ChevronLeft, Printer, Save, FileCheck, Loader2 } from 'lucide-react'
-import { supabase } from './supabaseClient' // 1. Import Supabase
+import React, { useState, useEffect } from 'react' // เพิ่ม useEffect
+import { useNavigate, useLocation, Link } from 'react-router-dom' // เพิ่ม useLocation
+import { ChevronLeft, Printer, FileCheck, Loader2 } from 'lucide-react'
+import { supabase } from './supabaseClient'
 
 const CompletionReportForm = () => {
   const navigate = useNavigate()
-  const [isSubmitting, setIsSubmitting] = useState(false) // State สำหรับสถานะกำลังบันทึก
+  const location = useLocation() // เรียกใช้ useLocation
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
-  const [formData, setFormData] = useState({
+  // ตรวจสอบว่ามีข้อมูลส่งกลับมาแก้ไขหรือไม่ ถ้าไม่มีให้ใช้ค่าเริ่มต้น
+  const initialData = location.state || {
     date: new Date().toISOString().split('T')[0],
     projectName: '',
     projectNo: '',
@@ -16,7 +18,16 @@ const CompletionReportForm = () => {
     finishTime: '',
     isComplete: true,
     remark: ''
-  })
+  }
+
+  const [formData, setFormData] = useState(initialData)
+
+  // ใช้ useEffect เพื่ออัปเดตฟอร์มถ้า location.state เปลี่ยนแปลง (กันเหนียว)
+  useEffect(() => {
+    if (location.state) {
+      setFormData(prev => ({ ...prev, ...location.state }))
+    }
+  }, [location.state])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -26,13 +37,11 @@ const CompletionReportForm = () => {
     }))
   }
 
-  // 2. ปรับฟังก์ชัน Submit ให้บันทึกลง Supabase ก่อน
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
-      // แปลง key เป็น snake_case ให้ตรงกับ column ใน Supabase
       const dbData = {
         date: formData.date,
         project_name: formData.projectName,
@@ -43,15 +52,13 @@ const CompletionReportForm = () => {
         remark: formData.remark
       }
 
-      // ส่งข้อมูลไป Supabase (เปลี่ยนชื่อตารางตามที่คุณสร้างจริง)
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('doc_completion_reports') 
         .insert([dbData])
         .select()
 
       if (error) throw error
 
-      // บันทึกสำเร็จ -> ไปหน้า Print (ส่ง formData ไปแสดงผลเหมือนเดิม)
       navigate('/completion-report-print', { state: formData })
 
     } catch (error) {
@@ -81,13 +88,10 @@ const CompletionReportForm = () => {
         </div>
 
         {/* Form Card */}
-        {/* เปลี่ยน onSubmit เป็น handleSubmit ใหม่ */}
         <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             
-            {/* ... (ส่วน Input เหมือนเดิมทั้งหมด) ... */}
-
             {/* วันที่ */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">วันที่ (Date)</label>
@@ -180,7 +184,7 @@ const CompletionReportForm = () => {
                     onChange={() => setFormData(prev => ({...prev, isComplete: true}))}
                     className="hidden" 
                   />
-                  <span className={`font-medium ${formData.isComplete ? 'text-green-600' : 'text-slate-500'}`}>Complete (เสร็จสมบูรณ์)</span>
+                  <span className={`font-medium ${formData.isComplete ? 'text-green-600' : 'text-slate-500'}`}>Complete</span>
                 </label>
 
                 <label className="flex items-center gap-3 cursor-pointer group">
@@ -194,7 +198,7 @@ const CompletionReportForm = () => {
                     onChange={() => setFormData(prev => ({...prev, isComplete: false}))}
                     className="hidden" 
                   />
-                  <span className={`font-medium ${!formData.isComplete ? 'text-red-600' : 'text-slate-500'}`}>Not Complete (ไม่เสร็จ)</span>
+                  <span className={`font-medium ${!formData.isComplete ? 'text-red-600' : 'text-slate-500'}`}>Not Complete</span>
                 </label>
               </div>
             </div>
@@ -203,10 +207,9 @@ const CompletionReportForm = () => {
 
           {/* ปุ่ม Action */}
           <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
-            
             <button 
                 type="submit" 
-                disabled={isSubmitting} // ห้ามกดซ้ำขณะบันทึก
+                disabled={isSubmitting}
                 className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (

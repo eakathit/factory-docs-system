@@ -7,6 +7,7 @@ const CompletionReportPrint = () => {
   const location = useLocation()
   const navigate = useNavigate()
   
+  // รับข้อมูลจากหน้า Form หรือ History
   const data = location.state || {
     date: '',
     projectName: '',
@@ -29,7 +30,8 @@ const CompletionReportPrint = () => {
       {/* Toolbar */}
       <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center print:hidden">
         <button 
-          onClick={() => navigate(-1)}
+          // แก้ไข: ส่งข้อมูลกลับไปที่หน้า Form (สมมติว่า path คือ /completion-report)
+          onClick={() => navigate('/completion-report', { state: data })}
           className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm text-gray-600 hover:bg-gray-50 border transition-colors"
         >
           <ChevronLeft size={18} /> กลับแก้ไข
@@ -48,27 +50,20 @@ const CompletionReportPrint = () => {
         {/* === HEADER === */}
         <div className="mb-4">
           <div className="flex justify-between items-start mb-2">
-             {/* Logo / Company Name EN */}
              <div className="w-[40%] pt-2">
-                <h1 className="text-[10px] tracking-wide">HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</h1>
-                <p className="text-[10px]">47/20 M.1. KLONPRAWET, BANPHO. CHACHOENGSAO 24140</p>
-                <p className="text-[10px]">TEL: 038-086-341, FAX: 038-086-342</p>
+                <h1 className="text-[9px] tracking-wide">HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</h1>
+                <p className="text-[9px]">47/20 M.1. KLONPRAWET, BANPHO. CHACHOENGSAO 24140</p>
+                <p className="text-[9px]">TEL: 038-086-341, FAX: 038-086-342</p>
              </div>
 
-             {/* Center: Logo */}
              <div className="w-[20%] flex justify-center items-center">
-                <img 
-                  src="/logo.png" 
-                  alt="Company Logo" 
-                  className="h-16 w-auto object-contain" 
-                />
+                <img src="/logo.png" alt="Company Logo" className="h-16 w-auto object-contain" />
              </div>
 
-             {/* Company Name TH */}
-             <div className="w-[40%] text-right pt-2">
-                <h2 className="text-[10px]">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนท์ (ไทยแลนด์) จำกัด</h2>
-                <p className="text-[10px]">47/20 หมู่ 1 ตำบลคลองประเวศ อำเภอบ้านโพธิ์ จังหวัดฉะเชิงเทรา 24140</p>
-                <p className="text-[10px]">โทร : 038-086-341, แฟ็กซ์ : 038-086-342</p>
+             <div className="w-[50%] text-right pt-2">
+                <h2 className="text-[9px]">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนท์ (ไทยแลนด์) จำกัด</h2>
+                <p className="text-[9px]">47/20 หมู่ 1 ตำบลคลองประเวศ อำเภอบ้านโพธิ์ จังหวัดฉะเชิงเทรา 24140</p>
+                <p className="text-[9px]">โทร : 038-086-341, แฟ็กซ์ : 038-086-342</p>
              </div>
           </div>
 
@@ -93,7 +88,7 @@ const CompletionReportPrint = () => {
             <div className="flex gap-4 mb-4">
                 <div className="w-[60%]">
                     <div className="text-[13px] text-center mb-1">工事場所 / Place / สถานที่โครงการ</div>
-                    <div className="border border-black px-2 h-10 flex items-center bg-white">
+                    <div className="border border-black pl-3 h-10 flex items-center text-left bg-white overflow-hidden whitespace-nowrap text-ellipsis">
                         {data.location}
                     </div>
                 </div>
@@ -109,49 +104,53 @@ const CompletionReportPrint = () => {
             <div className="flex gap-4 mb-4">
                 <div className="w-[60%]">
                     <div className="text-[13px] text-center mb-1">工事名 / Project Name / ชื่อโครงการ</div>
-                    <div className="border border-black px-2 h-10 flex items-center bg-white">
+                    <div className="border border-black pl-3 h-10 flex items-center text-left bg-white overflow-hidden whitespace-nowrap text-ellipsis">
                         {data.projectName}
                     </div>
                 </div>
                 <div className="w-[40%]">
-                    <div className="text-[13px] text-center mb-1">工事番号 / Project No. / รหัส</div>
+                    <div className="text-[13px]  text-center mb-1">工事番号 / Project No. / รหัส</div>
                     <div className="border border-black px-2 h-10 flex items-center justify-center bg-white">
                         {data.projectNo}
                     </div>
                 </div>
             </div>
 
-            {/* Row 3: Time (Left) | Checkboxes (Right) */}
+            {/* Row 3: Time / Checkbox */}
+            {/* Row 3: Time / Checkbox */}
             <div className="flex gap-4 mb-4">
-                {/* ฝั่งซ้าย 60% : Time (เหมือนข้างบน) */}
-                <div className="w-[60%]">
-                    <div className="text-[13px] mb-1">終わた時間 / Time / เวลา</div>
-                    <div className="border border-black px-2 h-10 flex items-center bg-white">
+                {/* ฝั่งซ้าย 60% : Time (ข้อความและกรอบอยู่ในบรรทัดเดียวกัน) */}
+                <div className="w-[60%] flex items-center gap-3">
+                    {/* ข้อความ Label */}
+                    <div className="text-[13px] whitespace-nowrap">
+                        終わた時間 / Time / เวลา
+                    </div>
+                    
+                    {/* กรอบสี่เหลี่ยม (ให้ขยายเต็มพื้นที่ที่เหลือ) */}
+                    <div className="border border-black px-2 h-10 flex-grow flex items-center justify-center bg-white">
                         {data.finishTime} {data.finishTime ? 'น.' : ''}
                     </div>
                 </div>
 
-                {/* ฝั่งขวา 40% : Checkboxes */}
                 <div className="w-[40%] flex flex-col justify-end">
-                     {/* ใช้ความสูง h-10 เพื่อให้ตรงกับกล่อง Time ด้านซ้าย */}
                      <div className="h-10 flex items-center gap-6 pl-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center ml-3 gap-2">
                             <div className="w-5 h-5 border border-black flex items-center justify-center bg-white">
                                 {data.isComplete && <span className="text-black font-bold text-sm">✓</span>}
                             </div>
-                            <span className="text-[10px] font-bold">Complete</span>
+                            <span className="text-[13px] font-bold">Complete</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-5 h-5 border border-black flex items-center justify-center bg-white">
                                 {!data.isComplete && <span className="text-black font-bold text-sm">✓</span>}
                             </div>
-                            <span className="text-[10px] font-bold">Not Complete</span>
+                            <span className="text-[13px] font-bold">Not Complete</span>
                         </div>
                      </div>
                 </div>
             </div>
 
-            {/* Row 4: Signature (New Line) */}
+             {/* Row 4: Signature (New Line) */}
             <div className="flex gap-4 mb-4">
                 {/* ฝั่งซ้าย 60% : ข้อความ Label */}
                 <div className="w-[60%] flex flex-col justify-end items-end pb-4 pr-2">
@@ -173,7 +172,7 @@ const CompletionReportPrint = () => {
             {/* Row 5: Remark */}
             <div className="mb-4">
                 <div className="text-[13px] mb-1">備考 / Remark / หมายเหตุ</div>
-                <div className="border border-black p-2 min-h-[100px] whitespace-pre-wrap leading-normal bg-white">
+                <div className="border border-black p-2 min-h-[100px] whitespace-pre-wrap leading-normal text-left bg-white">
                     {data.remark}
                 </div>
             </div>
@@ -181,7 +180,7 @@ const CompletionReportPrint = () => {
         </div>
 
         {/* === FOOTER === */}
-        <div className="mt-12 text-xs space-y-1 text-center">
+        <div className="mt-4 text-[13px] space-y-1 text-center">
             <p>ご協力ありがとうございました。今後とも何卒お引き立て賜りますようお願い申し上げます。</p>
             <p>Thank you for your cooperation. We hope you will be able to kindly continue in the future.</p>
             <p>ขอขอบคุณสำหรับความร่วมมือ และหวังว่าเราจะได้รับความกรุณาจากท่านอีกครั้งในอนาคต</p>
@@ -192,20 +191,10 @@ const CompletionReportPrint = () => {
       <style type="text/css">
         {`
           @media print {
-            body { 
-                background: white; 
-                -webkit-print-color-adjust: exact; 
-            }
-            @page { 
-                size: A4; 
-                margin: 0; 
-            }
-            .print\\:hidden { 
-                display: none !important; 
-            }
-            .print\\:shadow-none {
-                box-shadow: none !important;
-            }
+            body { background: white; -webkit-print-color-adjust: exact; }
+            @page { size: A4; margin: 0; }
+            .print\\:hidden { display: none !important; }
+            .print\\:shadow-none { box-shadow: none !important; }
           }
         `}
       </style>

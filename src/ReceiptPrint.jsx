@@ -165,7 +165,7 @@ export default function ReceiptPrint() {
                       </span>
                    </div>
                 </td>
-                <td className="border border-black text-right px-2 align-middle bg-gray-50 text-lg">
+                <td className="border border-black text-right px-2 align-middle text-lg">
                    {doc.total_amount?.toLocaleString()}
                 </td>
                 <td className=""></td>

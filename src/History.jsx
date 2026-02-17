@@ -10,7 +10,7 @@ import {
   Receipt,
   FileCheck,
   ChevronLeft,
-  Banknote, // <--- เพิ่มไอคอนสำหรับใบสำคัญรับเงิน
+  Banknote,
 } from "lucide-react";
 
 // ฟังก์ชันเลือกสีป้ายสถานะ
@@ -105,7 +105,7 @@ const History = () => {
         display_title: item.receiver_name, // ชื่อผู้รับเงิน
         display_subtitle: "ใบสำคัญรับเงิน (Receipt Voucher)",
         display_amount: item.total_amount,
-        display_person: "บุคคลภายนอก",
+        display_person: "",
         display_status: "เสร็จสิ้น",
         // หมายเหตุ: คุณต้องสร้าง Route นี้เพิ่มใน App.jsx ด้วย หรือชี้ไปที่หน้า Preview ชั่วคราว
         link_print: `/receipt-voucher-print/${item.id}`, 

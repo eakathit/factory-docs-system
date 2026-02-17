@@ -116,10 +116,10 @@ export default function ReceiptPrint() {
         
         {/* Header */}
         <div className="mb-6">
-          <div className="text-center font-bold text-2xl mb-2">
+          <div className="text-center text-2xl mb-2">
             ใบรับรองแทนใบเสร็จรับเงิน
           </div>
-          <div className="flex justify-end items-center text-lg font-bold mt-2">
+          <div className="flex justify-end items-center text-lg mt-2">
              <span className="mr-2">เลขที่</span>
              <span className="border-b border-black border-dotted px-4 min-w-[120px] text-center">{doc.doc_no}</span>
           </div>
@@ -129,10 +129,10 @@ export default function ReceiptPrint() {
         <table className="w-full border-collapse mb-2">
           <thead>
             <tr className="text-center h-10">
-              <th className="border border-black w-[15%]">วัน เดือน ปี</th>
-              <th className="border border-black w-[50%]">รายละเอียดรายจ่าย</th>
-              <th className="border border-black w-[20%]">จำนวนเงิน</th>
-              <th className="border border-black w-[15%]">เลขโปรเจ็ค</th>
+              <th className="border border-black font-normal w-[15%]">วัน เดือน ปี</th>
+              <th className="border border-black font-normal w-[50%]">รายละเอียดรายจ่าย</th>
+              <th className="border border-black font-normal w-[20%]">จำนวนเงิน</th>
+              <th className="border border-black font-normal w-[15%]">เลขโปรเจ็ค</th>
             </tr>
           </thead>
           <tbody>

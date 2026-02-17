@@ -3,7 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import SignatureCanvas from 'react-signature-canvas'
-import { ArrowLeft, Save, Plus, Trash2, Eye, Calculator } from 'lucide-react'
+import { ArrowLeft, Save, Plus, Trash2, Eye, Calculator, Pencil } from 'lucide-react'
 import ReceiptVoucherPreview from './ReceiptVoucherPreview'
 import toast from 'react-hot-toast'
 
@@ -117,27 +117,32 @@ export default function ReceiptVoucherForm() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
                
                {/* Card 1: ข้อมูลผู้รับเงิน */}
-               <div className="bg-white p-5 rounded-xl shadow-sm border space-y-4">
-                  <h3 className="font-bold text-gray-700 border-b pb-2">1. ข้อมูลผู้รับเงิน (บุคคลภายนอก)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <div>
-                        <label className="text-sm text-gray-500">วันที่เอกสาร</label>
-                        <input type="date" {...register('created_at')} className="w-full border p-2 rounded-lg" />
-                     </div>
-                     <div>
-                        <label className="text-sm text-gray-500">เลขบัตรประชาชน</label>
-                        <input {...register('id_card_number')} placeholder="x-xxxx-xxxxx-xx-x" className="w-full border p-2 rounded-lg" required />
-                     </div>
-                     <div className="col-span-2">
-                        <label className="text-sm text-gray-500">ชื่อ-นามสกุล (ข้าพเจ้า)</label>
-                        <input {...register('receiver_name')} className="w-full border p-2 rounded-lg" placeholder="นาย A..." required />
-                     </div>
-                     <div className="col-span-2">
-                        <label className="text-sm text-gray-500">ที่อยู่ตามบัตรประชาชน</label>
-                        <textarea {...register('address')} rows="2" className="w-full border p-2 rounded-lg" placeholder="บ้านเลขที่..." required />
-                     </div>
-                  </div>
-               </div>
+               {/* Card 1: ข้อมูลผู้รับเงิน */}
+<div className="bg-white p-5 rounded-xl shadow-sm border space-y-4">
+    <h3 className="font-bold text-gray-700 border-b pb-2">1. ข้อมูลผู้รับเงิน</h3>
+    
+    {/* เพื่อให้ วันที่ และ เลขบัตร ปชช. แยกบรรทัดกันเสมอ ไม่เบียดกัน */}
+    <div className="grid grid-cols-1 gap-4">
+        <div>
+            <label className="text-sm text-gray-500">วันที่เอกสาร</label>
+            <input type="date" {...register('created_at')} className="w-full border p-2 rounded-lg" />
+        </div>
+        <div>
+            <label className="text-sm text-gray-500">เลขบัตรประชาชน</label>
+            <input {...register('id_card_number')} placeholder="x-xxxx-xxxxx-xx-x" className="w-full border p-2 rounded-lg" required />
+        </div>
+        
+        {/* ชื่อและที่อยู่ ใช้ col-span-1 (เพราะมีแค่ 1 คอลัมน์แล้ว) หรือลบ class col-span ออกก็ได้ */}
+        <div>
+            <label className="text-sm text-gray-500">ชื่อ-นามสกุล (ข้าพเจ้า)</label>
+            <input {...register('receiver_name')} className="w-full border p-2 rounded-lg" placeholder="นาย A..." required />
+        </div>
+        <div>
+            <label className="text-sm text-gray-500">ที่อยู่ตามบัตรประชาชน</label>
+            <textarea {...register('address')} rows="2" className="w-full border p-2 rounded-lg" placeholder="บ้านเลขที่..." required />
+        </div>
+    </div>
+</div>
 
                {/* Card 2: รายการรับเงิน */}
                <div className="bg-white p-5 rounded-xl shadow-sm border">
@@ -153,39 +158,85 @@ export default function ReceiptVoucherForm() {
                      </div>
                   </div>
 
-                  <div className="space-y-3">
-                     {fields.map((field, index) => (
-                        <div key={field.id} className="grid grid-cols-12 gap-2 items-start bg-slate-50 p-3 rounded-lg border">
-                           <div className="col-span-1 text-center py-2 text-gray-400 font-bold">{index+1}</div>
-                           <div className="col-span-5">
-                              <input placeholder="รายการ..." {...register(`items.${index}.name`)} className="w-full text-sm border p-1 rounded mb-1" required />
-                           </div>
-                           <div className="col-span-2">
-                              <input type="number" placeholder="จำนวน" {...register(`items.${index}.quantity`)} className="w-full text-sm border p-1 rounded text-center" />
-                              <input placeholder="หน่วย" {...register(`items.${index}.unit`)} className="w-full text-xs border p-1 rounded text-center mt-1 bg-white" />
-                           </div>
-                           <div className="col-span-3">
-                              <input type="number" placeholder="ราคา/หน่วย" {...register(`items.${index}.price`)} className="w-full text-sm border p-1 rounded text-right" />
-                              <div className="text-right text-xs text-gray-500 mt-2">รวม: {watch(`items.${index}.total`)?.toLocaleString()}</div>
-                           </div>
-                           <div className="col-span-1 text-center">
-                              <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 mt-1"><Trash2 size={16}/></button>
-                           </div>
-                        </div>
-                     ))}
-                  </div>
+                  {fields.map((field, index) => (
+  <div key={field.id} className="grid grid-cols-12 gap-2 items-start bg-slate-50 p-3 rounded-lg border">
+    
+    {/* ลำดับ */}
+    <div className="col-span-1 text-center py-2 text-gray-400 font-bold">
+      {index + 1}
+    </div>
+
+    {/* รายการ */}
+    <div className="col-span-5">
+      <input 
+        placeholder="รายการ..." 
+        {...register(`items.${index}.name`)} 
+        className="w-full text-sm border p-1 rounded mb-1" 
+        required 
+      />
+    </div>
+
+    {/* จำนวน & หน่วย (แก้ไขตรงนี้) */}
+    <div className="col-span-2">
+      {/* 1. ช่องจำนวน */}
+      <input 
+        type="number" 
+        placeholder="จำนวน" 
+        {...register(`items.${index}.quantity`)} 
+        className="w-full text-sm border p-1 rounded text-center" 
+      />
+      
+      {/* 2. ช่องหน่วย (ใส่ไอคอนดินสอ) */}
+      <div className="relative mt-1 group">
+        <input 
+          placeholder="หน่วย" 
+          {...register(`items.${index}.unit`)} 
+          className="w-full text-xs border p-1 pr-6 rounded text-center bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all cursor-pointer hover:bg-gray-50" 
+        />
+        {/* ไอคอนดินสออยู่ขวาล่าง */}
+        <Pencil 
+          size={10} 
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-blue-500 pointer-events-none transition-colors"
+        />
+      </div>
+    </div>
+
+    {/* ราคา & ยอดรวม */}
+    <div className="col-span-3">
+      <input 
+        type="number" 
+        placeholder="ราคา/หน่วย" 
+        {...register(`items.${index}.price`)} 
+        className="w-full text-sm border p-1 rounded text-right" 
+      />
+      <div className="text-right text-xs text-gray-500 mt-2">
+        รวม: {watch(`items.${index}.total`)?.toLocaleString()}
+      </div>
+    </div>
+
+    {/* ปุ่มลบ */}
+    <div className="col-span-1 text-center">
+      <button 
+        type="button" 
+        onClick={() => remove(index)} 
+        className="text-red-400 hover:text-red-600 mt-1"
+      >
+        <Trash2 size={16}/>
+      </button>
+    </div>
+
+  </div>
+))}
 
                   {/* ยอดรวม */}
-                  <div className="mt-6 border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                          <label className="text-sm text-gray-500">จำนวนเงินตัวอักษร <span className="text-red-500">*</span></label>
-                          <input {...register('total_text')} placeholder="เช่น หนึ่งพันบาทถ้วน" className="w-full border p-2 rounded-lg" required />
-                      </div>
-                      <div className="text-right">
-                          <div className="text-sm text-gray-500">รวมเป็นเงินทั้งสิ้น</div>
-                          <div className="text-3xl font-bold text-blue-600">{parseFloat(watch('total_amount') || 0).toLocaleString()}</div>
-                      </div>
-                  </div>
+                  <div className="mt-6 border-t pt-4 flex justify-end">
+    <div className="text-right">
+        <div className="text-sm text-gray-500">รวมเป็นเงินทั้งสิ้น</div>
+        <div className="text-3xl font-bold text-blue-600">
+            {parseFloat(watch('total_amount') || 0).toLocaleString()} บาท
+        </div>
+    </div>
+</div>
                </div>
 
                {/* Card 3: การจ่ายเงิน & ลายเซ็น */}
@@ -202,7 +253,7 @@ export default function ReceiptVoucherForm() {
                    </div>
 
                    <div className="border rounded-xl p-4 bg-slate-50">
-                      <label className="block text-sm font-bold mb-2 text-gray-700">ลายเซ็นผู้จ่ายเงิน (เจ้าหน้าที่)</label>
+                      <label className="block text-sm font-bold mb-2 text-gray-700">ลายเซ็นผู้จ่ายเงิน</label>
                       <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg overflow-hidden h-40">
                          <SignatureCanvas 
                             ref={sigPad}

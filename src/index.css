@@ -7,13 +7,11 @@
 
 body {
   font-family: 'Prompt', sans-serif;
-  /* เปลี่ยนจากสีฟ้าฟุ้งๆ เป็นสีพื้นเทาอ่อนๆ สะอาดตา (Slate-50) */
   background-color: #f8fafc; 
   color: #334155;
   min-height: 100vh;
 }
 
-/* Custom Scrollbar (ซ่อน Scrollbar แต่ยังเลื่อนได้) */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -31,45 +29,29 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* --- ส่วนที่แก้ไขสำหรับการพิมพ์ --- */
 @media print {
   @page {
     size: A4;
-    margin: 0mm; /* บังคับขอบกระดาษเป็น 0 */
+    margin: 0; /* สำคัญ: ลบขอบขาวของ Browser ออก */
   }
   
-  body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  body, html {
+    width: 210mm;
+    height: 297mm;
     background-color: white !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: hidden !important; /* ป้องกัน scrollbar โผล่ในหน้าพิมพ์ */
   }
 
-  /* ซ่อน Elements ที่ไม่จำเป็นตอนพิมพ์ */
-  .no-print {
+  /* คลาสสำหรับซ่อนตอนพิมพ์ */
+  .print\:hidden {
     display: none !important;
   }
-
-  /* บังคับให้ Container หลักพอดีกับหน้า A4 */
-  .print-area {
+  
+  /* บังคับให้ Container มีขนาด A4 เป๊ะๆ */
+  .print\:w-\[210mm\] {
     width: 210mm !important;
-    min-height: 297mm !important;
-    margin: 0 !important;
-    padding: 20px !important; /* ปรับลด padding ได้ถ้าเนื้อหาล้น */
-    box-shadow: none !important;
-    border: none !important;
-    overflow: hidden !important; /* ตัดส่วนเกินป้องกันหน้า 2 */
-    page-break-after: avoid !important;
-    page-break-inside: avoid !important;
-  }
-}
-
-@media print {
-  @page {
-    size: auto;
-    margin: 0mm; /* บังคับขอบเป็น 0 เพื่อไม่ให้มีหน้าเปล่า */
-  }
-  body {
-    margin: 0px;
   }
 }

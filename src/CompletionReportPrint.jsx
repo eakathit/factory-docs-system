@@ -8,7 +8,6 @@ const CompletionReportPrint = () => {
   const navigate = useNavigate()
 
   const formData = location.state
-  // รับข้อมูลจากหน้า Form หรือ History
   const data = location.state || {
     date: '',
     projectName: '',
@@ -26,20 +25,18 @@ const CompletionReportPrint = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 print:bg-white p-4 md:p-8 font-sans">
+    // 1. แก้ไข Outer Div: เพิ่ม print:p-0 print:m-0 เพื่อลบขอบขาวตอนพิมพ์ ไม่ให้ดันไปหน้า 2
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans print:bg-white print:p-0 print:m-0">
       
       {/* Toolbar */}
       <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center print:hidden">
-        
-        {/* ปุ่มย้อนกลับไปแก้ไข (สำคัญ!) */}
         <button 
-          onClick={() => navigate('/completion-report', { state: formData })} // <--- ส่ง formData (ที่มี ID) กลับไป
+          onClick={() => navigate('/completion-report', { state: formData })}
           className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-lg shadow-sm border border-gray-200 hover:bg-slate-50 transition-colors"
         >
           <Edit3 size={18} /> กลับไปแก้ไข
         </button>
 
-        {/* ปุ่มสั่งปริ้น */}
         <button 
           onClick={() => window.print()}
           className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors font-semibold"
@@ -48,33 +45,33 @@ const CompletionReportPrint = () => {
         </button>
       </div>
 
-      {/* A4 Paper Container */}
-      <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white shadow-2xl print:shadow-none p-[15mm] text-black leading-tight relative">
+      {/* 2. แก้ไข A4 Container: 
+          - เปลี่ยน max-w เป็น w-[210mm] เฉพาะตอนพิมพ์ (print:w-[210mm]) เพื่อบังคับความกว้าง A4 เสมอแม้ในมือถือ
+          - เพิ่ม overflow-hidden เพื่อตัดส่วนเกินที่อาจทำให้เกิดหน้าเปล่า
+      */}
+      <div className="max-w-[210mm] mx-auto bg-white shadow-2xl print:shadow-none p-[15mm] text-black leading-tight relative print:w-[210mm] print:max-w-[210mm] print:min-w-[210mm] print:overflow-hidden print:min-h-0 print:h-[296mm]">
         
         {/* === HEADER === */}
-<div className="mb-4">
-  <div className="flex justify-between items-start mb-2">
-     {/* ฝั่งซ้าย 40% */}
-     <div className="w-[40%] pt-2">
-        <h1 className="text-[9px] tracking-wide">HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</h1>
-        <p className="text-[9px]">47/20 M.1. KLONPRAWET, BANPHO. CHACHOENGSAO 24140</p>
-        <p className="text-[9px]">TEL: 038-086-341, FAX: 038-086-342</p>
-     </div>
+        <div className="mb-4">
+          <div className="flex justify-between items-start mb-2">
+             <div className="w-[40%] pt-2">
+                <h1 className="text-[9px] tracking-wide">HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</h1>
+                <p className="text-[9px]">47/20 M.1. KLONPRAWET, BANPHO. CHACHOENGSAO 24140</p>
+                <p className="text-[9px]">TEL: 038-086-341, FAX: 038-086-342</p>
+             </div>
 
-     {/* ตรงกลาง 20% (Logo จะอยู่ตรงกลางเป๊ะ) */}
-     <div className="w-[20%] flex justify-center items-center">
-        <img src="/logo.png" alt="Company Logo" className="h-16 w-auto object-contain" />
-     </div>
+             <div className="w-[20%] flex justify-center items-center">
+                <img src="/logo.png" alt="Company Logo" className="h-16 w-auto object-contain" />
+             </div>
 
-     {/* ฝั่งขวา 40% (แก้จาก 50% เป็น 40%) */}
-     <div className="w-[40%] text-right pt-2">
-        <h2 className="text-[9px]">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนท์ (ไทยแลนด์) จำกัด</h2>
-        <p className="text-[9px] whitespace-nowrap tracking-tighter">
-  47/20 หมู่ 1 ตำบลคลองประเวศ อำเภอบ้านโพธิ์ จังหวัดฉะเชิงเทรา 24140
-</p>
-        <p className="text-[9px]">โทร : 038-086-341, แฟ็กซ์ : 038-086-342</p>
-     </div>
-  </div>
+             <div className="w-[40%] text-right pt-2">
+                <h2 className="text-[9px]">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนท์ (ไทยแลนด์) จำกัด</h2>
+                <p className="text-[9px] whitespace-nowrap tracking-tighter">
+                  47/20 หมู่ 1 ตำบลคลองประเวศ อำเภอบ้านโพธิ์ จังหวัดฉะเชิงเทรา 24140
+                </p>
+                <p className="text-[9px]">โทร : 038-086-341, แฟ็กซ์ : 038-086-342</p>
+             </div>
+          </div>
 
           <div className="border border-black p-3 mb-6">
             <h1 className="text-center uppercase leading-none">
@@ -93,7 +90,7 @@ const CompletionReportPrint = () => {
         {/* === TABLE FORM === */}
         <div className="mt-6 text-sm font-sans">
             
-            {/* Row 1: Place / Date */}
+            {/* Row 1 */}
             <div className="flex gap-4 mb-4">
                 <div className="w-[60%]">
                     <div className="text-[13px] text-center mb-1">工事場所 / Place / สถานที่โครงการ</div>
@@ -109,7 +106,7 @@ const CompletionReportPrint = () => {
                 </div>
             </div>
 
-            {/* Row 2: Project Name / Project No */}
+            {/* Row 2 */}
             <div className="flex gap-4 mb-4">
                 <div className="w-[60%]">
                     <div className="text-[13px] text-center mb-1">工事名 / Project Name / ชื่อโครงการ</div>
@@ -125,17 +122,12 @@ const CompletionReportPrint = () => {
                 </div>
             </div>
 
-            {/* Row 3: Time / Checkbox */}
-            {/* Row 3: Time / Checkbox */}
+            {/* Row 3 */}
             <div className="flex gap-4 mb-4">
-                {/* ฝั่งซ้าย 60% : Time (ข้อความและกรอบอยู่ในบรรทัดเดียวกัน) */}
                 <div className="w-[60%] flex items-center gap-3">
-                    {/* ข้อความ Label */}
                     <div className="text-[13px] whitespace-nowrap">
                         終わた時間 / Time / เวลา
                     </div>
-                    
-                    {/* กรอบสี่เหลี่ยม (ให้ขยายเต็มพื้นที่ที่เหลือ) */}
                     <div className="border border-black px-2 h-10 flex-grow flex items-center justify-center bg-white">
                         {data.finishTime} {data.finishTime ? 'น.' : ''}
                     </div>
@@ -159,25 +151,20 @@ const CompletionReportPrint = () => {
                 </div>
             </div>
 
-             {/* Row 4: Signature (New Line) */}
-            <div className="flex gap-4 mb-4 items-center"> {/* เพิ่ม items-center ตรงนี้เพื่อให้สูงเท่ากันแนวกลาง */}
-    {/* ฝั่งซ้าย 60% */}
-    <div className="w-[60%] flex flex-col justify-center items-center"> 
-        <h3 className="text-sm md:text-base leading-snug text-center">
-            工事完了承認サイン / Construction Completion <br />
-            Authorized Sign / ลายเซ็นต์อนุมัติเสร็จสิ้นโครงการ
-        </h3>
-    </div>
+             {/* Row 4 */}
+            <div className="flex gap-4 mb-4 items-center">
+                <div className="w-[60%] flex flex-col justify-center items-center"> 
+                    <h3 className="text-sm md:text-base leading-snug text-center">
+                        工事完了承認サイン / Construction Completion <br />
+                        Authorized Sign / ลายเซ็นต์อนุมัติเสร็จสิ้นโครงการ
+                    </h3>
+                </div>
+                <div className="w-[40%]">
+                    <div className="border border-black h-16 relative bg-white"></div>
+                </div>
+            </div>
 
-    {/* ฝั่งขวา 40% */}
-    <div className="w-[40%]">
-        <div className="border border-black h-16 relative bg-white">
-            {/* ช่องเซ็นชื่อ */}
-        </div>
-    </div>
-</div>
-
-            {/* Row 5: Remark */}
+            {/* Row 5 */}
             <div className="mb-4">
                 <div className="text-[13px] mb-1">備考 / Remark / หมายเหตุ</div>
                 <div className="border border-black p-2 min-h-[100px] whitespace-pre-wrap leading-normal text-left bg-white">
@@ -196,13 +183,12 @@ const CompletionReportPrint = () => {
 
       </div>
 
+      {/* ลบ style tag เดิมออกได้เลย เพราะเราจัดการใน index.css แทนเพื่อให้เป็นระเบียบ หรือถ้าจะคงไว้ให้ใช้แบบนี้ */}
       <style type="text/css">
         {`
           @media print {
-            body { background: white; -webkit-print-color-adjust: exact; }
             @page { size: A4; margin: 0; }
-            .print\\:hidden { display: none !important; }
-            .print\\:shadow-none { box-shadow: none !important; }
+            body { -webkit-print-color-adjust: exact; }
           }
         `}
       </style>

@@ -59,7 +59,7 @@ const CompletionReportForm = () => {
 
       if (error) throw error
 
-      navigate('/completion-report-print', { state: formData })
+      navigate('/operation-report-print', { state: formData })
 
     } catch (error) {
       console.error('Error saving report:', error)

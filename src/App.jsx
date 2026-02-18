@@ -28,6 +28,8 @@ import ReceiptVoucherForm from './ReceiptVoucherForm'
 import ReceiptVoucherPrint from './ReceiptVoucherPrint'
 import CompletionReportForm from './CompletionReportForm'
 import CompletionReportPrint from './CompletionReportPrint'
+import OperationReportForm from './OperationReportForm'
+import OperationReportPrint from './OperationReportPrint'
 // --- Component: Quick Stat Widget (ตัวเลขสรุป) ---
 const StatWidget = ({ icon: Icon, label, value, color }) => (
   <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 min-w-[200px] flex-1 fade-in-up hover:shadow-md transition-shadow">
@@ -211,7 +213,6 @@ const Home = ({ user }) => {
 
               {/* 4. Operation Report (Disabled) */}
               <MenuCard 
-                disabled={true} // <--- ปิดการใช้งาน
                 to="/operation-report"
                 title="Operation Report"
                 subtitle="รายงานการปฏิบัติงานประจำวัน"
@@ -288,6 +289,8 @@ function App() {
           <Route path="/receipt-voucher-print/:id" element={<ReceiptVoucherPrint />} />
           <Route path="/completion-report" element={<CompletionReportForm />} />
           <Route path="/completion-report-print" element={<CompletionReportPrint />} />
+          <Route path="/operation-report" element={<OperationReportForm />} />
+          <Route path="/operation-report-print" element={<OperationReportPrint />} />
         </Routes>
       </div>
     </Router>

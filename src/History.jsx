@@ -12,7 +12,8 @@ import {
   FileCheck,
   ChevronLeft,
   Banknote,
-  ClipboardCheck 
+  ClipboardCheck,
+  ClipboardList // เพิ่มไอคอนสำหรับ Operation Report
 } from "lucide-react";
 
 // ฟังก์ชันเลือกสีป้ายสถานะ
@@ -21,6 +22,7 @@ const getStatusColor = (status) => {
     case "อนุมัติแล้ว":
     case "เสร็จสิ้น":
     case "Complete": 
+    case "Recorded": // สถานะสำหรับ Operation Report
       return "bg-emerald-100 text-emerald-700 border-emerald-200";
     case "รออนุมัติ":
       return "bg-amber-100 text-amber-700 border-amber-200";
@@ -72,17 +74,25 @@ const History = () => {
         .select("*")
         .order("created_at", { ascending: false });
 
-      const [resOrders, resReceipts, resVouchers, resCompletions] = await Promise.all([
+      // 5. ดึงข้อมูล Operation Report (เพิ่มใหม่)
+      const reqOperations = supabase
+        .from("doc_operation_reports")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      const [resOrders, resReceipts, resVouchers, resCompletions, resOperations] = await Promise.all([
         reqOrders,
         reqReceipts,
         reqVouchers,
-        reqCompletions
+        reqCompletions,
+        reqOperations
       ]);
 
       if (resOrders.error) console.error("Error Orders:", resOrders.error);
       if (resReceipts.error) console.error("Error Receipts:", resReceipts.error);
       if (resVouchers.error) console.error("Error Vouchers:", resVouchers.error);
       if (resCompletions.error) console.error("Error Completions:", resCompletions.error);
+      if (resOperations.error) console.error("Error Operations:", resOperations.error);
 
       // --- แปลงข้อมูล (Mapping) ---
       
@@ -122,7 +132,6 @@ const History = () => {
         item_state: null
       }));
 
-      // ง. แก้ไขส่วน Completion Report
       const completions = (resCompletions.data || []).map((item) => ({
         ...item,
         doc_type: "completion",
@@ -131,7 +140,6 @@ const History = () => {
         display_amount: null, 
         display_person: item.location, 
         display_status: item.is_complete ? "Complete" : "Not Complete",
-        // แก้ไข: ใช้ link_print เป็น string ธรรมดา แล้วแยก state ออกมาต่างหาก
         link_print: '/completion-report-print',
         item_state: {
             date: item.date,
@@ -144,7 +152,51 @@ const History = () => {
         }
       }));
 
-      const allDocs = [...orders, ...receipts, ...vouchers, ...completions].sort(
+      // จ. Operation Reports (เพิ่มใหม่)
+      const operations = (resOperations.data || []).map((item) => {
+        // ดึง service_type ออกมา (ถ้าเป็น null ให้เป็น object ว่าง)
+        const serviceType = item.service_type || {};
+        
+        return {
+          ...item,
+          doc_type: "operation",
+          display_title: item.customer_name || "ไม่ระบุลูกค้า",
+          display_subtitle: `Operation Report: ${item.job_no || "-"}`,
+          display_amount: null, // ไม่มีจำนวนเงิน
+          display_person: item.operation_person,
+          display_status: "Recorded", // หรือเช็คเงื่อนไขอื่น
+          link_print: '/operation-report-print',
+          // ต้องแปลง field จาก DB (snake_case) เป็น State (camelCase) เพื่อให้หน้า Print รับค่าได้ถูกต้อง
+          item_state: {
+            jobNo: item.job_no,
+            issuedDate: item.issued_date,
+            // Checkboxes
+            isWarranty: serviceType.warranty,
+            isUrgent: serviceType.urgent,
+            isAfterService: serviceType.after_service,
+            isOther: serviceType.other,
+            otherDetail: serviceType.other_detail,
+            // Info
+            expense: item.expense,
+            customerName: item.customer_name,
+            contactName: item.contact_name,
+            startTime: item.start_time,
+            finishTime: item.finish_time,
+            operationPerson: item.operation_person,
+            // Details
+            problem: item.problem,
+            receivedInfoDate: item.received_info_date,
+            receivedInfoTime: item.received_info_time,
+            reason: item.reason,
+            solution: item.solution,
+            comment: item.comment,
+            placeProject: item.place_project
+          }
+        };
+      });
+
+      // รวมทุกเอกสาร
+      const allDocs = [...orders, ...receipts, ...vouchers, ...completions, ...operations].sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
@@ -159,21 +211,24 @@ const History = () => {
   const filteredDocs = docs.filter((doc) => {
     const matchesSearch =
       (doc.display_title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (doc.display_subtitle || "").toLowerCase().includes(searchTerm.toLowerCase());
+      (doc.display_subtitle || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (doc.job_no || "").toLowerCase().includes(searchTerm.toLowerCase()); // เพิ่มการค้นหา Job No
 
     const matchesType =
       filterType === "All" ||
       (filterType === "Order" && doc.doc_type === "order") ||
       (filterType === "Receipt" && doc.doc_type === "receipt") ||
       (filterType === "Voucher" && doc.doc_type === "voucher") ||
-      (filterType === "Completion" && doc.doc_type === "completion");
+      (filterType === "Completion" && doc.doc_type === "completion") ||
+      (filterType === "Operation" && doc.doc_type === "operation"); // เพิ่ม Filter
 
     return matchesSearch && matchesType;
   });
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      {/* ... (Header เหมือนเดิม) ... */}
+      
+      {/* Header Bar */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -216,6 +271,7 @@ const History = () => {
                   <option value="Receipt">ใบรับรองฯ</option>
                   <option value="Voucher">ใบสำคัญรับเงิน</option>
                   <option value="Completion">Completion Report</option>
+                  <option value="Operation">Operation Report</option> {/* เพิ่มตัวเลือก */}
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
               </div>
@@ -253,18 +309,22 @@ const History = () => {
                 >
                   <div className="p-4 md:px-6 md:py-4 flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center">
                     
+                    {/* วันที่ & ไอคอน */}
                     <div className="flex justify-between md:block md:col-span-2 mb-2 md:mb-0">
                       <div className="flex items-center gap-2 text-slate-500 text-sm">
                         {doc.doc_type === "order" && <FileText size={16} className="text-blue-500" />}
                         {doc.doc_type === "receipt" && <Receipt size={16} className="text-emerald-500" />}
                         {doc.doc_type === "voucher" && <Banknote size={16} className="text-pink-500" />}
                         {doc.doc_type === "completion" && <ClipboardCheck size={16} className="text-orange-500" />} 
+                        {doc.doc_type === "operation" && <ClipboardList size={16} className="text-violet-500" />} 
+                        
                         <span className="font-medium text-slate-700">
                           {new Date(doc.created_at).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "2-digit" })}
                         </span>
                       </div>
                     </div>
 
+                    {/* ชื่อ / หัวข้อ */}
                     <div className="md:col-span-3 mb-1 md:mb-0">
                       <h4 className="font-bold text-slate-800 text-base md:text-sm truncate">
                         {doc.display_title || "ไม่ระบุชื่อ"}
@@ -274,27 +334,33 @@ const History = () => {
                       </div>
                     </div>
 
+                    {/* รายละเอียด */}
                     <div className="md:col-span-3 mb-3 md:mb-0">
                       <p className="text-sm text-slate-600 line-clamp-1">{doc.display_subtitle}</p>
                       <p className="text-xs text-slate-400 mt-1 truncate font-medium">
+                        {/* แสดงผลต่างกันตามประเภทเอกสาร */}
                         {doc.doc_type === "completion" ? (
                             <span>🕒 เวลาเสร็จ: {doc.finish_time || "-"}</span>
+                        ) : doc.doc_type === "operation" ? (
+                            <span>📍 {doc.place_project || "ไม่ระบุสถานที่"}</span>
                         ) : (
                             <>💰 {Number(doc.display_amount || 0).toLocaleString()} บาท</>
                         )}
+                        
+                        {/* ชื่อคน (แสดงใน Desktop) */}
                         {doc.display_person && <span className="hidden md:inline text-slate-400 font-normal">{" • "}{doc.display_person}</span>}
                       </p>
                     </div>
 
+                    {/* สถานะ */}
                     <div className="md:col-span-2 flex md:justify-center mb-3 md:mb-0">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(doc.display_status)}`}>
                         {doc.display_status}
                       </span>
                     </div>
 
+                    {/* ปุ่ม Print */}
                     <div className="md:col-span-2 flex items-center justify-end gap-2 mt-2 md:mt-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
-                      
-                      {/* แก้ไข Link ให้ส่ง state ผ่าน prop 'state' แยกต่างหาก */}
                       <Link
                         to={doc.link_print}
                         state={doc.item_state} 
@@ -303,8 +369,8 @@ const History = () => {
                         <Printer size={18} />
                         <span>พิมพ์</span>
                       </Link>
-
                     </div>
+
                   </div>
                 </div>
               ))}

@@ -69,7 +69,9 @@ const CompletionReportPrint = () => {
      {/* ฝั่งขวา 40% (แก้จาก 50% เป็น 40%) */}
      <div className="w-[40%] text-right pt-2">
         <h2 className="text-[9px]">บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนท์ (ไทยแลนด์) จำกัด</h2>
-        <p className="text-[9px]">47/20 หมู่ 1 ตำบลคลองประเวศ อำเภอบ้านโพธิ์ จังหวัดฉะเชิงเทรา 24140</p>
+        <p className="text-[9px] whitespace-nowrap tracking-tighter">
+  47/20 หมู่ 1 ตำบลคลองประเวศ อำเภอบ้านโพธิ์ จังหวัดฉะเชิงเทรา 24140
+</p>
         <p className="text-[9px]">โทร : 038-086-341, แฟ็กซ์ : 038-086-342</p>
      </div>
   </div>
@@ -158,23 +160,22 @@ const CompletionReportPrint = () => {
             </div>
 
              {/* Row 4: Signature (New Line) */}
-            <div className="flex gap-4 mb-4">
-                {/* ฝั่งซ้าย 60% : ข้อความ Label */}
-                <div className="w-[60%] flex flex-col justify-end items-end pb-4 pr-2">
-                    <h3 className="mt-1 text-sm md:text-base leading-snug text-left">
-                        工事完了承認サイン / Construction Completion <br />
-                        Authorized Sign / ลายเซ็นต์อนุมัติเสร็จสิ้นโครงการ
-                    </h3>
-                </div>
+            <div className="flex gap-4 mb-4 items-center"> {/* เพิ่ม items-center ตรงนี้เพื่อให้สูงเท่ากันแนวกลาง */}
+    {/* ฝั่งซ้าย 60% */}
+    <div className="w-[60%] flex flex-col justify-center items-center"> 
+        <h3 className="text-sm md:text-base leading-snug text-center">
+            工事完了承認サイン / Construction Completion <br />
+            Authorized Sign / ลายเซ็นต์อนุมัติเสร็จสิ้นโครงการ
+        </h3>
+    </div>
 
-                {/* ฝั่งขวา 40% : ช่องเซ็นชื่อ */}
-                <div className="w-[40%]">
-                    <div className="border border-black h-16 relative bg-white">
-                        <div className="absolute bottom-2 left-0 w-full text-center">
-                        </div>
-                    </div>
-                </div>
-            </div>
+    {/* ฝั่งขวา 40% */}
+    <div className="w-[40%]">
+        <div className="border border-black h-16 relative bg-white">
+            {/* ช่องเซ็นชื่อ */}
+        </div>
+    </div>
+</div>
 
             {/* Row 5: Remark */}
             <div className="mb-4">

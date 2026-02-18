@@ -3,7 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, Eye, Save } from 'lucide-react'
 import ContractorPreview from './ContractorPreview' // เรียกใช้ตัวอย่างที่สร้างเมื่อกี้
-
+import { supabase } from './supabaseClient'
 export default function ContractorForm() {
   const [showPreview, setShowPreview] = useState(false) // สำหรับมือถือ
 

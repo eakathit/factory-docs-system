@@ -299,7 +299,7 @@ const Home = ({ user, onUserClick }) => {
         <header className="pt-8 pb-8 flex justify-between items-end">
           <div>
             <h1 className="text-3xl font-bold text-slate-800 bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">
-              สวัสดี, {user?.displayName || 'Guest'} 👋
+              ยินดีต้อนรับ, {user?.displayName || 'Guest'} 👋
             </h1>
             <p className="text-slate-500 mt-2 text-base">
               ระบบจัดการเอกสารโรงงาน {user?.role && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full ml-2">{user.role}</span>}

@@ -1,28 +1,35 @@
 // src/CompletionReportForm.jsx
-import React, { useState, useEffect } from 'react' // เพิ่ม useEffect
-import { useNavigate, useLocation, Link } from 'react-router-dom' // เพิ่ม useLocation
-import { ChevronLeft, Printer, FileCheck, Loader2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { ChevronLeft, Printer, Loader2, FileCheck } from 'lucide-react'
 import { supabase } from './supabaseClient'
 
 const CompletionReportForm = () => {
   const navigate = useNavigate()
-  const location = useLocation() // เรียกใช้ useLocation
+  const location = useLocation()
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  // ตรวจสอบว่ามีข้อมูลส่งกลับมาแก้ไขหรือไม่ ถ้าไม่มีให้ใช้ค่าเริ่มต้น
-  const initialData = location.state || {
+  // Helper: ดึงเวลาปัจจุบัน HH:mm
+  const getCurrentTime = () => {
+    const now = new Date()
+    return now.toTimeString().slice(0, 5)
+  }
+
+  // เตรียมข้อมูลเริ่มต้น (รองรับทั้ง Create และ Edit)
+  const initialData = {
+    id: null, // เพิ่ม id เข้ามาเพื่อเช็คสถานะ
     date: new Date().toISOString().split('T')[0],
     projectName: '',
     projectNo: '',
     location: '',
-    finishTime: '',
+    finishTime: getCurrentTime(),
     isComplete: true,
     remark: ''
   }
 
   const [formData, setFormData] = useState(initialData)
 
-  // ใช้ useEffect เพื่ออัปเดตฟอร์มถ้า location.state เปลี่ยนแปลง (กันเหนียว)
+  // ดึงข้อมูลจาก State (กรณีแก้ไข หรือ ย้อนกลับมาจากหน้า Print)
   useEffect(() => {
     if (location.state) {
       setFormData(prev => ({ ...prev, ...location.state }))
@@ -52,14 +59,39 @@ const CompletionReportForm = () => {
         remark: formData.remark
       }
 
-      const { error } = await supabase
-        .from('doc_completion_reports') 
-        .insert([dbData])
-        .select()
+      let resultData = null;
 
-      if (error) throw error
+      // --- LOGIC สำคัญ: เช็คว่ามี ID หรือไม่ ---
+      if (formData.id) {
+        // 1. กรณีมี ID = อัปเดตของเดิม (Update)
+        const { data, error } = await supabase
+          .from('doc_completion_reports') 
+          .update(dbData)
+          .eq('id', formData.id) // อ้างอิง ID เดิม
+          .select()
+          
+        if (error) throw error
+        resultData = data[0]
 
-      navigate('/operation-report-print', { state: formData })
+      } else {
+        // 2. กรณีไม่มี ID = สร้างใหม่ (Insert)
+        const { data, error } = await supabase
+          .from('doc_completion_reports') 
+          .insert([dbData])
+          .select() // select() เพื่อขอ ID ที่เพิ่งสร้างกลับมา
+
+        if (error) throw error
+        resultData = data[0]
+      }
+
+      // ส่งข้อมูลไปหน้า Print (รวมถึง ID ที่ได้มาด้วย เพื่อให้กดย้อนกลับมาแก้ถูกใบ)
+      navigate('/completion-report-print', { 
+        state: { 
+          ...formData, 
+          id: resultData.id, // สำคัญ: อัปเดต ID กลับเข้าไปใน State
+          created_at: resultData.created_at // เผื่อใช้แสดงเลขที่เอกสาร
+        } 
+      })
 
     } catch (error) {
       console.error('Error saving report:', error)
@@ -69,160 +101,101 @@ const CompletionReportForm = () => {
     }
   }
 
+  // ... (ส่วน Render Form เหมือนเดิมเป๊ะ ไม่ต้องแก้) ...
+  // Component ย่อยสำหรับ Label (แบบเรียบง่าย)
+  const FormLabel = ({ label, subLabel, required }) => (
+    <label className="block mb-1.5">
+      <span className="text-slate-800 font-medium text-base mr-2">
+        {label} {required && <span className="text-red-500">*</span>}
+      </span>
+      <span className="text-slate-400 text-xs font-normal font-mono">
+        {subLabel}
+      </span>
+    </label>
+  )
+
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
-      <div className="w-full max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50/50 pb-20">
+      <div className="w-full max-w-3xl mx-auto px-6 py-10">
         
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link to="/" className="p-2 rounded-full bg-white border shadow-sm hover:bg-slate-50">
-            <ChevronLeft size={24} className="text-slate-600" />
+        {/* --- Header --- */}
+        <div className="flex items-center gap-5 mb-8">
+          <Link 
+            to="/" 
+            className="w-12 h-12 flex items-center justify-center rounded-full bg-white shadow-sm border border-slate-200 text-slate-500 hover:text-orange-500 hover:shadow-md hover:border-orange-200 transition-all duration-300 group"
+          >
+            <ChevronLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-              <FileCheck className="text-orange-500" />
-              Completion Report
-            </h1>
-            <p className="text-slate-500">รายงานเสร็จสิ้นโครงการ</p>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+              <FileCheck size={24} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-800">
+                Completion Report
+              </h1>
+              <p className="text-slate-500 text-sm">แบบฟอร์มรายงานเสร็จสิ้นโครงการ</p>
+            </div>
           </div>
         </div>
 
         {/* Form Card */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 fade-in-up">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             
             {/* วันที่ */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">วันที่ / Date / 記入日</label>
-              <input 
-                type="date" 
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-                required
-              />
+            <div>
+              <FormLabel label="วันที่" subLabel="Date / 記入日" required />
+              <input type="date" name="date" value={formData.date} onChange={handleChange} className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" required />
             </div>
 
             {/* เวลา */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">เวลา / Time / 終わた時間</label>
-              <input 
-                type="time" 
-                name="finishTime"
-                value={formData.finishTime}
-                onChange={handleChange}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-              />
+            <div>
+              <FormLabel label="เวลาที่เสร็จ" subLabel="Finish Time / 終わた時間" />
+              <input type="time" name="finishTime" value={formData.finishTime} onChange={handleChange} className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
             </div>
 
             {/* ชื่อโครงการ */}
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-700">ชื่อโครงการ / Project Name / 工事名</label>
-              <input 
-                type="text" 
-                name="projectName"
-                value={formData.projectName}
-                onChange={handleChange}
-                placeholder="ระบุชื่อโครงการ..."
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-                required
-              />
+            <div className="md:col-span-2">
+              <FormLabel label="ชื่อโครงการ" subLabel="Project Name / 工事名" required />
+              <input type="text" name="projectName" value={formData.projectName} onChange={handleChange} className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-gray-300" placeholder="ระบุชื่อโครงการ" required />
             </div>
 
             {/* รหัสโครงการ */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">รหัส / Project No. / 工事番号</label>
-              <input 
-                type="text" 
-                name="projectNo"
-                value={formData.projectNo}
-                onChange={handleChange}
-                placeholder="ระบุรหัสโครงการ..."
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-              />
+            <div>
+              <FormLabel label="รหัสโครงการ" subLabel="Project No. / 工事番号" />
+              <input type="text" name="projectNo" value={formData.projectNo} onChange={handleChange} className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-gray-300" placeholder="ระบุรหัส (ถ้ามี)" />
             </div>
 
             {/* สถานที่ */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">สถานที่ / Place / 工事場所</label>
-              <input 
-                type="text" 
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                placeholder="ระบุสถานที่..."
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-              />
-            </div>
-
-            {/* หมายเหตุ */}
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-700">หมายเหตุ / Remark / 備考</label>
-              <textarea 
-                name="remark"
-                value={formData.remark}
-                onChange={handleChange}
-                rows="4"
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-              ></textarea>
+            <div>
+              <FormLabel label="สถานที่" subLabel="Place / 工事場所" />
+              <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-gray-300" placeholder="ระบุสถานที่" />
             </div>
 
             {/* สถานะความสำเร็จ */}
-            <div className="md:col-span-2 border-t border-slate-100 pt-6">
-              <div className="flex gap-6">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${formData.isComplete ? 'border-green-500 bg-green-500' : 'border-slate-300'}`}>
-                    {formData.isComplete && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
-                  </div>
-                  <input 
-                    type="radio" 
-                    name="status" 
-                    checked={formData.isComplete} 
-                    onChange={() => setFormData(prev => ({...prev, isComplete: true}))}
-                    className="hidden" 
-                  />
-                  <span className={`font-medium ${formData.isComplete ? 'text-green-600' : 'text-slate-500'}`}>Complete</span>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${!formData.isComplete ? 'border-red-500 bg-red-500' : 'border-slate-300'}`}>
-                    {!formData.isComplete && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
-                  </div>
-                  <input 
-                    type="radio" 
-                    name="status" 
-                    checked={!formData.isComplete} 
-                    onChange={() => setFormData(prev => ({...prev, isComplete: false}))}
-                    className="hidden" 
-                  />
-                  <span className={`font-medium ${!formData.isComplete ? 'text-red-600' : 'text-slate-500'}`}>Not Complete</span>
-                </label>
+            <div className="md:col-span-2 pt-2">
+              <FormLabel label="สถานะงาน" subLabel="Status / 状態" />
+              <div className="flex w-full bg-gray-100 p-1 rounded-lg border border-gray-200">
+                <button type="button" onClick={() => setFormData(prev => ({...prev, isComplete: true}))} className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${formData.isComplete ? 'bg-white text-green-700 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>Complete (เสร็จสมบูรณ์)</button>
+                <button type="button" onClick={() => setFormData(prev => ({...prev, isComplete: false}))} className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${!formData.isComplete ? 'bg-white text-red-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>Not Complete (ยังไม่เสร็จ)</button>
               </div>
             </div>
 
+            {/* หมายเหตุ */}
+            <div className="md:col-span-2">
+              <FormLabel label="หมายเหตุ" subLabel="Remark / 備考" />
+              <textarea name="remark" value={formData.remark} onChange={handleChange} rows="3" className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-gray-300 resize-none" placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea>
+            </div>
           </div>
 
           {/* ปุ่ม Action */}
-          <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
-            <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                  <>
-                    <Loader2 size={20} className="animate-spin" /> กำลังบันทึก...
-                  </>
-              ) : (
-                  <>
-                    <Printer size={20} /> บันทึกและพิมพ์
-                  </>
-              )}
+          <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+            <button type="button" onClick={() => navigate('/')} className="px-5 py-2.5 text-sm text-slate-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">ยกเลิก</button>
+            <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 text-white rounded-lg font-medium shadow-sm hover:bg-slate-900 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+              {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> บันทึก...</> : <><Printer size={18} /> บันทึกและพิมพ์</>}
             </button>
           </div>
-
         </form>
       </div>
     </div>

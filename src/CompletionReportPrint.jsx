@@ -1,12 +1,13 @@
 // src/CompletionReportPrint.jsx
 import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Printer, ChevronLeft } from 'lucide-react'
+import { Printer, ChevronLeft, Edit3 } from 'lucide-react'
 
 const CompletionReportPrint = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  
+
+  const formData = location.state
   // รับข้อมูลจากหน้า Form หรือ History
   const data = location.state || {
     date: '',
@@ -29,18 +30,21 @@ const CompletionReportPrint = () => {
       
       {/* Toolbar */}
       <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center print:hidden">
+        
+        {/* ปุ่มย้อนกลับไปแก้ไข (สำคัญ!) */}
         <button 
-          // แก้ไข: ส่งข้อมูลกลับไปที่หน้า Form (สมมติว่า path คือ /completion-report)
-          onClick={() => navigate('/completion-report', { state: data })}
-          className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm text-gray-600 hover:bg-gray-50 border transition-colors"
+          onClick={() => navigate('/completion-report', { state: formData })} // <--- ส่ง formData (ที่มี ID) กลับไป
+          className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-lg shadow-sm border border-gray-200 hover:bg-slate-50 transition-colors"
         >
-          <ChevronLeft size={18} /> กลับแก้ไข
+          <Edit3 size={18} /> กลับไปแก้ไข
         </button>
+
+        {/* ปุ่มสั่งปริ้น */}
         <button 
           onClick={() => window.print()}
-          className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 font-medium transition-colors"
+          className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors font-semibold"
         >
-          <Printer size={18} /> สั่งพิมพ์ (Print)
+          <Printer size={18} /> สั่งพิมพ์เอกสาร
         </button>
       </div>
 

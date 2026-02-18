@@ -64,7 +64,7 @@ const OperationReportPrint = () => {
       <div className="w-[210mm] min-h-[297mm] mx-auto bg-white p-[15mm] shadow-lg print:shadow-none print:w-[210mm] print:h-[297mm] print:p-[15mm] print:mx-0 print:my-0 text-black font-sans">
         
         {/* --- HEADER --- */}
-        <table className="w-full border-collapse">
+        <table className="w-full mb-4 border-collapse">
           <tbody>
             <tr>
               <td className="align-top">
@@ -87,18 +87,18 @@ const OperationReportPrint = () => {
                 <table className="border-collapse ml-auto bg-white">
                   <tbody>
                     <tr>
-                      <td className="text-[10px] px-2 py-1 text-right whitespace-nowrap align-middle">
+                      <td className="text-[10px] font-bold border border-black px-2 py-1 text-right whitespace-nowrap align-middle">
                         JOB NO.
                       </td>
-                      <td className="text-[10px] border border-black px-1 py-0.5 text-center w-[100px] min-w-[100px] align-middle leading-none">
+                      <td className="text-[11px] font-medium border border-black px-1 py-0.5 text-center w-[100px] min-w-[100px] align-middle leading-none">
                         {data.jobNo || '-'}
                       </td>
                     </tr>
                     <tr>
-                      <td className="text-[10px] px-2 py-1 text-right whitespace-nowrap align-middle">
+                      <td className="text-[10px] font-bold border border-black px-2 py-1 text-right whitespace-nowrap align-middle">
                         ISSUED DATE
                       </td>
-                      <td className="text-[10px] border border-black px-1 py-0.5 text-center w-[100px] min-w-[100px] align-middle leading-none">
+                      <td className="text-[11px] font-medium border border-black px-1 py-0.5 text-center w-[100px] min-w-[100px] align-middle leading-none">
                         {formatDate(data.issuedDate)}
                       </td>
                     </tr>
@@ -110,12 +110,12 @@ const OperationReportPrint = () => {
         </table>
 
         {/* --- TITLE --- */}
-        <div className="text-center py-1 mb-1">
+        <div className="text-center border-2 border-black py-1 mb-1 bg-gray-50 print:bg-gray-50">
           <h2 className="text-lg font-bold tracking-wider">OPERATION REPORT</h2>
         </div>
 
         {/* =========================================
-            กล่องที่ 1: Service Type & Expense (แยกออกมา)
+            กล่องที่ 1: Service Type & Expense 
            ========================================= */}
         <div className="flex border-2 border-black mb-1.5 text-xs">
             {/* ฝั่งซ้าย */}
@@ -131,11 +131,14 @@ const OperationReportPrint = () => {
               </div>
               <div className="flex items-center gap-2">
                  <CheckBox checked={data.isOther} label="OTHER" />
+                 <div className="border-b border-dotted border-black flex-1 text-[11px] text-blue-900 print:text-black leading-none h-4">
+                    {data.otherDetail}
+                 </div>
               </div>
             </div>
 
             {/* ฝั่งขวา (Expense) */}
-            <div className="w-[40%] border-l-2 border-black p-2 flex flex-col justify-center pl-4">
+            <div className="w-[25%] border-l-2 border-black p-2 flex flex-col justify-center pl-4">
                <span className="font-bold text-[10px] mb-1">EXPENSE</span>
                <div className="flex flex-col gap-1">
                   <CheckBox checked={data.expense === 'HAVE'} label="HAVE" />
@@ -145,51 +148,109 @@ const OperationReportPrint = () => {
         </div>
 
         {/* =========================================
-            กล่องที่ 2: Information & Details (แยกออกมา)
+            กล่องที่ 2: Information (Customer/Contact & Place/Project)
            ========================================= */}
-        <div className="border-2 border-black text-xs">
-          
-          {/* INFORMATION Header */}
+        <div className="border-2 border-black mb-1.5 text-xs">
+          {/* Header INFORMATION */}
           <div className="bg-gray-200 print:bg-gray-200 border-b border-black text-center font-bold py-1 text-[11px]">
             INFORMATION
           </div>
 
-          {/* Customer & Contact */}
-          <div className="grid grid-cols-2 border-b border-black">
-            <div className="flex border-r border-black">
-              <div className="w-28 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">CUSTOMER NAME</div>
-              <div className="flex-1 p-1.5 flex items-center text-blue-900 print:text-black font-medium break-words text-[11px]">
-                {data.customerName}
+          <div className="flex">
+            {/* --- ฝั่งซ้าย: Customer & Contact --- */}
+            <div className="w-1/2 border-r border-black">
+              {/* Customer Name */}
+              <div className="flex border-b border-black">
+                <div className="w-28 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">
+                  CUSTOMER NAME
+                </div>
+                <div className="flex-1 p-1.5 flex items-center text-blue-900 print:text-black font-medium break-words text-[11px]">
+                  {data.customerName}
+                </div>
+              </div>
+              {/* Contact Name */}
+              <div className="flex">
+                <div className="w-28 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">
+                  CONTACT NAME
+                </div>
+                <div className="flex-1 p-1.5 flex items-center text-blue-900 print:text-black font-medium text-[11px]">
+                  {data.contactName}
+                </div>
               </div>
             </div>
-            <div className="flex">
-              <div className="w-28 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">CONTACT NAME</div>
-              <div className="flex-1 p-1.5 flex items-center text-blue-900 print:text-black font-medium text-[11px]">
-                {data.contactName}
+
+            {/* --- ฝั่งขวา: Place & Project --- */}
+            <div className="w-1/2">
+              {/* Place */}
+              <div className="flex border-b border-black">
+                <div className="w-20 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">
+                  PLACE
+                </div>
+                <div className="flex-1 p-1.5 flex items-center text-blue-900 print:text-black font-medium text-[11px]">
+                  {/* ถ้ายังไม่มีตัวแปร data.place ให้ว่างไว้ หรือใช้ค่าอื่น */}
+                  {data.place || '-'} 
+                </div>
+              </div>
+              {/* Project */}
+              <div className="flex">
+                <div className="w-20 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">
+                  PROJECT
+                </div>
+                <div className="flex-1 p-1.5 flex items-center text-blue-900 print:text-black font-medium text-[11px]">
+                  {/* ใช้ placeProject มาแสดงตรงนี้แทน */}
+                  {data.placeProject}
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Time & Person */}
-          <div className="grid grid-cols-2 border-b border-black">
-            <div className="flex border-r border-black">
-               <div className="flex-1 flex border-r border-black">
-                  <div className="w-20 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">START TIME</div>
-                  <div className="flex-1 p-1.5 text-center flex items-center justify-center font-medium text-[11px]">{data.startTime}</div>
+       {/* =========================================
+            กล่องที่ 3: Time & Person (แก้ไข: Operation Person เป็นแนวนอน)
+           ========================================= */}
+        <div className="flex border-2 border-black mb-1.5 text-xs">
+           
+           {/* ฝั่งซ้าย: Start & Finish Time (70%) */}
+           <div className="w-[40%] border-r border-black">
+               {/* Start Time */}
+               <div className="flex border-b border-black">
+                  <div className="w-28 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">
+                    START TIME
+                  </div>
+                  <div className="flex-1 p-1.5 text-center flex items-center justify-center font-medium text-[11px]">
+                    {data.startTime}
+                  </div>
                </div>
-               <div className="flex-1 flex">
-                  <div className="w-20 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">FINISH TIME</div>
-                  <div className="flex-1 p-1.5 text-center flex items-center justify-center font-medium text-[11px]">{data.finishTime}</div>
+               {/* Finish Time */}
+               <div className="flex">
+                  <div className="w-28 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">
+                    FINISH TIME
+                  </div>
+                  <div className="flex-1 p-1.5 text-center flex items-center justify-center font-medium text-[11px]">
+                    {data.finishTime}
+                  </div>
                </div>
-            </div>
-            <div className="flex">
-              <div className="w-28 bg-gray-50 print:bg-gray-50 p-1.5 font-bold border-r border-black flex items-center text-[10px]">OPERATION PERSON</div>
-              <div className="flex-1 p-1.5 flex items-center text-blue-900 print:text-black font-medium text-[11px]">
-                {data.operationPerson}
+           </div>
+
+           {/* ฝั่งขวา: Operation Person (30%) - ปรับเป็น Flex Row (แนวนอน) */}
+           <div className="w-[30%] flex">
+              {/* ส่วนหัว Label: อยู่ฝั่งซ้าย */}
+              <div className="w-[45%] bg-gray-50 print:bg-gray-50 p-1 font-bold border-r border-black text-center text-[10px] leading-tight flex items-center justify-center">
+                 OPERATION<br/>PERSON
               </div>
-            </div>
-          </div>
+              
+              {/* ส่วนเนื้อหา Data: อยู่ฝั่งขวา */}
+              <div className="flex-1 flex items-center justify-center p-1 text-blue-900 print:text-black font-medium text-[11px] text-center">
+                 {data.operationPerson}
+              </div>
+           </div>
 
+        </div>
+        {/* =========================================
+            กล่องที่ 4: Details (Problem, Reason, etc.)
+           ========================================= */}
+        <div className="border-2 border-black text-xs">
+          
           {/* PROBLEM */}
           <div className="border-b border-black min-h-[110px] flex flex-col">
             <div className="bg-gray-50 print:bg-gray-50 p-1 px-2 border-b border-black flex justify-between items-center">

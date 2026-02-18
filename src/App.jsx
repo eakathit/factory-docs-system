@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { 
   FileText, 
@@ -7,18 +7,17 @@ import {
   Calendar, 
   Clock, 
   User, 
-  X,            // เพิ่ม X สำหรับปุ่มปิด
+  X,
   ChevronRight, 
   Banknote, 
   ClipboardList, 
   FileCheck, 
   LayoutGrid,
-  LogOut,       // เพิ่มไอคอน Logout
-  Lock          // เพิ่มไอคอน Lock
+  LogOut,
+  Lock,
+  AlertCircle // <--- เพิ่มไอคอนนี้เข้ามา
 } from 'lucide-react'
-import { Toaster, toast } from 'react-hot-toast' // Import ทีเดียวจบ
-
-// นำเข้า Client Supabase
+import { Toaster, toast } from 'react-hot-toast'
 import { supabase } from './supabaseClient'
 
 // นำเข้าไฟล์หน้าต่างๆ
@@ -35,7 +34,49 @@ import CompletionReportPrint from './CompletionReportPrint'
 import OperationReportForm from './OperationReportForm'
 import OperationReportPrint from './OperationReportPrint'
 
-// --- Component: Login Modal ---
+// --- 1. Component ใหม่: AlertModal (แจ้งเตือนตรงกลางจอ) ---
+const AlertModal = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform transition-all scale-100">
+        
+        {/* Icon */}
+        <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full mx-auto flex items-center justify-center mb-4">
+          <Lock size={32} />
+        </div>
+
+        {/* Text */}
+        <h3 className="text-xl font-bold text-slate-800 mb-2">
+          จำกัดสิทธิ์การเข้าถึง
+        </h3>
+        <p className="text-slate-500 mb-6 leading-relaxed">
+          เมนูนี้สำหรับผู้ใช้งานที่ลงทะเบียนเท่านั้น <br/>
+          กรุณาเข้าสู่ระบบก่อนใช้งาน
+        </p>
+
+        {/* Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+          >
+            ยกเลิก
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 text-white font-semibold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-colors"
+          >
+            เข้าสู่ระบบ
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// --- Component: Login Modal (เหมือนเดิม) ---
 const LoginModal = ({ isOpen, onClose, onLogin, user, onLogout }) => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -46,9 +87,7 @@ const LoginModal = ({ isOpen, onClose, onLogin, user, onLogout }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-
     try {
-      // ตรวจสอบข้อมูลจากตาราง users ใน Supabase
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -76,14 +115,9 @@ const LoginModal = ({ isOpen, onClose, onLogin, user, onLogout }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 fade-in">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative">
-        {/* Close Button */}
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-        >
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
           <X size={24} />
         </button>
-
         <div className="p-8">
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl mx-auto flex items-center justify-center mb-4">
@@ -98,51 +132,25 @@ const LoginModal = ({ isOpen, onClose, onLogin, user, onLogout }) => {
           </div>
 
           {user.displayName ? (
-             /* แสดงเมื่อ Login แล้ว */
             <div className="space-y-4">
               <div className="bg-slate-50 p-4 rounded-xl text-center border border-slate-100">
                 <p className="text-slate-600">สวัสดี, <span className="font-bold text-blue-600">{user.displayName}</span></p>
               </div>
-              <button
-                onClick={() => {
-                  onLogout()
-                  onClose()
-                }}
-                className="w-full py-3 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
-              >
+              <button onClick={() => { onLogout(); onClose(); }} className="w-full py-3 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
                 <LogOut size={20} /> ออกจากระบบ
               </button>
             </div>
           ) : (
-             /* แสดงฟอร์ม Login */
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">ชื่อผู้ใช้ (Username)</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                  placeholder="เช่น haru, AUM"
-                  required
-                />
+                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน (Password)</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                  placeholder="••••••••"
-                  required
-                />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="" required />
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-              >
+              <button type="submit" disabled={loading} className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:scale-[1.02] transition-all disabled:opacity-70">
                 {loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
               </button>
             </form>
@@ -153,7 +161,74 @@ const LoginModal = ({ isOpen, onClose, onLogin, user, onLogout }) => {
   )
 }
 
-// --- Component: Quick Stat Widget ---
+const ActivityFeed = () => {
+  // Mock Data: ข้อมูลสมมติ (ในอนาคตดึงจาก Supabase)
+  const activities = [
+    { id: 1, action: 'สร้างใบสั่งจ้าง', docId: 'PO-6702001', user: 'Haru', time: '10 นาทีที่แล้ว', type: 'create' },
+    { id: 2, action: 'อนุมัติใบรับรอง', docId: 'RC-6702015', user: 'Admin AUM', time: '1 ชม. ที่แล้ว', type: 'approve' },
+    { id: 3, action: 'ส่งรายงาน', docId: 'OP-6702088', user: 'Technician B', time: 'เมื่อวาน', type: 'submit' },
+    { id: 4, action: 'แก้ไขเอกสาร', docId: 'PO-6701099', user: 'Haru', time: 'เมื่อวาน', type: 'edit' },
+  ]
+
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-6 fade-in-up" style={{ animationDelay: '100ms' }}>
+      <div className="flex justify-between items-center mb-4">
+        <h4 className="text-slate-800 font-bold text-lg flex items-center gap-2">
+          <Clock size={20} className="text-blue-500" /> 
+          ความเคลื่อนไหวล่าสุด
+        </h4>
+        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full cursor-pointer hover:bg-blue-100">ดูทั้งหมด</span>
+      </div>
+      
+      <div className="space-y-4">
+        {activities.map((item) => (
+          <div key={item.id} className="flex items-start gap-3 pb-3 border-b border-slate-50 last:border-0 last:pb-0">
+            {/* Icon แยกตามประเภท action */}
+            <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 
+              ${item.type === 'approve' ? 'bg-green-500' : 
+                item.type === 'create' ? 'bg-blue-500' : 'bg-slate-300'
+              }`} 
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-slate-700">
+                {item.action} <span className="text-slate-500 font-normal">#{item.docId}</span>
+              </p>
+              <div className="flex justify-between items-center mt-1">
+                <p className="text-xs text-slate-400">โดย {item.user}</p>
+                <p className="text-xs text-slate-400">{item.time}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// --- Component: การ์ดสถานะ/ประกาศ (System Status) ---
+const SystemStatus = () => {
+  return (
+    <div className="bg-gradient-to-br from-indigo-600 to-violet-600 p-6 rounded-2xl shadow-lg shadow-indigo-500/20 mt-6 text-white fade-in-up" style={{ animationDelay: '200ms' }}>
+      <div className="flex items-start gap-4">
+        <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+          <ClipboardList size={24} className="text-white" />
+        </div>
+        <div>
+          <h4 className="font-bold text-lg mb-1">ประกาศจากระบบ</h4>
+          <p className="text-indigo-100 text-sm leading-relaxed mb-3">
+            กรุณาส่งเอกสารเบิกงวดสุดท้ายภายในวันที่ 25 ของเดือนนี้ เพื่อให้ทันรอบบัญชี
+          </p>
+          <div className="flex items-center gap-2 text-xs font-medium bg-white/10 w-fit px-3 py-1.5 rounded-lg">
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            ระบบทำงานปกติ
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// --- Stats Widget ---
 const StatWidget = ({ icon: Icon, label, value, color }) => (
   <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 min-w-[200px] flex-1 fade-in-up hover:shadow-md transition-shadow">
     <div className="flex items-center gap-4">
@@ -170,84 +245,57 @@ const StatWidget = ({ icon: Icon, label, value, color }) => (
   </div>
 )
 
-// --- Component: MenuCard ---
+// --- MenuCard ---
 const MenuCard = ({ to, title, subtitle, icon: Icon, gradient, delay, disabled, onClick }) => {
   const CardContent = (
-    <div 
-      className={`h-full rounded-3xl p-6 border relative overflow-hidden fade-in-up transition-all duration-300
-        ${disabled 
-          ? 'bg-slate-50 border-slate-200 opacity-70 grayscale cursor-not-allowed' 
-          : 'bg-white border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1'
-        }
-      `}
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      {!disabled && (
-        <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${gradient} opacity-10 rounded-bl-[100px] -mr-10 -mt-10 group-hover:scale-110 transition-transform duration-500`} />
-      )}
+    <div className={`h-full rounded-3xl p-6 border relative overflow-hidden fade-in-up transition-all duration-300 ${disabled ? 'bg-slate-50 border-slate-200 opacity-70 grayscale cursor-not-allowed' : 'bg-white border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1'}`} style={{ animationDelay: `${delay}ms` }}>
+      {!disabled && <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${gradient} opacity-10 rounded-bl-[100px] -mr-10 -mt-10 group-hover:scale-110 transition-transform duration-500`} />}
       <div className="relative z-10 flex flex-col h-full justify-between">
         <div>
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg transition-transform duration-300
-            ${disabled 
-              ? 'bg-slate-400 shadow-none' 
-              : `bg-gradient-to-br ${gradient} transform group-hover:rotate-6`
-            }
-          `}>
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg transition-transform duration-300 ${disabled ? 'bg-slate-400 shadow-none' : `bg-gradient-to-br ${gradient} transform group-hover:rotate-6`}`}>
             <Icon size={28} />
           </div>
-          <h3 className={`text-xl font-bold mb-2 transition-colors
-            ${disabled ? 'text-slate-500' : 'text-slate-800 group-hover:text-blue-600'}
-          `}>
-            {title}
-          </h3>
-          <p className="text-slate-500 text-sm leading-relaxed">
-            {subtitle}
-          </p>
+          <h3 className={`text-xl font-bold mb-2 transition-colors ${disabled ? 'text-slate-500' : 'text-slate-800 group-hover:text-blue-600'}`}>{title}</h3>
+          <p className="text-slate-500 text-sm leading-relaxed">{subtitle}</p>
         </div>
-        <div className={`mt-6 flex items-center text-sm font-semibold transition-colors
-          ${disabled ? 'text-slate-400' : 'text-slate-400 group-hover:text-blue-600'}
-        `}>
+        <div className={`mt-6 flex items-center text-sm font-semibold transition-colors ${disabled ? 'text-slate-400' : 'text-slate-400 group-hover:text-blue-600'}`}>
           <span>{disabled ? 'เร็วๆ นี้ (Coming Soon)' : 'เข้าสู่เมนู'}</span>
           {!disabled && <ChevronRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />}
         </div>
       </div>
     </div>
   )
-
-  if (disabled) {
-    return <div className="block group select-none">{CardContent}</div>
-  }
-
-  return (
-    <Link to={to} className="block group" onClick={onClick}>
-      {CardContent}
-    </Link>
-  )
+  if (disabled) return <div className="block group select-none">{CardContent}</div>
+  return <Link to={to} className="block group" onClick={onClick}>{CardContent}</Link>
 }
 
-// --- Component: Home ---
+// --- Home Component (แก้ไขเพิ่ม Warning Modal) ---
+// --- Component: Home (ซ่อน Activity Feed ในมือถือ) ---
 const Home = ({ user, onUserClick }) => {
+  const [showWarning, setShowWarning] = useState(false)
 
   const handleRestrictedClick = (e) => {
-    if (!user?.displayName) { // เช็คว่ามีชื่อผู้ใช้หรือไม่ (ถ้าไม่มี = ยังไม่ Login)
-      e.preventDefault()      // ห้ามเปลี่ยนหน้า
-      toast.error('กรุณาเข้าสู่ระบบก่อนใช้งานเมนูนี้', {
-        icon: '🔒',
-        style: {
-          borderRadius: '10px',
-          background: '#333',
-          color: '#fff',
-        },
-      })
-      // onUserClick() // (ทางเลือก) ถ้าต้องการให้เด้งหน้า Login ทันทีให้เอา comment ออก
+    if (!user?.displayName) {
+      e.preventDefault() 
+      setShowWarning(true) 
     }
   }
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-10">
       
+      <AlertModal 
+        isOpen={showWarning}
+        onClose={() => setShowWarning(false)}
+        onConfirm={() => {
+          setShowWarning(false)
+          onUserClick()
+        }}
+      />
+
       <div className="w-full max-w-[96%] mx-auto px-4 sm:px-6 lg:px-12">
         
+        {/* --- Header --- */}
         <header className="pt-8 pb-8 flex justify-between items-end">
           <div>
             <h1 className="text-3xl font-bold text-slate-800 bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">
@@ -258,11 +306,7 @@ const Home = ({ user, onUserClick }) => {
             </p>
           </div>
           
-          {/* ปุ่ม User Profile คลิกเพื่อ Login */}
-          <div 
-            onClick={onUserClick}
-            className="group cursor-pointer relative"
-          >
+          <div onClick={onUserClick} className="group cursor-pointer relative">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-105
               ${user?.displayName 
                 ? 'bg-gradient-to-tr from-blue-500 to-indigo-600 shadow-blue-500/30' 
@@ -271,7 +315,6 @@ const Home = ({ user, onUserClick }) => {
             `}>
               <User size={24} />
             </div>
-            {/* Tooltip */}
             <div className="absolute top-full right-0 mt-2 px-3 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
               {user?.displayName ? 'จัดการบัญชี' : 'คลิกเพื่อเข้าสู่ระบบ'}
             </div>
@@ -280,52 +323,41 @@ const Home = ({ user, onUserClick }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* LEFT COLUMN: Stats */}
-          <div className="lg:col-span-4 xl:col-span-3 space-y-6">
+          {/* --- LEFT COLUMN --- */}
+          <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-6">
+            
             <h3 className="text-lg font-semibold text-slate-700 hidden lg:block px-1">
               ภาพรวมเดือนนี้
             </h3>
             
-            <div className="flex gap-4 overflow-x-auto pb-4 lg:pb-0 lg:overflow-visible lg:flex-col lg:gap-5">
+            {/* 1. สถิติตัวเลข (Stats) - เลื่อนแนวนอนในมือถือ */}
+            <div className="flex gap-4 overflow-x-auto pb-4 lg:pb-0 lg:overflow-visible lg:flex-col lg:gap-5 scrollbar-hide">
               <StatWidget 
-                icon={FileText} 
-                label="ใบสั่งจ้าง" 
-                value="12" 
-                color="bg-blue-500" 
+                icon={FileText} label="ใบสั่งจ้าง" value="12" color="bg-blue-500" 
               />
               <StatWidget 
-                icon={Receipt} 
-                label="ใบรับรองฯ" 
-                value="20" 
-                color="bg-emerald-500" 
+                icon={Receipt} label="ใบรับรองฯ" value="20" color="bg-emerald-500" 
               />
               <StatWidget 
-                icon={Clock} 
-                label="รออนุมัติ" 
-                value="3" 
-                color="bg-orange-500" 
+                icon={Clock} label="รออนุมัติ" value="3" color="bg-orange-500" 
               />
-              
-              <div className="hidden lg:block bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-4">
-                <h4 className="text-slate-800 font-medium mb-2 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-blue-500"/> ปฏิทินงาน
-                </h4>
-                <p className="text-sm text-slate-500">
-                  วันนี้ {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}<br/>    
-                </p>
-              </div>
             </div>
+            
+            {/* 2. รายการเคลื่อนไหวล่าสุด (Activity Feed) */}
+            {/* แก้ไขตรงนี้: ใส่ hidden lg:block เพื่อซ่อนในมือถือ แต่แสดงใน PC */}
+            <div className="hidden lg:block">
+               <ActivityFeed />
+            </div>
+
           </div>
 
-          {/* RIGHT COLUMN: 6 เมนูหลัก */}
+          {/* --- RIGHT COLUMN: Main Menu --- */}
           <div className="lg:col-span-8 xl:col-span-9">
             <h3 className="text-lg font-semibold text-slate-700 mb-4 hidden lg:block px-1">
                เมนูใช้งาน
             </h3>
             
-            {/* Grid 3 คอลัมน์ */}
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              
               <MenuCard 
                 to="/contractor-order"
                 title="ใบสั่งจ้างผู้รับเหมา"
@@ -378,7 +410,7 @@ const Home = ({ user, onUserClick }) => {
                 icon={Calendar}
                 gradient="from-cyan-500 to-blue-500"
                 delay="350"
-                onClick={handleRestrictedClick}
+                onClick={handleRestrictedClick} 
               />
 
               <MenuCard 
@@ -389,7 +421,6 @@ const Home = ({ user, onUserClick }) => {
                 gradient="from-slate-600 to-slate-800"
                 delay="350"
               />
-
             </div>
           </div>
 
@@ -399,7 +430,6 @@ const Home = ({ user, onUserClick }) => {
   )
 }
 
-// --- Main App Component ---
 function App() {
   const [user, setUser] = useState({ displayName: '', role: '' })
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
@@ -416,15 +446,8 @@ function App() {
 
   return (
     <>
-      <Toaster 
-        position="top-center"
-        toastOptions={{
-          duration: 3000,
-          style: { background: '#1e293b', color: '#fff', borderRadius: '12px' },
-        }} 
-      />
-
-      {/* เรียกใช้ Login Modal */}
+      <Toaster position="top-center" toastOptions={{ duration: 3000, style: { background: '#1e293b', color: '#fff', borderRadius: '12px' }, }} />
+      
       <LoginModal 
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)}
@@ -436,12 +459,7 @@ function App() {
       <Router>
         <div className="min-h-screen text-slate-800 selection:bg-blue-100 selection:text-blue-600">
           <Routes>
-            <Route path="/" element={
-              <Home 
-                user={user} 
-                onUserClick={() => setIsLoginModalOpen(true)} 
-              />
-            } />
+            <Route path="/" element={<Home user={user} onUserClick={() => setIsLoginModalOpen(true)} />} />
             <Route path="/contractor-order" element={<ContractorForm />} />
             <Route path="/history" element={<History />} />
             <Route path="/factory-portal" element={<FactoryPortal />} />

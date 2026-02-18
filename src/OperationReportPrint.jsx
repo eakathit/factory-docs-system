@@ -191,7 +191,7 @@ const OperationReportPrint = () => {
                 </div>
                 <div className="flex-1 p-1.5 flex items-center print:text-black text-[13px]">
                   {/* ถ้ายังไม่มีตัวแปร data.place ให้ว่างไว้ หรือใช้ค่าอื่น */}
-                  {data.place || '-'} 
+                  {data.place}
                 </div>
               </div>
               {/* Project */}
@@ -200,8 +200,7 @@ const OperationReportPrint = () => {
                   PROJECT
                 </div>
                 <div className="flex-1 p-1.5 flex items-center print:text-black text-[13px]">
-                  {/* ใช้ placeProject มาแสดงตรงนี้แทน */}
-                  {data.placeProject}
+                  {data.project}
                 </div>
               </div>
             </div>

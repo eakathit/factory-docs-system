@@ -337,19 +337,7 @@ const History = () => {
                     {/* รายละเอียด */}
                     <div className="md:col-span-3 mb-3 md:mb-0">
                       <p className="text-sm text-slate-600 line-clamp-1">{doc.display_subtitle}</p>
-                      <p className="text-xs text-slate-400 mt-1 truncate font-medium">
-                        {/* แสดงผลต่างกันตามประเภทเอกสาร */}
-                        {doc.doc_type === "completion" ? (
-                            <span>🕒 เวลาเสร็จ: {doc.finish_time || "-"}</span>
-                        ) : doc.doc_type === "operation" ? (
-                            <span>📍 {doc.place_project || "ไม่ระบุสถานที่"}</span>
-                        ) : (
-                            <>💰 {Number(doc.display_amount || 0).toLocaleString()} บาท</>
-                        )}
-                        
-                        {/* ชื่อคน (แสดงใน Desktop) */}
-                        {doc.display_person && <span className="hidden md:inline text-slate-400 font-normal">{" • "}{doc.display_person}</span>}
-                      </p>
+                      
                     </div>
 
                     {/* สถานะ */}

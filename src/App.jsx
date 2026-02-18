@@ -127,14 +127,14 @@ const LoginModal = ({ isOpen, onClose, onLogin, user, onLogout }) => {
               {user.displayName ? 'ข้อมูลผู้ใช้งาน' : 'เข้าสู่ระบบ'}
             </h2>
             <p className="text-slate-500 text-sm mt-1">
-              {user.displayName ? `สถานะ: ${user.role || 'User'}` : 'กรุณากรอกข้อมูลเพื่อยืนยันตัวตน'}
+              {user.displayName ? `Role: ${user.role || 'User'}` : 'กรุณากรอกข้อมูลเพื่อยืนยันตัวตน'}
             </p>
           </div>
 
           {user.displayName ? (
             <div className="space-y-4">
               <div className="bg-slate-50 p-4 rounded-xl text-center border border-slate-100">
-                <p className="text-slate-600">สวัสดี, <span className="font-bold text-blue-600">{user.displayName}</span></p>
+                <p className="text-slate-600">user, <span className="font-bold text-blue-600">{user.displayName}</span></p>
               </div>
               <button onClick={() => { onLogout(); onClose(); }} className="w-full py-3 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
                 <LogOut size={20} /> ออกจากระบบ

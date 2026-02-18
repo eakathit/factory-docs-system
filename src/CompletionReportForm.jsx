@@ -171,7 +171,6 @@ const CompletionReportForm = () => {
 
             {/* สถานะความสำเร็จ */}
             <div className="md:col-span-2 border-t border-slate-100 pt-6">
-              <label className="text-sm font-medium text-slate-700 mb-3 block">ผลการดำเนินงาน</label>
               <div className="flex gap-6">
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${formData.isComplete ? 'border-green-500 bg-green-500' : 'border-slate-300'}`}>
@@ -218,7 +217,7 @@ const CompletionReportForm = () => {
                   </>
               ) : (
                   <>
-                    <Printer size={20} /> บันทึกและสร้างใบรายงาน
+                    <Printer size={20} /> บันทึกและพิมพ์
                   </>
               )}
             </button>

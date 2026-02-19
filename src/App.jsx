@@ -33,6 +33,7 @@ import CompletionReportForm from './CompletionReportForm'
 import CompletionReportPrint from './CompletionReportPrint'
 import OperationReportForm from './OperationReportForm'
 import OperationReportPrint from './OperationReportPrint'
+import DashboardPanel from './DashboardPanel'
 
 // --- 1. Component ใหม่: AlertModal (แจ้งเตือนตรงกลางจอ) ---
 const AlertModal = ({ isOpen, onClose, onConfirm }) => {
@@ -324,32 +325,9 @@ const Home = ({ user, onUserClick }) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* --- LEFT COLUMN --- */}
-          <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-6">
-            
-            <h3 className="text-lg font-semibold text-slate-700 hidden lg:block px-1">
-              ภาพรวมเดือนนี้
-            </h3>
-            
-            {/* 1. สถิติตัวเลข (Stats) - เลื่อนแนวนอนในมือถือ */}
-            <div className="flex gap-4 overflow-x-auto pb-4 lg:pb-0 lg:overflow-visible lg:flex-col lg:gap-5 scrollbar-hide">
-              <StatWidget 
-                icon={FileText} label="ใบสั่งจ้าง" value="12" color="bg-blue-500" 
-              />
-              <StatWidget 
-                icon={Receipt} label="ใบรับรองฯ" value="20" color="bg-emerald-500" 
-              />
-              <StatWidget 
-                icon={Clock} label="รออนุมัติ" value="3" color="bg-orange-500" 
-              />
-            </div>
-            
-            {/* 2. รายการเคลื่อนไหวล่าสุด (Activity Feed) */}
-            {/* แก้ไขตรงนี้: ใส่ hidden lg:block เพื่อซ่อนในมือถือ แต่แสดงใน PC */}
-            <div className="hidden lg:block">
-               <ActivityFeed />
-            </div>
-
-          </div>
+          <div className="lg:col-span-4 xl:col-span-3">
+  <DashboardPanel />
+</div>
 
           {/* --- RIGHT COLUMN: Main Menu --- */}
           <div className="lg:col-span-8 xl:col-span-9">

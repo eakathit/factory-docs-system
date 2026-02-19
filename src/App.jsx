@@ -325,8 +325,8 @@ const Home = ({ user, onUserClick }) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* --- LEFT COLUMN --- */}
-          <div className="lg:col-span-4 xl:col-span-3">
-  <DashboardPanel />
+          <div className="hidden lg:block lg:col-span-4 xl:col-span-3">
+  <DashboardPanel onRestrictedClick={handleRestrictedClick} />
 </div>
 
           {/* --- RIGHT COLUMN: Main Menu --- */}

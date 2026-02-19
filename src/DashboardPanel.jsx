@@ -30,7 +30,7 @@ const DOC_CONFIGS = [
   {
     key: 'receipt',
     table: 'doc_substitute_receipts',
-    label: 'ใบรับรองฯ',
+    label: 'ใบรับรองเเทนใบเสร็จ',
     labelEn: 'Receipts',
     icon: Receipt,
     color: 'text-emerald-600',
@@ -134,12 +134,13 @@ const StatCard = ({ config, count, loading }) => {
 // ============================================================
 // RecentDocRow — แถวเอกสารล่าสุด
 // ============================================================
-const RecentDocRow = ({ doc, config }) => {
+const RecentDocRow = ({ doc, config, onRestrictedClick }) => {
   const Icon = config.icon
   return (
     <Link
       to={config.printPath(doc.id)}
       state={doc._state}
+      onClick={onRestrictedClick}
       className="flex items-center gap-3 py-3 px-1 rounded-xl hover:bg-slate-50 transition-colors group cursor-pointer"
     >
       {/* Icon */}
@@ -167,7 +168,7 @@ const RecentDocRow = ({ doc, config }) => {
 // ============================================================
 // DashboardPanel — Main Component (แทนที่ StatWidget + ActivityFeed)
 // ============================================================
-const DashboardPanel = () => {
+const DashboardPanel = ({ onRestrictedClick }) => {
   const [counts, setCounts] = useState({})
   const [recentDocs, setRecentDocs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -277,7 +278,7 @@ const DashboardPanel = () => {
       </div>
 
       {/* ── Total Badge ── */}
-      
+
       {/* ── Recent 5 Docs ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
         <div className="flex items-center justify-between mb-3">
@@ -287,6 +288,7 @@ const DashboardPanel = () => {
           </h4>
           <Link
             to="/history"
+            onClick={onRestrictedClick}
             className="text-xs text-blue-600 hover:text-blue-700 font-semibold bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full transition-colors"
           >
             ดูทั้งหมด
@@ -317,6 +319,7 @@ const DashboardPanel = () => {
                 key={`${doc._docType}-${doc.id}`}
                 doc={doc}
                 config={doc._config}
+                onRestrictedClick={onRestrictedClick}
               />
             ))}
           </div>

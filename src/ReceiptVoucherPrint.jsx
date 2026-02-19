@@ -79,16 +79,10 @@ export default function ReceiptVoucherPrint() {
 
         <div className="flex gap-3 w-full sm:w-auto">
           <button 
-            onClick={handleShare}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-all"
-          >
-            <Share2 size={18} /> <span>แชร์</span>
-          </button>
-          <button 
             onClick={() => window.print()} 
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 transition-all"
           >
-            <Printer size={18} /> สั่งพิมพ์
+            <Printer size={18} /> สั่งพิมพ์เอกสาร
           </button>
         </div>
       </div>

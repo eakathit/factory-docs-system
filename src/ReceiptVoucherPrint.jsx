@@ -88,13 +88,12 @@ export default function ReceiptVoucherPrint() {
       </div>
 
       {/* --- Preview Area Wrapper (แก้การบีบหน้าจอในมือถือ) --- */}
-      <div className="w-full overflow-x-auto pb-4 print:overflow-visible print:pb-0 flex justify-center">
-        {/* Component ReceiptVoucherPreview.jsx ถูกล็อคขนาด w-[210mm] ไว้แล้วในตัวมันเอง */}
-        <div className="shadow-2xl print:shadow-none bg-white">
+      <div className="w-full overflow-x-auto pb-4 print:overflow-visible print:pb-0">
+        {/* บังคับขนาดกว้าง 210mm และใช้ mx-auto เพื่อให้อยู่ตรงกลางในจอคอม และชิดซ้ายเลื่อนได้ในจอมือถือ */}
+        <div className="w-[210mm] min-w-[210mm] mx-auto shadow-2xl print:shadow-none bg-white">
           <ReceiptVoucherPreview data={doc} />
         </div>
       </div>
-
       {/* CSS สำหรับแก้หน้าว่างแผ่นที่ 2 */}
       <style type="text/css">
         {`

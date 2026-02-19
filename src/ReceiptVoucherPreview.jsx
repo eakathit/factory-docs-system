@@ -159,7 +159,7 @@ const VoucherContent = ({ data, copyType }) => {
 export default function ReceiptVoucherPreview({ data }) {
   return (
     // แก้ไข: ลดความสูงลงเหลือ 290mm (แทน 297mm) เพื่อให้มีที่ว่าง 7mm สำหรับขอบมือถือ
-    <div className="w-[210mm] min-h-[297mm] bg-white text-black font-sans shadow-lg flex flex-col print:shadow-none print:w-[210mm] print:min-h-0 print:h-auto print:m-0">
+    <div className="w-[210mm] min-h-[297mm] bg-white text-black font-sarabun shadow-lg flex flex-col print:shadow-none print:w-[210mm] print:min-h-0 print:h-auto print:m-0">
       
       {/* ใบที่ 1: ลดความสูงเหลือ 145mm (หายไป 3mm) เพื่อเผื่อที่ */}
       <div className="h-[148mm] print:h-[145mm] border-b border-dashed border-gray-300 print:border-gray-400 overflow-hidden box-border">

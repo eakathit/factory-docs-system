@@ -26,7 +26,7 @@ const OperationReportPrint = () => {
 
   return (
     // 1. แก้ไข Outer Div: เพิ่ม print:min-h-0 print:h-auto print:block แก้หน้าว่างแผ่นที่สอง
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans print:bg-white print:p-0 print:m-0 print:min-h-0 print:h-auto print:block">
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sarabun print:bg-white print:p-0 print:m-0 print:min-h-0 print:h-auto print:block">
       
       {/* Toolbar */}
       <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center print:hidden">

@@ -29,7 +29,7 @@ const CompletionReportPrint = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans print:bg-white print:p-0 print:m-0 print:min-h-0 print:h-auto print:block">
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sarabun print:bg-white print:p-0 print:m-0 print:min-h-0 print:h-auto print:block">
       {/* Toolbar */}
       <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center print:hidden">
         <button
@@ -112,7 +112,7 @@ const CompletionReportPrint = () => {
           </div>
 
           {/* === TABLE FORM === */}
-          <div className="mt-6 text-sm font-sans">
+          <div className="mt-6 text-sm font-sarabun">
             {/* Row 1 */}
             <div className="flex gap-4 mb-4">
               <div className="w-[60%]">

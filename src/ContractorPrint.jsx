@@ -2,7 +2,8 @@ import React from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Printer, Edit3 } from 'lucide-react'
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const d = new Date(dateStr)
@@ -20,234 +21,524 @@ const calcHours = (start, end) => {
   return (mins / 60).toFixed(1).replace('.0', '')
 }
 
-const Checkbox = ({ checked }) => (
-  <span className="inline-flex items-center justify-center border border-black text-[9px] font-bold" style={{ width: 12, height: 12, minWidth: 12 }}>
+/** กล่อง ☐ ตามแบบฟอร์ม */
+const CB = ({ checked }) => (
+  <span
+    style={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      border: '1px solid black', width: 11, height: 11, minWidth: 11,
+      fontSize: '8pt', fontWeight: 'bold', lineHeight: 1,
+    }}
+  >
     {checked ? '✓' : ''}
   </span>
 )
 
-const MIN_ROWS = 10 
+/** เส้นประว่างสำหรับกรอก (ช่องว่างให้การเงินกรอก) */
+const BlankLine = ({ w = 60 }) => (
+  <span style={{
+    borderBottom: '1px dotted black',
+    display: 'inline-block',
+    minWidth: w,
+    width: w,
+  }}>&nbsp;</span>
+)
+
+const MIN_ROWS = 10
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function ContractorPrint() {
   const location = useLocation()
   const navigate = useNavigate()
-  const data = location.state || {} // รับข้อมูลมาจากหน้าฟอร์ม
+  const data = location.state || {}
 
   const items = data.daily_items || []
-  const wage = parseFloat(data.wage_rate) || 0
-
-  const normalRows = items.filter(i => i.date)
-  const normalDays = normalRows.length
-
-  const otHoursList = items.map(i => parseFloat(calcHours(i.ot_start, i.ot_end)) || 0)
-  const totalOtHours = otHoursList.reduce((a, b) => a + b, 0)
-
-  const ratePerHourOT = wage > 0 ? (wage / 8 * 1.5) : 0
-  const rateHolidayDay = wage > 0 ? wage * 2 : 0
-
-  const normalTotal = normalDays * wage
-  const otTotal = totalOtHours * ratePerHourOT
-
-  const accomRate = parseFloat(data.accom_rate) || 0
-  const travelRate = parseFloat(data.travel_rate) || 0
-  const accomTotal = data.has_accom ? accomRate : 0
-  const travelTotal = data.has_travel ? travelRate : 0
-
-  const grandTotal = normalTotal + otTotal + accomTotal + travelTotal
-  const taxDeduct = data.deduct_tax ? grandTotal * 0.03 : 0
-  const netTotal = grandTotal - taxDeduct
-
   const emptyRows = Math.max(0, MIN_ROWS - items.length)
 
+  // นับวันทำงานจริงจากตาราง (เพื่อแสดงในช่อง "รวม __ วัน")
+  const totalDays = items.filter(i => i.date).length
+
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sarabun print:bg-white print:p-0 print:m-0 print:min-h-0 print:block">
-      
-      {/* --- Toolbar --- */}
+    <div className="min-h-screen bg-gray-200 p-4 md:p-8 print:bg-white print:p-0 print:m-0">
+
+      {/* ── Toolbar (ซ่อนตอนพิมพ์) ── */}
       <div className="w-full max-w-[210mm] mx-auto mb-6 print:hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-4">
-          <Link to="/history" className="inline-flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 rounded-lg transition-all font-medium text-sm">
-            <ArrowLeft size={18} /> <span>กลับหน้าประวัติ</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <Link
+            to="/history"
+            className="inline-flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-all text-sm font-medium"
+          >
+            <ArrowLeft size={16} /> กลับหน้าประวัติ
           </Link>
-          <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
-            <button onClick={() => navigate('/contractor-order', { state: data })} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-all font-medium text-sm">
-              <Edit3 size={18} /> <span>แก้ไขข้อมูล</span>
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate('/contractor-order', { state: data })}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-sm font-medium"
+            >
+              <Edit3 size={16} /> แก้ไขข้อมูล
             </button>
-            <button onClick={() => window.print()} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-bold rounded-xl shadow-md shadow-blue-600/20 hover:bg-blue-700 transition-all text-sm">
-              <Printer size={18} /> <span>สั่งพิมพ์</span>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all text-sm shadow-md shadow-blue-600/20"
+            >
+              <Printer size={16} /> สั่งพิมพ์
             </button>
           </div>
         </div>
       </div>
 
-      <div className="w-full overflow-x-auto pb-4 print:overflow-visible print:pb-0">
-        <div className="w-[210mm] min-w-[210mm] mx-auto bg-white shadow-2xl print:shadow-none p-[10mm_12mm] text-black" style={{ fontFamily: 'Sarabun, sans-serif', fontSize: '11pt', lineHeight: '1.4', minHeight: '297mm' }}>
-          
-          {/* Header แบบฟอร์ม A4 */}
-          <div style={{ textAlign: 'center', marginBottom: '4px' }}>
-            <div style={{ fontSize: '9pt' }}>HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</div>
-            <div style={{ fontSize: '9pt', color: '#444' }}>47/20 M.1, KLONGPRAWET, BANPHO, CHACHOENGSAO 24140</div>
+      {/* ── กระดาษ A4 ── */}
+      <div className="overflow-x-auto pb-4 print:overflow-visible print:pb-0">
+        <div
+          className="mx-auto bg-white shadow-2xl print:shadow-none"
+          style={{
+            width: '210mm', minWidth: '210mm', minHeight: '297mm',
+            padding: '10mm 13mm',
+            fontFamily: 'Sarabun, TH Sarabun New, sans-serif',
+            fontSize: '10.5pt', lineHeight: '1.45',
+            color: '#000', boxSizing: 'border-box',
+          }}
+        >
+
+          {/* ════ HEADER ════ */}
+          <div style={{ textAlign: 'center', marginBottom: '3px' }}>
+            <div style={{ fontSize: '10pt', fontWeight: 'bold', letterSpacing: '0.3px' }}>
+              HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.
+            </div>
+            <div style={{ fontSize: '8.5pt', color: '#333' }}>
+              47/20 M.1, KLONGPRAWET, BANPHO, CHACHOENGSAO 24140
+            </div>
           </div>
-          <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12pt', margin: '6px 0 8px' }}>
+
+          <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '13pt', margin: '5px 0 6px' }}>
             ใบสั่งจ้างผู้รับเหมา / Technician supporter record
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12pt' }}>วันที่ / Date</span>
-            <span style={{ fontSize: '12pt', borderBottom: '1px dotted black', minWidth: '120px', textAlign: 'center' }}>{formatDate(data.created_at)}</span>
+
+          {/* วันที่ — ชิดขวา */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: '6px', marginBottom: '8px' }}>
+            <span style={{ fontWeight: 'bold' }}>วันที่/ Date</span>
+            <span style={{ borderBottom: '1px solid black', minWidth: '130px', textAlign: 'center', display: 'inline-block', paddingBottom: '1px' }}>
+              {formatDate(data.created_at)}
+            </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', marginBottom: '6px' }}>
-            <span style={{ fontWeight: 'bold' }}>ผู้รับเหมาชื่อ</span>
-            <span style={{ borderBottom: '1px dotted black', flex: 1, textAlign: 'center', fontWeight: 'bold', color: '#1e3a8a' }}>{data.contractor_name || ''}</span>
-            <span>เลขบัตรประชาชน</span>
-            <span style={{ borderBottom: '1px dotted black', minWidth: '130px', textAlign: 'center', letterSpacing: '2px' }}>{data.id_card || ''}</span>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', marginBottom: '6px' }}>
-            <span style={{ fontWeight: 'bold' }}>1. จ้างทำงานโปรเจ็คเลขที่</span>
-            <span style={{ borderBottom: '1px dotted black', minWidth: '140px', textAlign: 'center', fontWeight: 'bold' }}>{data.doc_no || ''}</span>
-            <span style={{ marginLeft: '12px' }}>ดูแลโดย</span>
-            <span style={{ borderBottom: '1px dotted black', flex: 1, textAlign: 'center' }}>{data.supervisor_name || ''}</span>
+          {/* ════ ชื่อผู้รับเหมา + เลขบัตร (บรรทัดเดียวกัน ตามต้นฉบับ) ════ */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginBottom: '5px', flexWrap: 'wrap' }}>
+            <span style={{ whiteSpace: 'nowrap' }}>ผู้รับเหมาชื่อ (นาย/นาง/นางสาว)</span>
+            <span style={{
+              borderBottom: '1px solid black', flex: 1, minWidth: '120px',
+              textAlign: 'center', fontWeight: 'bold', color: '#1e3a8a',
+              display: 'inline-block', paddingBottom: '1px',
+            }}>
+              {data.contractor_name || ''}
+            </span>
+            <span style={{ whiteSpace: 'nowrap', marginLeft: '8px' }}>เลขบัตรประชาชน</span>
+            <span style={{
+              borderBottom: '1px solid black', minWidth: '140px',
+              textAlign: 'center', letterSpacing: '3px',
+              display: 'inline-block', paddingBottom: '1px',
+            }}>
+              {data.id_card || ''}
+            </span>
           </div>
 
-          <div style={{ marginBottom: '2px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <span style={{ fontWeight: 'bold' }}>2. ค่าจ้างเป็นแบบ</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Checkbox checked={data.wage_type === 'daily'} /> รายวัน</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Checkbox checked={data.wage_type === 'project'} /> ต่อโปรเจ็ค</span>
-              <span style={{ marginLeft: '16px' }}>จำนวนเงิน</span>
-              <span style={{ borderBottom: '1px dotted black', minWidth: '70px', textAlign: 'center', fontWeight: 'bold' }}>{data.wage_rate || ''}</span>
+          {/* ════ ข้อ 1: โปรเจ็ค + ผู้ดูแล ════ */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>1. จ้างทำงานโปรเจ็คเลขที่</span>
+            <span style={{
+              borderBottom: '1px solid black', minWidth: '150px',
+              textAlign: 'center', fontWeight: 'bold',
+              display: 'inline-block', paddingBottom: '1px',
+            }}>
+              {data.doc_no || ''}
+            </span>
+            <span style={{ whiteSpace: 'nowrap', marginLeft: '12px' }}>โดยมีผู้รับผิดชอบดูแลผู้รับเหมา คือ</span>
+            <span style={{
+              borderBottom: '1px solid black', flex: 1, minWidth: '100px',
+              textAlign: 'center', display: 'inline-block', paddingBottom: '1px',
+            }}>
+              {data.supervisor_name || ''}
+            </span>
+          </div>
+
+          {/* ════ ข้อ 2: ค่าจ้าง ════ */}
+          <div style={{ marginBottom: '3px' }}>
+            {/* บรรทัด 1 — ประเภทค่าจ้าง */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap', marginBottom: '3px' }}>
+              <span style={{ fontWeight: 'bold' }}>2 . ค่าจ้างเป็นแบบ</span>
+
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <CB checked={data.wage_type === 'daily'} />
+                <span>รายวัน</span>
+              </span>
+
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <CB checked={data.wage_type === 'project'} />
+                <span>ต่อโปรเจ็ค</span>
+              </span>
+
+              <span style={{ marginLeft: '10px' }}>เป็นจำนวนเงิน (เรทปกติ)</span>
+              <span style={{
+                borderBottom: '1px solid black', minWidth: '70px',
+                textAlign: 'center', fontWeight: 'bold',
+                display: 'inline-block', paddingBottom: '1px',
+              }}>
+                {data.wage_rate || ''}
+              </span>
               <span>บาท ต่อ</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Checkbox checked={data.wage_type === 'daily'} /> วัน</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Checkbox checked={data.wage_type === 'project'} /> งาน</span>
+
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <CB checked={data.wage_type === 'daily'} />
+                <span>วัน</span>
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <CB checked={data.wage_type === 'project'} />
+                <span>งาน</span>
+              </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>โอที</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Checkbox checked={data.has_ot === true || data.has_ot === 'true'} /> มี</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Checkbox checked={!data.has_ot || data.has_ot === 'false'} /> ไม่มี</span>
-              <span style={{ marginLeft: '16px' }}>ตั้งแต่</span>
-              <span style={{ borderBottom: '1px dotted black', minWidth: '90px', textAlign: 'center' }}>{formatDate(data.start_date)}</span>
-              <span>ถึง</span>
-              <span style={{ borderBottom: '1px dotted black', minWidth: '90px', textAlign: 'center' }}>{formatDate(data.end_date)}</span>
+
+            {/* บรรทัด 2 — OT + ระยะเวลา */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
+              <span>โอที</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <CB checked={data.has_ot === true || data.has_ot === 'true'} />
+                <span>มี</span>
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <CB checked={!data.has_ot || data.has_ot === 'false'} />
+                <span>ไม่มี</span>
+              </span>
+
+              <span style={{ marginLeft: '10px' }}>โดยมีระยะเวลาตั้งแต่วันที่</span>
+              <span style={{
+                borderBottom: '1px solid black', minWidth: '95px',
+                textAlign: 'center', display: 'inline-block', paddingBottom: '1px',
+              }}>
+                {formatDate(data.start_date)}
+              </span>
+              <span>จนถึงวันที่</span>
+              <span style={{
+                borderBottom: '1px solid black', minWidth: '95px',
+                textAlign: 'center', display: 'inline-block', paddingBottom: '1px',
+              }}>
+                {formatDate(data.end_date)}
+              </span>
             </div>
           </div>
 
-          {/* ตารางลงเวลา */}
-          <div style={{ margin: '8px 0 6px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '3px', fontSize: '10.5pt' }}>3. ตารางลงเวลา กรณีจ้างแบบรายวัน</div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5pt' }}>
+          {/* ════ ข้อ 3: ตารางลงเวลา ════ */}
+          <div style={{ margin: '6px 0 5px' }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '3px' }}>
+              3. ตารางลงเวลา กรณีจ้างแบบรายวัน
+            </div>
+
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8pt' }}>
               <thead>
-                <tr style={{ background: '#f1f5f9', textAlign: 'center' }}>
-                  <TH w="11%">วันที่ทำงาน</TH><TH w="7%">เริ่ม</TH><TH w="7%">สิ้นสุด</TH><TH w="6%">รวม</TH>
-                  <TH w="7%">OT เริ่ม</TH><TH w="7%">OT สิ้นสุด</TH><TH w="6%">รวม OT</TH><TH w="9%">ลงชื่อ</TH>
-                  <TH>รายละเอียดงาน</TH><TH w="10%">ผู้รับผิดชอบ</TH>
+                <tr style={{ background: '#f0f0f0', textAlign: 'center' }}>
+                  <TH w="11%">วันที่ทำงาน</TH>
+                  <TH w="7%">เริ่ม</TH>
+                  <TH w="7%">สิ้นสุด</TH>
+                  <TH w="6%">รวม</TH>
+                  <TH w="7%">โอทีเริ่ม</TH>
+                  <TH w="7%">โอทีสิ้นสุด</TH>
+                  <TH w="6%">รวมโอที</TH>
+                  <TH w="9%">ลงชื่อ</TH>
+                  <TH>รายละเอียดงาน</TH>
+                  <TH w="10%">ผู้รับผิดชอบ</TH>
                 </tr>
               </thead>
               <tbody>
+                {/* แถวข้อมูลจริง */}
                 {items.map((item, i) => (
-                  <tr key={i} style={{ height: '20px', textAlign: 'center' }}>
-                    <TD>{formatDate(item.date)}</TD><TD>{item.start_time}</TD><TD>{item.end_time}</TD>
-                    <TD>{calcHours(item.start_time, item.end_time)}</TD><TD>{item.ot_start}</TD><TD>{item.ot_end}</TD>
-                    <TD>{calcHours(item.ot_start, item.ot_end)}</TD><TD></TD><TD left>{item.detail}</TD><TD></TD>
+                  <tr key={i} style={{ height: '22px', textAlign: 'center' }}>
+                    <TD>{formatDate(item.date)}</TD>
+                    <TD>{item.start_time}</TD>
+                    <TD>{item.end_time}</TD>
+                    <TD>{calcHours(item.start_time, item.end_time)}</TD>
+                    <TD>{item.ot_start}</TD>
+                    <TD>{item.ot_end}</TD>
+                    <TD>{calcHours(item.ot_start, item.ot_end)}</TD>
+                    <TD></TD>
+                    <TD left>{item.detail}</TD>
+                    <TD></TD>
                   </tr>
                 ))}
+
+                {/* แถวว่าง */}
                 {Array.from({ length: emptyRows }).map((_, i) => (
-                  <tr key={`e${i}`} style={{ height: '20px' }}>{Array.from({ length: 10 }).map((__, j) => <TD key={j}></TD>)}</tr>
+                  <tr key={`empty-${i}`} style={{ height: '22px' }}>
+                    {Array.from({ length: 10 }).map((__, j) => <TD key={j}></TD>)}
+                  </tr>
                 ))}
-                <tr style={{ background: '#f8fafc' }}>
-                  <td colSpan={2} style={tdStyle({ center: true, fontWeight: 'bold' })}>รวม</td>
-                  <td colSpan={2} style={tdStyle({ center: true, fontWeight: 'bold' })}>{normalDays > 0 ? `${normalDays} วัน` : ''}</td>
-                  <td colSpan={3} style={tdStyle()}></td>
-                  <td colSpan={3} style={tdStyle({ fontSize: '7.5pt', color: '#555' })}>หมายเหตุ : หัก ณ ที่จ่าย 3%</td>
+
+                {/* แถวรวม */}
+                <tr style={{ background: '#f8f8f8' }}>
+                  <td colSpan={2} style={tdSt({ center: true, bold: true })}>รวม</td>
+                  <td colSpan={2} style={tdSt({ center: true, bold: true })}>
+                    {totalDays > 0 ? `${totalDays} วัน` : ''}
+                  </td>
+                  <td colSpan={3} style={tdSt()}></td>
+                  <td colSpan={3} style={tdSt({ small: true })}>
+                    หมายเหตุ : ค่าจ้างและค่าใช้จ่ายทั้งหมด จะถูกหัก ณ ที่จ่าย 3%
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
+          {/* ════ ข้อ 4: ค่าใช้จ่ายนอกจากค่าจ้าง ════ */}
           <div style={{ marginBottom: '6px', fontSize: '10pt' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>4. ค่าใช้จ่ายนอกจาก ค่าจ้าง</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-              <Checkbox checked={!!data.has_accom} /> <span>ค่าที่พัก เป็นเงิน</span>
-              <span style={{ borderBottom: '1px dotted black', minWidth: '60px', textAlign: 'center' }}>{data.has_accom ? data.accom_rate : ''}</span>
+
+            {/* บรรทัด 1: ค่าที่พัก */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
+              <CB checked={!!data.has_accom} />
+              <span>ค่าที่พัก เป็นเงิน</span>
+              <span style={{ borderBottom: '1px dotted black', minWidth: '65px', textAlign: 'center', display: 'inline-block' }}>
+                {data.has_accom && data.accom_rate ? data.accom_rate : ''}
+              </span>
               <span>บาท ต่อ</span>
-              <Checkbox checked={data.has_accom && data.accom_unit !== 'job'} /> วัน
-              <Checkbox checked={data.has_accom && data.accom_unit === 'job'} /> งาน
+              <CB checked={data.has_accom && data.accom_unit !== 'job'} />
+              <span>วัน</span>
+              <CB checked={data.has_accom && data.accom_unit === 'job'} />
+              <span>งาน</span>
+              <span style={{ marginLeft: '24px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <CB checked={!data.has_accom} />
+                <span>ไม่มี</span>
+              </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Checkbox checked={!!data.has_travel} /> <span>ค่าเดินทาง เป็นเงิน</span>
-              <span style={{ borderBottom: '1px dotted black', minWidth: '60px', textAlign: 'center' }}>{data.has_travel ? data.travel_rate : ''}</span>
+
+            {/* บรรทัด 2: ค่าเดินทาง */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <CB checked={!!data.has_travel} />
+              <span>ค่าเดินทาง เป็นเงิน</span>
+              <span style={{ borderBottom: '1px dotted black', minWidth: '65px', textAlign: 'center', display: 'inline-block' }}>
+                {data.has_travel && data.travel_rate ? data.travel_rate : ''}
+              </span>
               <span>บาท ต่อ</span>
-              <Checkbox checked={data.has_travel && data.travel_unit !== 'job'} /> วัน
-              <Checkbox checked={data.has_travel && data.travel_unit === 'job'} /> งาน
+              <CB checked={data.has_travel && data.travel_unit !== 'job'} />
+              <span>วัน</span>
+              <CB checked={data.has_travel && data.travel_unit === 'job'} />
+              <span>งาน</span>
+              <span style={{ marginLeft: '24px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <CB checked={!data.has_travel} />
+                <span>ไม่มี</span>
+              </span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={{ flex: 1, border: '1px solid black', height: '60px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '4px' }}>ผู้รับเหมา</div>
-            <div style={{ flex: 1, border: '1px solid black', height: '60px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '4px' }}>ผู้รับผิดชอบโปรเจ็ค</div>
+          {/* ════ กล่องลายเซ็น 2 กล่อง ════ */}
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '0' }}>
+            <SignBox label="ผู้รับเหมา" />
+            <SignBox label="ผู้รับผิดชอบโปรเจ็ค" />
           </div>
 
-          <div style={{ borderTop: '2px dashed #555', margin: '10px 0 8px' }} />
+          {/* ════ เส้นประคั่น ════ */}
+          <div style={{ borderTop: '2px dashed #666', margin: '10px 0 8px' }} />
 
+          {/* ════ ตารางสรุปค่าจ้างงาน — ช่องว่างทั้งหมด (การเงินกรอกเอง) ════ */}
           <div style={{ fontSize: '10pt' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>ตารางสรุปค่าจ้างงาน</div>
+            <div style={{ fontWeight: 'bold', marginBottom: '3px' }}>ตารางสรุปค่าจ้างงาน</div>
+            <div style={{ marginBottom: '4px', fontSize: '9.5pt' }}>จำนวนวันทำงาน</div>
+
+            {/* ── ตาราง 2 คอลัมน์: วันธรรมดา | วันหยุด ── */}
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9.5pt' }}>
               <tbody>
+
+                {/* แถว 1: วันธรรมดา | วันหยุด */}
                 <tr>
-                  <td style={summaryTd()}>
-                    <div style={summaryInner()}><span>วันธรรมดา</span><span><DotLine val={normalDays||''} w={28}/>วันๆละ<DotLine val={wage||''} w={50} right/>บาท</span></div>
-                  </td>
-                  <td style={summaryTd()}>
-                    <div style={summaryInner()}><span>วันหยุด</span><span><DotLine val="" w={28}/>วันๆละ<DotLine val={rateHolidayDay||''} w={50} right/>บาท (*2)</span></div>
-                  </td>
+                  <SummaryCell
+                    left="วันธรรมดา"
+                    countUnit="วันๆละ"
+                    rateUnit="บาท"
+                  />
+                  <SummaryCell
+                    left="วันหยุด"
+                    countUnit="วันๆละ"
+                    rateUnit="บาท (*2)"
+                  />
                 </tr>
+
+                {/* แถว 2: ชม.ล่วงเวลา | ชม.ล่วงเวลา (วันหยุด) */}
                 <tr>
-                  <td style={summaryTd()}>
-                    <div style={summaryInner()}><span>ชม.ล่วงเวลา</span><span><DotLine val={totalOtHours||''} w={28}/>ชม.ๆละ<DotLine val={ratePerHourOT.toFixed(0)||''} w={50} right/>บาท (*1.5)</span></div>
-                  </td>
-                  <td style={summaryTd()}>
-                    <div style={summaryInner()}><span>ชม.ล่วงเวลา (หยุด)</span><span><DotLine val="" w={28}/>ชม.ๆละ<DotLine val={(wage/8*3).toFixed(0)||''} w={50} right/>บาท (*3)</span></div>
-                  </td>
+                  <SummaryCell
+                    left="ชม.ล่วงเวลา"
+                    countUnit="ชม.ๆละ"
+                    rateUnit="บาท (*1.5)"
+                  />
+                  <SummaryCell
+                    left="ชม.ล่วงเวลา"
+                    countUnit="ชม.ๆละ"
+                    rateUnit="บาท (*3)"
+                  />
                 </tr>
+
+                {/* แถว 3: รวมทั้งสิ้น */}
                 <tr>
-                  <td style={summaryTd()}>
-                    <div style={summaryInner()}><span>รวมทั้งสิ้น</span><span><DotLine val={normalTotal?normalTotal.toLocaleString('th-TH'):''} w={90} right/>บาท</span></div>
-                  </td>
-                  <td style={summaryTd()}>
-                    <div style={summaryInner()}><span>รวมทั้งสิ้น</span><span><DotLine val="" w={90} right/>บาท</span></div>
-                  </td>
+                  <SummaryCell left="รวมทั้งสิ้น" totalOnly rateUnit="บาท" />
+                  <SummaryCell left="รวมทั้งสิ้น" totalOnly rateUnit="บาท" />
                 </tr>
+
               </tbody>
             </table>
 
+            {/* ── ยอดรวม / หัก / สุทธิ + ช่องการเงิน ── */}
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9.5pt' }}>
               <tbody>
+
+                {/* ยอดรวมทั้งสิ้น */}
                 <tr>
-                  <td style={{ border: '1px solid black', padding: '3px 8px', fontWeight: 'bold' }}>ยอดรวมทั้งสิ้น</td>
-                  <td style={{ border: '1px solid black', padding: '3px 8px', textAlign: 'right', fontWeight: 'bold', minWidth: '120px' }}>{grandTotal > 0 ? grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : ''} บาท</td>
-                  <td rowSpan={3} style={{ border: '1px solid black', padding: '4px 8px', textAlign: 'center', verticalAlign: 'bottom', width: '120px' }}>การเงิน</td>
+                  <td style={sumTd({ bold: true })}>ยอดรวมทั้งสิ้น</td>
+                  <td style={sumTd({ right: true })}>
+                    <BlankLine w={120} /> บาท
+                  </td>
+                  {/* ช่องการเงิน — rowspan 3 */}
+                  <td
+                    rowSpan={3}
+                    style={{
+                      border: '1px solid black', padding: '6px 8px',
+                      textAlign: 'center', verticalAlign: 'bottom',
+                      width: '110px', fontSize: '9pt',
+                    }}
+                  >
+                    การเงิน
+                  </td>
                 </tr>
+
+                {/* ยอดหัก ณ ที่จ่าย */}
                 <tr>
-                  <td style={{ border: '1px solid black', padding: '3px 8px' }}>ยอดหัก ณ ที่จ่าย รวม</td>
-                  <td style={{ border: '1px solid black', padding: '3px 8px', textAlign: 'right' }}>{taxDeduct > 0 ? taxDeduct.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : ''} บาท</td>
+                  <td style={sumTd()}>ยอดหัก ณ ที่จ่าย รวม</td>
+                  <td style={sumTd({ right: true })}>
+                    <BlankLine w={120} /> บาท
+                  </td>
                 </tr>
+
+                {/* ยอดสุทธิ */}
                 <tr>
-                  <td style={{ border: '1px solid black', padding: '3px 8px', fontWeight: 'bold' }}>ยอดสุทธิ</td>
-                  <td style={{ border: '1px solid black', padding: '3px 8px', textAlign: 'right', fontWeight: 'bold', color: '#1e3a8a' }}>{netTotal > 0 ? netTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : ''} บาท</td>
+                  <td style={sumTd({ bold: true })}>ยอดสุทธิ</td>
+                  <td style={sumTd({ right: true })}>
+                    <BlankLine w={120} /> บาท
+                  </td>
                 </tr>
+
               </tbody>
             </table>
           </div>
 
         </div>
       </div>
-      <style type="text/css">{`@media print { @page { size: A4; margin: 0; } body { -webkit-print-color-adjust: exact; } html, body { height: auto !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; } }`}</style>
+
+      {/* Print CSS */}
+      <style>{`
+        @media print {
+          @page { size: A4; margin: 0; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          html, body { height: auto !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+        }
+      `}</style>
     </div>
   )
 }
 
-function TH({ children, w }) { return <th style={{ border: '1px solid black', padding: '2px 3px', textAlign: 'center', fontWeight: 'bold', width: w || 'auto', fontSize: '8.5pt' }}>{children}</th> }
-function tdStyle({ center, fontWeight, fontSize, color } = {}) { return { border: '1px solid black', padding: '1px 3px', textAlign: center ? 'center' : 'left', fontWeight: fontWeight || 'normal', fontSize: fontSize || '8.5pt', color: color || 'inherit' } }
-function TD({ children, left }) { return <td style={{ border: '1px solid black', padding: '1px 3px', textAlign: left ? 'left' : 'center', fontSize: '8.5pt' }}>{children}</td> }
-function summaryTd() { return { border: '1px solid black', padding: '3px 6px', verticalAlign: 'middle', width: '50%' } }
-function summaryInner() { return { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' } }
-function DotLine({ val, w = 50, right = false }) { return <span style={{ borderBottom: '1px dotted black', minWidth: w, width: w, textAlign: right ? 'right' : 'center', display: 'inline-block', fontSize: '9pt' }}>{val !== undefined && val !== null ? val : ''}</span> }
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+/** TH cell */
+function TH({ children, w }) {
+  return (
+    <th style={{
+      border: '1px solid black', padding: '2px 3px',
+      textAlign: 'center', fontWeight: 'bold',
+      width: w || 'auto', lineHeight: '1.3', fontSize: '8pt',
+    }}>
+      {children}
+    </th>
+  )
+}
+
+/** TD cell */
+function TD({ children, left }) {
+  return (
+    <td style={{
+      border: '1px solid black', padding: '1px 3px',
+      textAlign: left ? 'left' : 'center', fontSize: '8pt',
+    }}>
+      {children}
+    </td>
+  )
+}
+
+/** tdStyle สำหรับตารางลงเวลา */
+function tdSt({ center, bold, small } = {}) {
+  return {
+    border: '1px solid black', padding: '2px 4px',
+    textAlign: center ? 'center' : 'left',
+    fontWeight: bold ? 'bold' : 'normal',
+    fontSize: small ? '7.5pt' : '8pt',
+  }
+}
+
+/**
+ * SummaryCell — 1 cell ในตารางสรุป
+ * ทุกช่องเป็นเส้นว่างให้การเงินกรอก
+ */
+function SummaryCell({ left, countUnit, rateUnit, totalOnly = false }) {
+  if (totalOnly) {
+    return (
+      <td style={{
+        border: '1px solid black', padding: '4px 8px',
+        width: '50%', verticalAlign: 'middle',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontWeight: 'bold' }}>{left}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <BlankLine w={85} />
+            <span>{rateUnit}</span>
+          </span>
+        </div>
+      </td>
+    )
+  }
+
+  return (
+    <td style={{
+      border: '1px solid black', padding: '4px 8px',
+      width: '50%', verticalAlign: 'middle',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+        <span>{left}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', whiteSpace: 'nowrap' }}>
+          {/* จำนวน */}
+          <BlankLine w={28} />
+          <span>{countUnit}</span>
+          {/* อัตรา */}
+          <BlankLine w={45} />
+          <span>{rateUnit}</span>
+        </span>
+      </div>
+    </td>
+  )
+}
+
+/** กล่องลายเซ็น */
+function SignBox({ label }) {
+  return (
+    <div style={{
+      flex: 1, border: '1px solid black',
+      height: '58px', display: 'flex',
+      alignItems: 'flex-end', justifyContent: 'center',
+      paddingBottom: '4px', fontSize: '10pt',
+    }}>
+      {label}
+    </div>
+  )
+}
+
+/** style สำหรับ td ในตารางยอดรวม */
+function sumTd({ bold, right } = {}) {
+  return {
+    border: '1px solid black', padding: '3px 8px',
+    fontWeight: bold ? 'bold' : 'normal',
+    textAlign: right ? 'right' : 'left',
+  }
+}

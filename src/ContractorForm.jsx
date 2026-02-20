@@ -12,26 +12,39 @@ export default function ContractorForm() {
   const { register, control, watch, handleSubmit, reset } = useForm({
     defaultValues: {
       created_at: new Date().toISOString().split('T')[0],
-      wage_type: 'daily',
-      has_ot: false,
-      has_accom: false,
-      has_travel: false,
-      deduct_tax: true,
+      // ── ข้อ 1 ──
+      doc_no: '',
+      contractor_name: '',
+      id_card: '',
+      supervisor_name: '',
+      // ── ข้อ 2 ──
+      wage_type: 'daily',         // 'daily' | 'project'
+      wage_rate: '',
+      has_ot: false,              // checkbox: มี/ไม่มีโอที
+      start_date: '',
+      end_date: '',
+      // ── ข้อ 3 ──
       daily_items: [
         { date: '', start_time: '08:00', end_time: '17:00', ot_start: '', ot_end: '', detail: '' }
-      ]
+      ],
+      // ── ข้อ 4 ──
+      has_accom: false,
+      accom_rate: '',
+      accom_unit: 'day',          // 'day' | 'job'
+      has_travel: false,
+      travel_rate: '',
+      travel_unit: 'day',
+      deduct_tax: true,
     }
   })
 
-  // โหลดข้อมูลเก่ามาใส่ฟอร์มถ้ามีการกด "แก้ไข" กลับมาจากหน้า Print
+  // โหลดข้อมูลเก่าถ้ากดแก้ไขจากหน้า Print
   useEffect(() => {
-    if (location.state) {
-      reset(location.state)
-    }
+    if (location.state) reset(location.state)
   }, [location.state, reset])
 
-  const formData = watch()
   const { fields, append, remove } = useFieldArray({ control, name: 'daily_items' })
+  const [hasAccom, hasTravel, wageType] = watch(['has_accom', 'has_travel', 'wage_type'])
 
   const onSubmit = async (data) => {
     setLoading(true)
@@ -50,209 +63,301 @@ export default function ContractorForm() {
         daily_items: data.daily_items,
         has_accom: data.has_accom,
         accom_rate: parseFloat(data.accom_rate || 0),
-        accom_unit: data.accom_unit || 'day',
+        accom_unit: data.accom_unit,
         has_travel: data.has_travel,
         travel_rate: parseFloat(data.travel_rate || 0),
-        travel_unit: data.travel_unit || 'day',
+        travel_unit: data.travel_unit,
         deduct_tax: data.deduct_tax,
       }
 
-      // บันทึกลงฐานข้อมูล
-      const { data: responseData, error } = await supabase
+      const { data: res, error } = await supabase
         .from('doc_contractor_orders')
         .insert([payload])
         .select()
 
       if (error) throw error
-      alert('✅ บันทึกใบสั่งจ้างเรียบร้อย!')
-      
-      // ไปยังหน้า Print พร้อมส่งข้อมูลไปแสดงผล
-      navigate('/contractor-print', { state: { ...data, id: responseData[0]?.id } })
 
-    } catch (error) {
-      console.error('Error:', error)
-      alert('เกิดข้อผิดพลาด: ' + error.message)
+      navigate('/contractor-print', { state: { ...data, id: res[0]?.id } })
+
+    } catch (err) {
+      console.error(err)
+      alert('เกิดข้อผิดพลาด: ' + err.message)
     } finally {
       setLoading(false)
     }
   }
 
-  const hasAccom = watch('has_accom')
-  const hasTravel = watch('has_travel')
-
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20 font-sans">
-      {/* Sticky Navbar แบบเดียวกับหน้าอื่นๆ */}
-      <nav className="relative sm:sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center gap-3">
+    <div className="min-h-screen bg-slate-50 pb-20 font-sans">
+
+      {/* ── Navbar ── */}
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           <Link to="/" className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
             <ArrowLeft size={18} />
           </Link>
-          <div className="h-5 w-[1px] bg-slate-200 mx-1" />
-          <div className="flex items-center text-sm font-medium">
-            <span className="text-slate-800 font-bold uppercase tracking-tight">ใบสั่งจ้างผู้รับเหมา</span>
-          </div>
+          <div className="h-5 w-px bg-slate-200 mx-1" />
+          <span className="font-bold text-slate-800 tracking-tight">ใบสั่งจ้างผู้รับเหมา</span>
+          <span className="ml-2 text-xs text-slate-400 hidden sm:block">/ Technician supporter record</span>
         </div>
       </nav>
 
-      {/* Form Area */}
-      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
-          {/* ── Card: ข้อมูลทั่วไป ── */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
-            <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-4 mb-6 uppercase tracking-wider">ข้อมูลทั่วไป</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-bold text-slate-800 mb-1.5 uppercase">วันที่เอกสาร</label>
-                <input type="date" {...register('created_at')} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" />
+          {/* ══════════════════════════════════════════
+               ข้อมูลทั่วไป
+          ══════════════════════════════════════════ */}
+          <Section title="ข้อมูลทั่วไป">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+              <Field label="วันที่เอกสาร" required>
+                <input
+                  type="date" {...register('created_at', { required: true })}
+                  className={inputCls()}
+                />
+              </Field>
+
+              {/* ตรงกับ "จ้างทำงานโปรเจ็คเลขที่" ในฟอร์ม */}
+              <Field label="จ้างทำงานโปรเจ็คเลขที่">
+                <input
+                  {...register('doc_no')} placeholder="เช่น PJ-24001"
+                  className={inputCls('font-mono')}
+                />
+              </Field>
+
+              {/* ชื่อผู้รับเหมา — full width */}
+              <div className="sm:col-span-2">
+                <Field label="ผู้รับเหมาชื่อ (นาย/นาง/นางสาว)" required>
+                  <input
+                    {...register('contractor_name', { required: true })}
+                    placeholder="ชื่อ-นามสกุล"
+                    className={inputCls()}
+                  />
+                </Field>
               </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-800 mb-1.5 uppercase">จ้างทำงานโปรเจ็คเลขที่</label>
-                <input {...register('doc_no')} placeholder="เช่น PJ-24001" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-slate-800 mb-1.5 uppercase">ผู้รับเหมาชื่อ (นาย/นาง/นางสาว)</label>
-                <input {...register('contractor_name')} placeholder="ชื่อ-นามสกุล" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-800 mb-1.5 uppercase">เลขบัตรประชาชน</label>
-                <input {...register('id_card')} maxLength={13} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all tracking-widest" />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-800 mb-1.5 uppercase">โดยมีผู้รับผิดชอบดูแล คือ</label>
-                <input {...register('supervisor_name')} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" />
-              </div>
+
+              {/* เลขบัตรประชาชน */}
+              <Field label="เลขบัตรประชาชน">
+                <input
+                  {...register('id_card')} maxLength={13}
+                  placeholder="_ _ _ _ _ _ _ _ _ _ _ _ _"
+                  className={inputCls('tracking-widest font-mono')}
+                />
+              </Field>
+
+              {/* โดยมีผู้รับผิดชอบดูแลผู้รับเหมา คือ */}
+              <Field label="โดยมีผู้รับผิดชอบดูแลผู้รับเหมา คือ">
+                <input {...register('supervisor_name')} className={inputCls()} />
+              </Field>
+
             </div>
-          </div>
+          </Section>
 
-          {/* ── Card: ข้อตกลงค่าจ้าง ── */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
-            <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-4 mb-6 uppercase tracking-wider">ข้อตกลงค่าจ้าง</h3>
-            
-            <div className="flex gap-6 mb-6">
-              <label className="flex items-center gap-2 cursor-pointer p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors w-full sm:w-auto">
-                <input type="radio" value="daily" {...register('wage_type')} className="w-4 h-4 accent-blue-600" />
-                <span className="text-sm font-bold text-slate-700">รายวัน</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors w-full sm:w-auto">
-                <input type="radio" value="project" {...register('wage_type')} className="w-4 h-4 accent-blue-600" />
-                <span className="text-sm font-bold text-slate-700">ต่อโปรเจ็ค (เหมา)</span>
-              </label>
-            </div>
+          {/* ══════════════════════════════════════════
+               ข้อ 2: ค่าจ้างเป็นแบบ
+          ══════════════════════════════════════════ */}
+          <Section title="2. ค่าจ้างเป็นแบบ">
+            <div className="space-y-5">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-bold text-slate-800 mb-1.5">เป็นจำนวนเงิน (เรทปกติ)</label>
-                <div className="flex items-center gap-2">
-                  <input type="number" {...register('wage_rate')} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-blue-700" placeholder="0.00" />
-                  <span className="text-sm text-slate-500 whitespace-nowrap">บาท ต่อ {formData.wage_type === 'daily' ? 'วัน' : 'งาน'}</span>
-                </div>
-              </div>
-              <div className="flex items-center md:items-end">
-                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-slate-200 w-full hover:bg-slate-50">
-                  <input type="checkbox" {...register('has_ot')} className="w-5 h-5 rounded accent-blue-600" />
-                  <span className="text-sm font-bold text-slate-700">มีโอที (ล่วงเวลา)</span>
-                </label>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-800 mb-1.5">เริ่มตั้งแต่วันที่</label>
-                <input type="date" {...register('start_date')} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-800 mb-1.5">จนถึงวันที่</label>
-                <input type="date" {...register('end_date')} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
-              </div>
-            </div>
-          </div>
-
-          {/* ── Card: ตารางลงเวลา ── */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-slate-800 uppercase tracking-wider">ตารางลงเวลา</h3>
-              <button type="button" onClick={() => append({ date: '', start_time: '08:00', end_time: '17:00', ot_start: '', ot_end: '', detail: '' })} className="text-sm bg-blue-50 text-blue-600 flex items-center gap-1 font-bold hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors">
-                <Plus size={16} /> เพิ่มวันทำงาน
-              </button>
-            </div>
-
-            <div className="min-w-[800px]">
-              <div className="grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">
-                <div className="col-span-3">วันที่</div>
-                <div className="col-span-2">เริ่ม</div>
-                <div className="col-span-2">สิ้นสุด</div>
-                <div className="col-span-2">โอทีเริ่ม</div>
-                <div className="col-span-2">โอทีสิ้นสุด</div>
-                <div className="col-span-1 text-center">ลบ</div>
-              </div>
-
-              <div className="space-y-3">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="bg-slate-50 rounded-xl border border-slate-200 p-3 space-y-3">
-                    <div className="grid grid-cols-12 gap-2 items-center">
-                      <div className="col-span-3"><input type="date" {...register(`daily_items.${index}.date`)} className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg outline-none" /></div>
-                      <div className="col-span-2"><input type="time" {...register(`daily_items.${index}.start_time`)} className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg outline-none" /></div>
-                      <div className="col-span-2"><input type="time" {...register(`daily_items.${index}.end_time`)} className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg outline-none" /></div>
-                      <div className="col-span-2"><input type="time" {...register(`daily_items.${index}.ot_start`)} className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg outline-none" /></div>
-                      <div className="col-span-2"><input type="time" {...register(`daily_items.${index}.ot_end`)} className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg outline-none" /></div>
-                      <div className="col-span-1 text-center"><button type="button" onClick={() => remove(index)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18} /></button></div>
-                    </div>
-                    <div>
-                      <input type="text" placeholder="รายละเอียดงาน..." {...register(`daily_items.${index}.detail`)} className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg outline-none" />
-                    </div>
-                  </div>
+              {/* รายวัน / ต่อโปรเจ็ค */}
+              <div className="flex gap-3 flex-wrap">
+                {[
+                  { value: 'daily',   label: 'รายวัน' },
+                  { value: 'project', label: 'ต่อโปรเจ็ค (เหมา)' },
+                ].map(opt => (
+                  <label key={opt.value}
+                    className="flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
+                    <input type="radio" value={opt.value} {...register('wage_type')}
+                      className="w-4 h-4 accent-blue-600" />
+                    <span className="text-sm font-semibold text-slate-700">{opt.label}</span>
+                  </label>
                 ))}
               </div>
-            </div>
-          </div>
 
-          {/* ── Card: ค่าใช้จ่ายอื่น ๆ ── */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
-            <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-4 mb-6 uppercase tracking-wider">ค่าใช้จ่ายเพิ่มเติม & ภาษี</h3>
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50/50">
-                <label className="flex items-center gap-3 cursor-pointer min-w-[150px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+                {/* เป็นจำนวนเงิน (เรทปกติ) บาท ต่อ วัน/งาน */}
+                <Field label={`เป็นจำนวนเงิน (เรทปกติ) บาท / ${wageType === 'daily' ? 'วัน' : 'งาน'}`} required>
+                  <input
+                    type="number" step="0.01"
+                    {...register('wage_rate', { required: true })}
+                    placeholder="0.00"
+                    className={inputCls('font-bold text-blue-700')}
+                  />
+                </Field>
+
+                {/* โอที มี / ไม่มี */}
+                <Field label="โอที (ล่วงเวลา)">
+                  <label className="flex items-center gap-3 cursor-pointer h-[42px] px-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
+                    <input type="checkbox" {...register('has_ot')}
+                      className="w-5 h-5 rounded accent-blue-600" />
+                    <span className="text-sm font-semibold text-slate-700">มีโอที</span>
+                    <span className="text-xs text-slate-400">(ไม่ติ๊ก = ไม่มี)</span>
+                  </label>
+                </Field>
+
+                {/* โดยมีระยะเวลาตั้งแต่วันที่ */}
+                <Field label="โดยมีระยะเวลาตั้งแต่วันที่">
+                  <input type="date" {...register('start_date')} className={inputCls()} />
+                </Field>
+
+                {/* จนถึงวันที่ */}
+                <Field label="จนถึงวันที่">
+                  <input type="date" {...register('end_date')} className={inputCls()} />
+                </Field>
+
+              </div>
+            </div>
+          </Section>
+
+          {/* ══════════════════════════════════════════
+               ข้อ 3: ตารางลงเวลา
+          ══════════════════════════════════════════ */}
+          <Section
+            title="3. ตารางลงเวลา (กรณีจ้างแบบรายวัน)"
+            action={
+              <button type="button"
+                onClick={() => append({ date: '', start_time: '08:00', end_time: '17:00', ot_start: '', ot_end: '', detail: '' })}
+                className="flex items-center gap-1.5 text-sm text-blue-600 font-semibold hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                <Plus size={15} /> เพิ่มวัน
+              </button>
+            }
+          >
+            {/* Column labels */}
+            <div className="hidden sm:grid grid-cols-12 gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
+              <div className="col-span-3">วันที่ทำงาน</div>
+              <div className="col-span-2">เริ่ม</div>
+              <div className="col-span-2">สิ้นสุด</div>
+              <div className="col-span-2">โอทีเริ่ม</div>
+              <div className="col-span-2">โอทีสิ้นสุด</div>
+              <div className="col-span-1"></div>
+            </div>
+
+            <div className="space-y-3">
+              {fields.map((field, idx) => (
+                <div key={field.id} className="bg-slate-50 rounded-xl border border-slate-100 p-3 space-y-2">
+                  <div className="grid grid-cols-12 gap-2 items-center">
+                    {/* วันที่ */}
+                    <div className="col-span-3">
+                      <input type="date" {...register(`daily_items.${idx}.date`)}
+                        className="w-full text-sm px-2 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                    {/* เริ่ม */}
+                    <div className="col-span-2">
+                      <input type="time" {...register(`daily_items.${idx}.start_time`)}
+                        className="w-full text-sm px-2 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                    {/* สิ้นสุด */}
+                    <div className="col-span-2">
+                      <input type="time" {...register(`daily_items.${idx}.end_time`)}
+                        className="w-full text-sm px-2 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                    {/* โอทีเริ่ม */}
+                    <div className="col-span-2">
+                      <input type="time" {...register(`daily_items.${idx}.ot_start`)}
+                        className="w-full text-sm px-2 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                    {/* โอทีสิ้นสุด */}
+                    <div className="col-span-2">
+                      <input type="time" {...register(`daily_items.${idx}.ot_end`)}
+                        className="w-full text-sm px-2 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                    {/* ลบ */}
+                    <div className="col-span-1 flex justify-center">
+                      <button type="button" onClick={() => remove(idx)}
+                        className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  {/* รายละเอียดงาน — ตรงกับคอลัมน์ "รายละเอียดงาน" ในตาราง */}
+                  <input type="text"
+                    placeholder="รายละเอียดงาน..."
+                    {...register(`daily_items.${idx}.detail`)}
+                    className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* หมายเหตุหักภาษี — แสดงในหมายเหตุแถว "รวม" ของตาราง */}
+            <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" {...register('deduct_tax')}
+                  className="mt-0.5 w-4 h-4 rounded accent-amber-500" />
+                <div>
+                  <span className="text-sm font-semibold text-amber-800">หักภาษี ณ ที่จ่าย 3%</span>
+                  <p className="text-xs text-amber-600 mt-0.5">
+                    จะแสดงข้อความในหมายเหตุของตาราง: "ค่าจ้างและค่าใช้จ่ายทั้งหมด จะถูกหัก ณ ที่จ่าย 3%"
+                  </p>
+                </div>
+              </label>
+            </div>
+
+          </Section>
+
+          {/* ══════════════════════════════════════════
+               ข้อ 4: ค่าใช้จ่ายนอกจากค่าจ้าง
+          ══════════════════════════════════════════ */}
+          <Section title="4. ค่าใช้จ่ายนอกจากค่าจ้าง">
+            <div className="space-y-3">
+
+              {/* ── ค่าที่พัก ── */}
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors bg-white">
                   <input type="checkbox" {...register('has_accom')} className="w-5 h-5 rounded accent-blue-600" />
-                  <span className="text-sm font-bold text-slate-700">ค่าที่พัก</span>
+                  <span className="text-sm font-semibold text-slate-700">ค่าที่พัก เป็นเงิน</span>
+                  {!hasAccom && <span className="text-xs text-slate-400 ml-auto">ไม่มี</span>}
                 </label>
                 {hasAccom && (
-                  <div className="flex items-center gap-3 flex-1">
-                    <input type="number" {...register('accom_rate')} placeholder="0.00" className="w-32 px-4 py-2 border border-slate-200 rounded-lg outline-none text-sm" />
-                    <span className="text-sm text-slate-500">บาท /</span>
-                    <select {...register('accom_unit')} className="px-4 py-2 border border-slate-200 rounded-lg outline-none text-sm bg-white">
-                      <option value="day">วัน</option><option value="job">งาน</option>
+                  <div className="px-4 pb-4 pt-3 bg-slate-50 border-t border-slate-100 flex items-center gap-3">
+                    <input type="number" step="0.01" {...register('accom_rate')}
+                      placeholder="0.00"
+                      className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 bg-white" />
+                    <span className="text-sm text-slate-500">บาท ต่อ</span>
+                    <select {...register('accom_unit')}
+                      className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white outline-none">
+                      <option value="day">วัน</option>
+                      <option value="job">งาน</option>
                     </select>
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50/50">
-                <label className="flex items-center gap-3 cursor-pointer min-w-[150px]">
+              {/* ── ค่าเดินทาง ── */}
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors bg-white">
                   <input type="checkbox" {...register('has_travel')} className="w-5 h-5 rounded accent-blue-600" />
-                  <span className="text-sm font-bold text-slate-700">ค่าเดินทาง</span>
+                  <span className="text-sm font-semibold text-slate-700">ค่าเดินทาง เป็นเงิน</span>
+                  {!hasTravel && <span className="text-xs text-slate-400 ml-auto">ไม่มี</span>}
                 </label>
                 {hasTravel && (
-                  <div className="flex items-center gap-3 flex-1">
-                    <input type="number" {...register('travel_rate')} placeholder="0.00" className="w-32 px-4 py-2 border border-slate-200 rounded-lg outline-none text-sm" />
-                    <span className="text-sm text-slate-500">บาท /</span>
-                    <select {...register('travel_unit')} className="px-4 py-2 border border-slate-200 rounded-lg outline-none text-sm bg-white">
-                      <option value="day">วัน</option><option value="job">งาน</option>
+                  <div className="px-4 pb-4 pt-3 bg-slate-50 border-t border-slate-100 flex items-center gap-3">
+                    <input type="number" step="0.01" {...register('travel_rate')}
+                      placeholder="0.00"
+                      className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 bg-white" />
+                    <span className="text-sm text-slate-500">บาท ต่อ</span>
+                    <select {...register('travel_unit')}
+                      className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white outline-none">
+                      <option value="day">วัน</option>
+                      <option value="job">งาน</option>
                     </select>
                   </div>
                 )}
               </div>
 
-              <div className="p-4 rounded-xl border border-orange-200 bg-orange-50">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" {...register('deduct_tax')} className="w-5 h-5 rounded accent-orange-500" />
-                  <span className="text-sm font-bold text-orange-800">หักภาษี ณ ที่จ่าย 3% (ค่าจ้างและค่าใช้จ่ายทั้งหมดจะถูกนำมาคำนวณหัก 3%)</span>
-                </label>
-              </div>
             </div>
-          </div>
+          </Section>
 
-          <div className="flex justify-end pt-4">
-            <button type="submit" disabled={loading} className="w-full sm:w-auto px-10 py-4 bg-slate-900 text-white rounded-2xl font-black shadow-xl hover:bg-black transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-              {loading ? 'กำลังบันทึก...' : <><Save size={20} /> บันทึกและดูเอกสาร</>}
+          {/* ── ปุ่มบันทึก ── */}
+          <div className="flex justify-end pt-2">
+            <button type="submit" disabled={loading}
+              className="w-full sm:w-auto px-10 py-4 bg-slate-900 text-white rounded-2xl font-black shadow-xl hover:bg-black transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-base">
+              {loading
+                ? 'กำลังบันทึก...'
+                : <><Save size={20} /> บันทึกและดูเอกสาร</>
+              }
             </button>
           </div>
 
@@ -260,4 +365,33 @@ export default function ContractorForm() {
       </div>
     </div>
   )
+}
+
+// ── UI Helpers ────────────────────────────────────────────────────────────────
+
+function Section({ title, children, action }) {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/60">
+        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wider">{title}</h3>
+        {action && <div>{action}</div>}
+      </div>
+      <div className="p-6">{children}</div>
+    </div>
+  )
+}
+
+function Field({ label, required, children }) {
+  return (
+    <div>
+      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+function inputCls(extra = '') {
+  return `w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all ${extra}`
 }

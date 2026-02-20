@@ -1,334 +1,413 @@
-import { useState, useRef, useEffect } from 'react' // เพิ่ม useEffect
-import { useNavigate, Link, useLocation } from 'react-router-dom' // เพิ่ม useLocation
+import { useState, useRef } from 'react'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import SignatureCanvas from 'react-signature-canvas'
 import toast from 'react-hot-toast'
-import { 
-  ArrowLeft, Save, Plus, Trash2, FileText, 
-  User, CreditCard, Calendar, Briefcase, 
-  Hash, DollarSign, PenTool, Eraser,
-  ChevronLeft, Home, ChevronRight, ReceiptText 
-} from 'lucide-react'
-
-// --- InputGroup ปรับแต่งเพื่อรองรับ defaultValue ---
-const InputGroup = ({ label, icon: Icon, fullWidth, defaultValue, ...props }) => (
-  <div className={`space-y-1.5 ${fullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
-    <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-      {Icon && <Icon size={16} className="text-blue-500" />}
-      {label}
-    </label>
-    <input
-      defaultValue={defaultValue} // เพิ่มเพื่อรับค่าเดิม
-      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-slate-700"
-      {...props}
-    />
-  </div>
-)
+import { ArrowLeft, Plus, Trash2, Save, Eraser } from 'lucide-react'
 
 export default function ReceiptForm() {
   const navigate = useNavigate()
-  const location = useLocation() // รับ state เพื่อเช็คการเข้าผ่านปุ่ม "แก้ไข"
-  const sigPad = useRef({})
+  const location = useLocation()
+  const sigRef   = useRef({})
   const [loading, setLoading] = useState(false)
-  
-  const editData = location.state || null // ข้อมูลเก่าที่จะแก้ไข
-  
-  const [items, setItems] = useState(editData?.items || [
-    { date: '', detail: '', amount: '', project_no: '' }
-  ])
+  const edit = location.state || null
 
-  const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+  // ── ตาราง: รายการ, จำนวน, หน่วย, ราคาต่อหน่วย ──────────────────────────────
+  const [rows, setRows] = useState(
+    edit?.items || [{ detail: '', qty: '', unit: '', price_per_unit: '' }]
+  )
 
-  const addItem = () => {
-    setItems([...items, { date: '', detail: '', amount: '', project_no: '' }])
-  }
+  const total = rows.reduce(
+    (s, r) => s + (parseFloat(r.qty || 0) * parseFloat(r.price_per_unit || 0)), 0
+  )
 
-  const removeItem = (index) => {
-    if (items.length > 1) {
-      const newItems = items.filter((_, i) => i !== index)
-      setItems(newItems)
-    }
-  }
+  const addRow = () =>
+    setRows(p => [...p, { detail: '', qty: '', unit: '', price_per_unit: '' }])
+  const delRow = i =>
+    rows.length > 1 && setRows(p => p.filter((_, x) => x !== i))
+  const setRow = (i, f, v) =>
+    setRows(p => { const n = [...p]; n[i] = { ...n[i], [f]: v }; return n })
 
-  const handleItemChange = (index, field, value) => {
-    const newItems = [...items]
-    newItems[index][field] = value
-    setItems(newItems)
-  }
-
-  const handleSubmit = async (e) => {
+  // ── Submit ────────────────────────────────────────────────────────────────────
+  const onSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-
     try {
-      const formData = new FormData(e.target)
-      const data = Object.fromEntries(formData.entries())
+      const fd  = Object.fromEntries(new FormData(e.target).entries())
+      let sig   = edit?.payer_signature || null
 
-      // จัดการลายเซ็น
-      let signatureUrl = editData?.payer_signature || null // เริ่มต้นด้วยลายเซ็นเดิม
-      
-      // ถ้ายูสเซอร์วาดลายเซ็นใหม่
-      if (sigPad.current && !sigPad.current.isEmpty()) {
-        const canvas = sigPad.current.getCanvas()
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
-        const fileName = `receipt-sig-${Date.now()}.png`
-        const { error: uploadError } = await supabase.storage.from('signatures').upload(fileName, blob)
-        if (uploadError) throw uploadError
-        const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(fileName)
-        signatureUrl = urlData.publicUrl
+      if (sigRef.current && !sigRef.current.isEmpty()) {
+        const blob = await new Promise(r => sigRef.current.getCanvas().toBlob(r, 'image/png'))
+        const name = `sig-${Date.now()}.png`
+        const { error: ue } = await supabase.storage.from('signatures').upload(name, blob)
+        if (ue) throw ue
+        sig = supabase.storage.from('signatures').getPublicUrl(name).data.publicUrl
       }
 
-      const dbPayload = {
-        doc_no: data.doc_no,
-        payer_name: data.payer_name,
-        position: data.position,
-        items: items,
-        total_amount: totalAmount,
-        total_text: data.total_text,
-        payment_method: data.payment_method,
-        payment_date: data.payment_date || null,
-        payer_signature: signatureUrl
+      const payload = {
+        doc_date:        fd.doc_date || null,
+        payer_name:      fd.payer_name,
+        id_card:         fd.id_card,
+        address:         fd.address,
+        total_amount:    total,
+        total_text:      fd.total_text,
+        payment_method:  fd.payment_method,
+        payment_date:    fd.payment_date || null,
+        items:           rows,
+        payer_signature: sig,
       }
 
-      let newId = null
-
-      // ถ้าเป็นการแก้ไข (มี ID เดิมส่งมา) ให้ทำ UPDATE
-      if (editData?.id) {
-        const { data: updatedData, error: updateError } = await supabase
-          .from('doc_substitute_receipts')
-          .update(dbPayload)
-          .eq('id', editData.id)
-          .select()
-
-        if (updateError) throw updateError
-        newId = updatedData[0].id
+      let newId
+      if (edit?.id) {
+        const { data: r, error } = await supabase
+          .from('doc_substitute_receipts').update(payload).eq('id', edit.id).select()
+        if (error) throw error
+        newId = r[0].id
       } else {
-        // ถ้าเป็นการสร้างใหม่ ให้ทำ INSERT
-        const { data: insertedData, error: insertError } = await supabase
-          .from('doc_substitute_receipts')
-          .insert([dbPayload])
-          .select()
-
-        if (insertError) throw insertError
-        newId = insertedData[0].id
+        const { data: r, error } = await supabase
+          .from('doc_substitute_receipts').insert([payload]).select()
+        if (error) throw error
+        newId = r[0].id
       }
 
-      toast.success('บันทึกข้อมูลเรียบร้อย!')
-      // ส่ง state กลับไปให้หน้า Print ด้วยเพื่อให้โชว์ค่าใหม่เลยโดยไม่ต้องรอ Query
-      navigate(`/receipt-print/${newId}`, { state: { ...dbPayload, id: newId } }) 
-
-    } catch (error) {
-      console.error(error)
-      alert('เกิดข้อผิดพลาด: ' + error.message)
+      toast.success('บันทึกเรียบร้อย!')
+      navigate(`/receipt-print/${newId}`, { state: { ...payload, id: newId } })
+    } catch (err) {
+      console.error(err)
+      alert('เกิดข้อผิดพลาด: ' + err.message)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20 font-sans">
-      
-      {/* --- Sticky Navbar --- */}
-      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link to="/" className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
-              <ChevronLeft size={18} />
-            </Link>
-            <div className="h-5 sm:h-6 w-[1px] bg-slate-200 mx-1" />
-            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium">
-              <Link to="/" className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors">
-                <Home size={14} /> หน้าแรก
-              </Link>
-              <ChevronRight size={12} className="text-slate-300" />
-              <span className="text-slate-800 font-bold">ใบรับรองแทนใบเสร็จ {editData && "(แก้ไข)"}</span>
-            </div>
+    <div className="min-h-screen bg-stone-50 pb-20"
+      style={{ fontFamily: "'Sarabun','TH Sarabun New',sans-serif" }}>
+
+      {/* ══ Navbar ══ */}
+      <nav className="sticky top-0 z-40 bg-white border-b border-stone-200 shadow-sm">
+        <div className="max-w-2xl mx-auto px-5 h-13 flex items-center gap-3" style={{ height: 52 }}>
+          <Link to="/" className="text-stone-400 hover:text-stone-700 transition-colors" style={{ lineHeight: 0 }}>
+            <ArrowLeft size={18} />
+          </Link>
+          <div className="w-px h-5 bg-stone-200" />
+          {/* breadcrumb */}
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="text-stone-400">เอกสาร</span>
+            <span className="text-stone-300">/</span>
+            <span className="font-semibold text-stone-700">ใบสำคัญรับเงิน</span>
+            {edit && (
+              <span className="ml-1 text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                แก้ไข
+              </span>
+            )}
           </div>
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        
-        <div className="flex items-center gap-5 mb-10">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white shadow-xl shadow-orange-500/20 rotate-3">
-            <ReceiptText size={32} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Substitute Receipt</h1>
-            <p className="text-slate-500 text-sm font-medium">{editData ? 'แก้ไขเอกสารใบรับรองแทนใบเสร็จ' : 'ใบรับรองแทนใบเสร็จรับเงิน / เอกสารเบิกจ่าย'}</p>
-          </div>
+      <div className="max-w-2xl mx-auto px-4 pt-8">
+
+        {/* ── Page heading ── */}
+        <div className="mb-7">
+          <h1 className="text-xl font-bold text-stone-800 tracking-tight">
+            RECEIPT VOUCHER
+          </h1>
+          <p className="text-stone-400 text-sm mt-0.5">ใบสำคัญรับเงิน</p>
+          <div className="mt-3 h-px bg-stone-200" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          
-          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
-            <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg border-b border-slate-100 pb-4">
-              <FileText className="text-blue-600" />
-              ข้อมูลเอกสารและผู้เบิก
+        <form onSubmit={onSubmit} className="space-y-4">
+
+          {/* ════════════════════════════════════════════════
+               ส่วน 1 — ข้อมูลผู้รับเงิน
+          ════════════════════════════════════════════════ */}
+          <Card title="ข้อมูลผู้รับเงิน">
+
+            {/* วันที่ */}
+            <Row2>
+              <Field label="วันที่" hint="Date" required>
+                <input type="date" name="doc_date"
+                  defaultValue={edit?.doc_date || new Date().toISOString().split('T')[0]}
+                  className={inp()} />
+              </Field>
+              {/* spacer */}
+              <div />
+            </Row2>
+
+            {/* ข้าพเจ้า + เลขบัตร (1 แถว — ตามต้นฉบับ PDF) */}
+            <Row2>
+              <Field label="ข้าพเจ้า" hint="ชื่อ-นามสกุลผู้รับเงิน" required>
+                <input type="text" name="payer_name" required
+                  placeholder="ชื่อ-นามสกุล"
+                  defaultValue={edit?.payer_name}
+                  className={inp()} />
+              </Field>
+              <Field label="ผู้มีถิ่นฐานอยู่ตามบัตรประชาชนเลขที่">
+                <input type="text" name="id_card" maxLength={13}
+                  placeholder="_ _ _ _ _ _ _ _ _ _ _ _ _"
+                  defaultValue={edit?.id_card}
+                  className={inp('font-mono tracking-widest')} />
+              </Field>
+            </Row2>
+
+            {/* ที่อยู่ */}
+            <Field label="ที่อยู่" hint="Address">
+              <input type="text" name="address"
+                placeholder="ระบุที่อยู่"
+                defaultValue={edit?.address}
+                className={inp()} />
+            </Field>
+
+            {/* ── ข้อความบรรยาย: ได้รับเงินจากบริษัท ── */}
+            <div className="mt-4 pt-4 border-t border-dashed border-stone-200 text-[13.5px] text-stone-500 leading-loose">
+              ตามสำเนาแนบท้าย ได้รับเงินจาก{' '}
+              <span className="font-semibold text-stone-800">
+                บริษัท ฮารุ ซิสเต็ม ดีเวล็อปเมนต์ (ไทยแลนด์) จำกัด
+              </span>{' '}
+              เป็นจำนวนเงิน
+              <span className="inline-block min-w-[110px] border-b border-stone-400 text-center mx-2 font-bold text-stone-900 text-[15px]">
+                {total > 0
+                  ? total.toLocaleString('th-TH', { minimumFractionDigits: 2 })
+                  : '\u00A0'}
+              </span>
+              บาท
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputGroup 
-                label="เลขที่เอกสาร" 
-                name="doc_no" 
-                required 
-                icon={Hash}
-                placeholder="เช่น 65/001"
-                defaultValue={editData?.doc_no}
-              />
-              
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                  <Calendar size={16} className="text-blue-500" />
-                  วันที่ทำรายการ
+
+            {/* ── ได้รับเงินเป็น: เงินสด / โอนเงิน ── */}
+            <div className="mt-3 flex items-center gap-5 flex-wrap">
+              <span className="text-[13.5px] text-stone-600 font-medium">ได้รับเงินเป็น</span>
+              {[
+                { v: 'cash',     l: 'เงินสด' },
+                { v: 'transfer', l: 'โอนเงิน' },
+              ].map(o => (
+                <label key={o.v} className="flex items-center gap-2 cursor-pointer text-[13.5px] text-stone-700">
+                  <input type="radio" name="payment_method" value={o.v}
+                    defaultChecked={edit ? edit.payment_method === o.v : o.v === 'cash'}
+                    className="w-4 h-4 accent-stone-700" />
+                  {o.l}
                 </label>
-                <div className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 flex justify-between items-center cursor-not-allowed font-medium">
-                  {new Date().toISOString().split('T')[0]}
-                  <span className="text-[10px] bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-400 font-bold">AUTO</span>
-                </div>
+              ))}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-stone-400">วันที่โอน</span>
+                <input type="date" name="payment_date"
+                  defaultValue={edit?.payment_date}
+                  className={`${inp()} text-xs`}
+                  style={{ width: 148 }} />
               </div>
-
-              <InputGroup 
-                label="ข้าพเจ้า (ชื่อผู้เบิก)" 
-                name="payer_name" 
-                required 
-                icon={User}
-                placeholder="ระบุชื่อ-นามสกุล"
-                defaultValue={editData?.payer_name}
-              />
-
-              <InputGroup 
-                label="ตำแหน่ง" 
-                name="position" 
-                required 
-                icon={Briefcase}
-                placeholder="ระบุตำแหน่งงาน"
-                defaultValue={editData?.position}
-              />
             </div>
-          </div>
 
-          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
-            <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-2 text-slate-800 font-bold text-lg">
-                <CreditCard className="text-orange-500" />
-                รายการค่าใช้จ่าย
-              </div>
-              <button 
-                type="button" 
-                onClick={addItem} 
-                className="text-xs font-bold bg-blue-50 text-blue-600 px-3 py-2 rounded-lg flex items-center gap-1 hover:bg-blue-100 transition-colors"
-              >
-                <Plus size={16} /> เพิ่มรายการ
+            <p className="mt-2 text-[13.5px] text-stone-500">ดังรายการต่อไปนี้</p>
+
+          </Card>
+
+          {/* ════════════════════════════════════════════════
+               ส่วน 2 — รายการค่าใช้จ่าย (ตาราง)
+          ════════════════════════════════════════════════ */}
+          <Card
+            title="รายการค่าใช้จ่าย"
+            action={
+              <button type="button" onClick={addRow}
+                className="flex items-center gap-1.5 text-xs font-bold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-lg transition-colors">
+                <Plus size={13} /> เพิ่มรายการ
               </button>
+            }
+          >
+            {/* ── Column headers (ตรงตาม PDF) ── */}
+            <div className="grid gap-2 text-[10px] font-bold text-stone-400 uppercase tracking-wider pb-2 border-b border-stone-200"
+              style={{ gridTemplateColumns: '28px 1fr 64px 60px 90px 86px 24px' }}>
+              <div className="text-center">ลำดับ</div>
+              <div>รายการ</div>
+              <div className="text-center">จำนวน</div>
+              <div className="text-center">หน่วย</div>
+              <div className="text-right">ราคาต่อหน่วย</div>
+              <div className="text-right">รวมเป็นเงิน</div>
+              <div />
             </div>
 
-            <div className="space-y-4">
-              <div className="hidden md:grid grid-cols-12 gap-4 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                <div className="col-span-2">วันที่บิล</div>
-                <div className="col-span-5">รายละเอียด</div>
-                <div className="col-span-2 text-right">จำนวนเงิน</div>
-                <div className="col-span-2">Project No.</div>
-                <div className="col-span-1"></div>
-              </div>
+            {/* ── Rows ── */}
+            <div className="space-y-2 mt-2">
+              {rows.map((row, i) => {
+                const sub = parseFloat(row.qty || 0) * parseFloat(row.price_per_unit || 0)
+                return (
+                  <div key={i}
+                    className="grid gap-2 items-center bg-stone-50 rounded-lg px-2 py-2 border border-stone-100"
+                    style={{ gridTemplateColumns: '28px 1fr 64px 60px 90px 86px 24px' }}>
 
-              {items.map((item, index) => (
-                <div key={index} className="group relative bg-slate-50 p-4 rounded-xl border border-slate-100 md:bg-white md:border-0 md:p-0 md:hover:bg-slate-50 md:transition-colors">
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-start md:items-center">
-                    <div className="md:col-span-2">
-                      <label className="md:hidden text-xs font-semibold text-slate-500 mb-1 block">วันที่</label>
-                      <input type="date" value={item.date} onChange={(e) => handleItemChange(index, 'date', e.target.value)} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:border-blue-500 outline-none" required />
+                    {/* ลำดับ */}
+                    <div className="text-center text-xs font-bold text-stone-300">{i + 1}</div>
+
+                    {/* รายการ */}
+                    <input type="text" required value={row.detail}
+                      placeholder="ระบุรายการ..."
+                      onChange={e => setRow(i, 'detail', e.target.value)}
+                      className={rowInp()} />
+
+                    {/* จำนวน */}
+                    <input type="number" min="0" step="any" value={row.qty}
+                      placeholder="0"
+                      onChange={e => setRow(i, 'qty', e.target.value)}
+                      className={rowInp('text-center')} />
+
+                    {/* หน่วย */}
+                    <input type="text" value={row.unit}
+                      placeholder="ชิ้น"
+                      onChange={e => setRow(i, 'unit', e.target.value)}
+                      className={rowInp('text-center')} />
+
+                    {/* ราคาต่อหน่วย */}
+                    <input type="number" min="0" step="any" value={row.price_per_unit}
+                      placeholder="0.00"
+                      onChange={e => setRow(i, 'price_per_unit', e.target.value)}
+                      className={rowInp('text-right')} />
+
+                    {/* รวมเป็นเงิน (คำนวณอัตโนมัติ) */}
+                    <div className={`text-right text-[13px] font-semibold pr-1 ${sub > 0 ? 'text-stone-800' : 'text-stone-300'}`}>
+                      {sub > 0
+                        ? sub.toLocaleString('th-TH', { minimumFractionDigits: 2 })
+                        : '—'}
                     </div>
-                    <div className="md:col-span-5">
-                      <label className="md:hidden text-xs font-semibold text-slate-500 mb-1 block">รายละเอียด</label>
-                      <input type="text" placeholder="ระบุรายละเอียด..." value={item.detail} onChange={(e) => handleItemChange(index, 'detail', e.target.value)} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:border-blue-500 outline-none" required />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="md:hidden text-xs font-semibold text-slate-500 mb-1 block">จำนวนเงิน</label>
-                      <input type="number" placeholder="0.00" value={item.amount} onChange={(e) => handleItemChange(index, 'amount', e.target.value)} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-right text-slate-700 focus:border-blue-500 outline-none" required />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="md:hidden text-xs font-semibold text-slate-500 mb-1 block">Project No.</label>
-                      <input type="text" placeholder="-" value={item.project_no} onChange={(e) => handleItemChange(index, 'project_no', e.target.value)} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-500 focus:border-blue-500 outline-none" />
-                    </div>
-                    <div className="md:col-span-1 flex justify-end">
-                      {items.length > 1 && (
-                        <button type="button" onClick={() => removeItem(index)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all">
-                          <Trash2 size={18} />
+
+                    {/* ลบ */}
+                    <div className="flex justify-center">
+                      {rows.length > 1 && (
+                        <button type="button" onClick={() => delRow(i)}
+                          className="text-stone-300 hover:text-red-500 transition-colors p-0.5 rounded">
+                          <Trash2 size={13} />
                         </button>
                       )}
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
-            <div className="mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col md:flex-row gap-6 items-center justify-between">
-              <div className="w-full md:w-2/3">
-                <label className="text-sm font-semibold text-slate-600 mb-1.5 block">จำนวนเงินรวม (ตัวอักษร) <span className="text-red-500">*</span></label>
-                <input type="text" name="total_text" defaultValue={editData?.total_text} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-blue-500 outline-none text-slate-700" placeholder="เช่น ห้าร้อยบาทถ้วน" required />
-              </div>
-              <div className="w-full md:w-1/3 text-right">
-                <p className="text-sm text-slate-500 font-medium mb-1">ยอดรวมทั้งสิ้น</p>
-                <div className="text-3xl font-bold text-blue-600">
-                  {totalAmount.toLocaleString()} <span className="text-sm text-slate-400 font-normal">บาท</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-              <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <DollarSign size={20} className="text-emerald-500" /> 
-                วิธีการจ่ายเงิน
-              </h3>
-              <div className="space-y-3">
-                <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                  <input type="radio" name="payment_method" value="cash" defaultChecked={!editData || editData?.payment_method === 'cash'} className="w-5 h-5 text-blue-600 accent-blue-600" />
-                  <span className="font-medium text-slate-700">เงินสด (Cash)</span>
-                </label>
-                <div className="border border-slate-200 rounded-xl p-3 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-all">
-                  <label className="flex items-center gap-3 cursor-pointer mb-2">
-                    <input type="radio" name="payment_method" value="transfer" defaultChecked={editData?.payment_method === 'transfer'} className="w-5 h-5 text-blue-600 accent-blue-600" />
-                    <span className="font-medium text-slate-700">โอนเงิน (Transfer)</span>
-                  </label>
-                  <input type="date" name="payment_date" defaultValue={editData?.payment_date} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-blue-500" />
-                </div>
-              </div>
+            {/* ── รวมเป็นเงิน / Total ── */}
+            <div className="mt-3 flex justify-between items-center bg-stone-800 text-white rounded-xl px-5 py-3.5">
+              <span className="text-sm font-bold tracking-wide">รวมเป็นเงิน / Total</span>
+              <span className="text-lg font-black">
+                {total > 0
+                  ? total.toLocaleString('th-TH', { minimumFractionDigits: 2 })
+                  : '0.00'}
+                <span className="text-stone-400 text-xs font-normal ml-1.5">บาท</span>
+              </span>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-              <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <PenTool size={20} className="text-purple-500" /> 
-                ลายมือชื่อผู้เบิก
-              </h3>
-              
-              {/* ถ้ามีลายเซ็นเดิมให้แสดงให้เห็นด้วย */}
-              {editData?.payer_signature && (
-                <div className="text-xs text-slate-500 mb-2 font-medium">
-                  *มีลายเซ็นเดิมถูกบันทึกไว้แล้ว หากต้องการเปลี่ยนให้เซ็นใหม่ด้านล่าง
-                </div>
-              )}
-
-              <div className="flex-1 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-white hover:border-purple-400 transition-colors cursor-crosshair relative overflow-hidden">
-                <SignatureCanvas ref={sigPad} penColor="black" canvasProps={{ className: 'w-full h-full min-h-[160px]' }} />
-                <div className="absolute bottom-2 right-2 text-xs text-slate-300 pointer-events-none select-none font-bold uppercase">Sign Here</div>
-              </div>
-              <button type="button" onClick={() => sigPad.current.clear()} className="mt-3 text-sm text-red-500 hover:text-red-600 flex items-center gap-1 font-medium self-end hover:bg-red-50 px-2 py-1 rounded transition-colors">
-                <Eraser size={14} /> ล้างลายเซ็น
-              </button>
+            {/* จำนวนเงินตัวอักษร */}
+            <div className="mt-4">
+              <Field label="จำนวนเงินรวม (ตัวอักษร)" required>
+                <input type="text" name="total_text" required
+                  placeholder="เช่น ห้าร้อยบาทถ้วน"
+                  defaultValue={edit?.total_text}
+                  className={inp()} />
+              </Field>
             </div>
-          </div>
 
-          <div className="pt-4 flex flex-col-reverse md:flex-row gap-4">
-            <Link to="/" className="flex-1 px-6 py-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors text-center">ยกเลิก</Link>
-            <button type="submit" disabled={loading} className="flex-[2] px-6 py-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 transform active:scale-[0.99]">
-              {loading ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> กำลังบันทึก...</> : <><Save size={20} /> {editData ? 'บันทึกการแก้ไข' : 'บันทึกเอกสาร'}</>}
+          </Card>
+
+          {/* ════════════════════════════════════════════════
+               ส่วน 3 — ลายมือชื่อผู้จ่ายเงิน
+          ════════════════════════════════════════════════ */}
+          <Card title="ลายมือชื่อผู้จ่ายเงิน">
+
+            {edit?.payer_signature && (
+              <p className="text-xs text-stone-400 mb-3">
+                * มีลายเซ็นเดิมถูกบันทึกไว้แล้ว — เซ็นใหม่ด้านล่างเพื่อเปลี่ยน
+              </p>
+            )}
+
+            <div className="border-2 border-dashed border-stone-300 rounded-xl bg-stone-50 overflow-hidden cursor-crosshair hover:border-stone-400 transition-colors">
+              <SignatureCanvas ref={sigRef} penColor="#1c1917"
+                canvasProps={{ className: 'w-full', style: { minHeight: 130, display: 'block' } }} />
+            </div>
+
+            <button type="button" onClick={() => sigRef.current.clear()}
+              className="mt-2 flex items-center gap-1.5 text-xs text-stone-400 hover:text-red-500 font-medium transition-colors ml-auto">
+              <Eraser size={12} /> ล้างลายเซ็น
+            </button>
+
+            {/* หมายเหตุท้ายใบ (ตรงต้นฉบับ PDF) */}
+            <div className="mt-4 pt-4 border-t border-dashed border-stone-200 text-[12px] text-stone-400 leading-relaxed">
+              เนื่องจาก ข้าพเจ้าเป็นบุคคลธรรมดา ไม่ต้องจดทะเบียนการค้า และภาษีมูลค่าเพิ่ม
+              จึงออกใบสำคัญรับเงินฉบับนี้ เพื่อเป็นหลักฐานในการรับเงิน แทนใบเสร็จรับเงิน
+            </div>
+            <p className="mt-2 text-[12.5px] text-stone-500 font-medium text-center">
+              ขอรับรองว่า ข้อความข้างต้นเป็นความจริงทุกประการ
+            </p>
+
+          </Card>
+
+          {/* ── ปุ่มกระทำ ── */}
+          <div className="flex gap-3 pt-2 pb-10">
+            <Link to="/"
+              className="flex-1 py-3.5 rounded-xl border border-stone-200 text-stone-500 text-sm font-bold text-center hover:bg-stone-100 transition-colors">
+              ยกเลิก
+            </Link>
+            <button type="submit" disabled={loading}
+              className="flex-[3] py-3.5 rounded-xl bg-stone-900 text-white text-sm font-black flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-50">
+              {loading
+                ? <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    กำลังบันทึก...
+                  </>
+                : <>
+                    <Save size={16} />
+                    {edit ? 'บันทึกการแก้ไข' : 'บันทึกเอกสาร'}
+                  </>}
             </button>
           </div>
+
         </form>
       </div>
     </div>
   )
+}
+
+// ── UI Helpers ────────────────────────────────────────────────────────────────
+
+/** Card section */
+function Card({ title, children, action }) {
+  return (
+    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-100 bg-stone-50/80">
+        <span className="text-[11px] font-extrabold text-stone-500 uppercase tracking-widest">
+          {title}
+        </span>
+        {action}
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  )
+}
+
+/** 2-column grid */
+function Row2({ children }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+      {children}
+    </div>
+  )
+}
+
+/** Field label wrapper */
+function Field({ label, hint, required, children }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-1.5">
+        {label}
+        {hint && <span className="ml-1.5 normal-case text-[10px] font-normal text-stone-300">{hint}</span>}
+        {required && <span className="text-red-400 ml-0.5">*</span>}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+/** Standard input class */
+function inp(extra = '') {
+  return `w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-lg text-[13.5px] text-stone-800 outline-none focus:ring-2 focus:ring-stone-300 focus:border-stone-400 transition-all ${extra}`
+}
+
+/** Row input (in table) */
+function rowInp(align = '') {
+  return `w-full px-2 py-2 bg-white border border-stone-200 rounded-md text-[13px] text-stone-700 outline-none focus:ring-1 focus:ring-stone-300 transition-all${align ? ` text-${align}` : ''}`
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react'
+import { ChevronLeft, Home, ChevronRight, ArrowLeft, Plus, Trash2, Save } from 'lucide-react'
 import { supabase } from './supabaseClient'
 
 export default function ContractorForm() {
@@ -90,15 +90,32 @@ export default function ContractorForm() {
   return (
     <div className="min-h-screen bg-slate-50 pb-20 font-sans">
 
-      {/* ── Navbar ── */}
-      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
-          <Link to="/" className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
-            <ArrowLeft size={18} />
-          </Link>
-          <div className="h-5 w-px bg-slate-200 mx-1" />
-          <span className="font-bold text-slate-800 tracking-tight">ใบสั่งจ้างผู้รับเหมา</span>
-          <span className="ml-2 text-xs text-slate-400 hidden sm:block">/ Technician supporter record</span>
+      {/* --- New Sticky Navbar --- */}
+      <nav className="relative sm:sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              to="/"
+              className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+            >
+              <ChevronLeft size={18} />
+            </Link>
+            <div className="h-5 sm:h-6 w-[1px] bg-slate-200 mx-1" />
+
+            {/* Breadcrumbs: ปรับขนาดตัวอักษรและซ่อนไอคอนในจอเล็กมากเพื่อประหยัดพื้นที่ */}
+            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium">
+              <Link
+                to="/"
+                className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors whitespace-nowrap"
+              >
+                <Home size={14} /> หน้าแรก
+              </Link>
+              <ChevronRight size={12} className="text-slate-300" />
+              <span className="text-slate-800 truncate max-w-[190px] sm:max-w-none">
+                Technician supporter record
+              </span>
+            </div>
+          </div>
         </div>
       </nav>
 

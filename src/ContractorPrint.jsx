@@ -46,7 +46,7 @@ const BlankLine = ({ w = 60 }) => (
 
 const MIN_ROWS = 10
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Main Component ────────────────────────────────────────────────────────────
 
 export default function ContractorPrint() {
   const location = useLocation()
@@ -123,7 +123,7 @@ export default function ContractorPrint() {
             </span>
           </div>
 
-          {/* ════ ชื่อผู้รับเหมา + เลขบัตร (บรรทัดเดียวกัน ตามต้นฉบับ) ════ */}
+          {/* ════ ชื่อผู้รับเหมา + เลขบัตร ════ */}
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginBottom: '5px', flexWrap: 'wrap' }}>
             <span style={{ whiteSpace: 'nowrap' }}>ผู้รับเหมาชื่อ (นาย/นาง/นางสาว)</span>
             <span style={{
@@ -249,7 +249,6 @@ export default function ContractorPrint() {
                 </tr>
               </thead>
               <tbody>
-                {/* แถวข้อมูลจริง */}
                 {items.map((item, i) => (
                   <tr key={i} style={{ height: '22px', textAlign: 'center' }}>
                     <TD>{formatDate(item.date)}</TD>
@@ -264,15 +263,11 @@ export default function ContractorPrint() {
                     <TD></TD>
                   </tr>
                 ))}
-
-                {/* แถวว่าง */}
                 {Array.from({ length: emptyRows }).map((_, i) => (
                   <tr key={`empty-${i}`} style={{ height: '22px' }}>
                     {Array.from({ length: 10 }).map((__, j) => <TD key={j}></TD>)}
                   </tr>
                 ))}
-
-                {/* แถวรวม */}
                 <tr style={{ background: '#f8f8f8' }}>
                   <td colSpan={2} style={tdSt({ center: true, bold: true })}>รวม</td>
                   <td colSpan={2} style={tdSt({ center: true, bold: true })}>
@@ -290,8 +285,6 @@ export default function ContractorPrint() {
           {/* ════ ข้อ 4: ค่าใช้จ่ายนอกจากค่าจ้าง ════ */}
           <div style={{ marginBottom: '6px', fontSize: '10pt' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>4. ค่าใช้จ่ายนอกจาก ค่าจ้าง</div>
-
-            {/* บรรทัด 1: ค่าที่พัก */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
               <CB checked={!!data.has_accom} />
               <span>ค่าที่พัก เป็นเงิน</span>
@@ -308,8 +301,6 @@ export default function ContractorPrint() {
                 <span>ไม่มี</span>
               </span>
             </div>
-
-            {/* บรรทัด 2: ค่าเดินทาง */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
               <CB checked={!!data.has_travel} />
               <span>ค่าเดินทาง เป็นเงิน</span>
@@ -328,102 +319,153 @@ export default function ContractorPrint() {
             </div>
           </div>
 
-          {/* ════ กล่องลายเซ็น 2 กล่อง ════ */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '0' }}>
+          {/* ════ กล่องลายเซ็น 2 กล่อง (อยู่นอกกรอบ) ════ */}
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '0', marginTop: '20px' }}>
             <SignBox label="ผู้รับเหมา" />
             <SignBox label="ผู้รับผิดชอบโปรเจ็ค" />
           </div>
 
           {/* ════ เส้นประคั่น ════ */}
-          <div style={{ borderTop: '2px dashed #666', margin: '10px 0 8px' }} />
+          <div style={{ borderTop: '2px dashed #666', margin: '14px 0 10px' }} />
 
-          {/* ════ ตารางสรุปค่าจ้างงาน — ช่องว่างทั้งหมด (การเงินกรอกเอง) ════ */}
+          {/* ════ ตารางสรุปค่าจ้างงาน (การเงินกรอกเอง) ════ */}
           <div style={{ fontSize: '10pt' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '3px' }}>ตารางสรุปค่าจ้างงาน</div>
             <div style={{ marginBottom: '4px', fontSize: '9.5pt' }}>จำนวนวันทำงาน</div>
 
-            {/* ── ตาราง 2 คอลัมน์: วันธรรมดา | วันหยุด ── */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9.5pt' }}>
-              <tbody>
+            {/* ── แบ่ง 2 ฝั่ง ซ้าย-ขวา ห่างกัน ── */}
+            <div style={{ display: 'flex', gap: '24px', marginBottom: '8px' }}>
+              
+              {/* ฝั่งซ้าย: วันธรรมดา */}
+              <table style={{ flex: 1, borderCollapse: 'collapse', fontSize: '9.5pt' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ border: '1px solid black', padding: '4px 8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>วันธรรมดา</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <BlankLine w={28} />
+                          <span style={{ width: '45px', textAlign: 'center' }}>วันๆละ</span>
+                          <BlankLine w={40} />
+                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท</span>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: '1px solid black', padding: '4px 8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>ชม.ล่วงเวลา</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <BlankLine w={28} />
+                          <span style={{ width: '45px', textAlign: 'center' }}>ชม.ๆละ</span>
+                          <BlankLine w={40} />
+                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท (*1.5)</span>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: '1px solid black', padding: '4px 8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 'bold' }}>รวมทั้งสิ้น</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          {/* 113 มาจาก 28 + 45 + 40 เพื่อให้เส้นยาวพอดีกับบรรทัดบน */}
+                          <BlankLine w={113} />
+                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท</span>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
-                {/* แถว 1: วันธรรมดา | วันหยุด */}
-                <tr>
-                  <SummaryCell
-                    left="วันธรรมดา"
-                    countUnit="วันๆละ"
-                    rateUnit="บาท"
-                  />
-                  <SummaryCell
-                    left="วันหยุด"
-                    countUnit="วันๆละ"
-                    rateUnit="บาท (*2)"
-                  />
-                </tr>
+              {/* ฝั่งขวา: วันหยุด */}
+              <table style={{ flex: 1, borderCollapse: 'collapse', fontSize: '9.5pt' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ border: '1px solid black', padding: '4px 8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>วันหยุด</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <BlankLine w={28} />
+                          <span style={{ width: '45px', textAlign: 'center' }}>วันๆละ</span>
+                          <BlankLine w={40} />
+                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท (*2)</span>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: '1px solid black', padding: '4px 8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>ชม.ล่วงเวลา</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <BlankLine w={28} />
+                          <span style={{ width: '45px', textAlign: 'center' }}>ชม.ๆละ</span>
+                          <BlankLine w={40} />
+                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท (*3)</span>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: '1px solid black', padding: '4px 8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 'bold' }}>รวมทั้งสิ้น</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <BlankLine w={113} />
+                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท</span>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
-                {/* แถว 2: ชม.ล่วงเวลา | ชม.ล่วงเวลา (วันหยุด) */}
-                <tr>
-                  <SummaryCell
-                    left="ชม.ล่วงเวลา"
-                    countUnit="ชม.ๆละ"
-                    rateUnit="บาท (*1.5)"
-                  />
-                  <SummaryCell
-                    left="ชม.ล่วงเวลา"
-                    countUnit="ชม.ๆละ"
-                    rateUnit="บาท (*3)"
-                  />
-                </tr>
+            </div>
 
-                {/* แถว 3: รวมทั้งสิ้น */}
-                <tr>
-                  <SummaryCell left="รวมทั้งสิ้น" totalOnly rateUnit="บาท" />
-                  <SummaryCell left="รวมทั้งสิ้น" totalOnly rateUnit="บาท" />
-                </tr>
+            {/* ── ยอดรวม / หัก / สุทธิ + ช่องการเงิน (ไม่มีกรอบตาราง) ── */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '16px' }}>
+              
+              {/* ฝั่งซ้าย: รายการยอดเงิน */}
+              <div style={{ width: '60%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                  <span style={{ fontWeight: 'bold' }}>ยอดรวมทั้งสิ้น</span>
+                  <span style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                    <BlankLine w={150} /> <span style={{ width: '30px' }}>บาท</span>
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                  <span>ยอดหัก ณ ที่จ่าย รวม</span>
+                  <span style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                    <BlankLine w={150} /> <span style={{ width: '30px' }}>บาท</span>
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                  <span style={{ fontWeight: 'bold' }}>ยอดสุทธิ</span>
+                  <span style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                    <BlankLine w={150} /> <span style={{ width: '30px' }}>บาท</span>
+                  </span>
+                </div>
+              </div>
 
-              </tbody>
-            </table>
+              {/* ฝั่งขวา: ช่องการเงิน (กรอบสี่เหลี่ยม + ข้อความด้านล่างนอกกรอบ) */}
+              <div style={{ width: '130px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {/* กรอบสี่เหลี่ยมว่างๆ */}
+                <div style={{
+                  width: '100%',
+                  height: '70px',
+                  border: '1px solid black'
+                }}></div>
+                {/* ข้อความด้านล่างกรอบ */}
+                <div style={{ fontSize: '10pt', marginTop: '6px' }}>
+                  การเงิน
+                </div>
+              </div>
 
-            {/* ── ยอดรวม / หัก / สุทธิ + ช่องการเงิน ── */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9.5pt' }}>
-              <tbody>
+            </div>
 
-                {/* ยอดรวมทั้งสิ้น */}
-                <tr>
-                  <td style={sumTd({ bold: true })}>ยอดรวมทั้งสิ้น</td>
-                  <td style={sumTd({ right: true })}>
-                    <BlankLine w={120} /> บาท
-                  </td>
-                  {/* ช่องการเงิน — rowspan 3 */}
-                  <td
-                    rowSpan={3}
-                    style={{
-                      border: '1px solid black', padding: '6px 8px',
-                      textAlign: 'center', verticalAlign: 'bottom',
-                      width: '110px', fontSize: '9pt',
-                    }}
-                  >
-                    การเงิน
-                  </td>
-                </tr>
-
-                {/* ยอดหัก ณ ที่จ่าย */}
-                <tr>
-                  <td style={sumTd()}>ยอดหัก ณ ที่จ่าย รวม</td>
-                  <td style={sumTd({ right: true })}>
-                    <BlankLine w={120} /> บาท
-                  </td>
-                </tr>
-
-                {/* ยอดสุทธิ */}
-                <tr>
-                  <td style={sumTd({ bold: true })}>ยอดสุทธิ</td>
-                  <td style={sumTd({ right: true })}>
-                    <BlankLine w={120} /> บาท
-                  </td>
-                </tr>
-
-              </tbody>
-            </table>
           </div>
 
         </div>
@@ -478,67 +520,18 @@ function tdSt({ center, bold, small } = {}) {
   }
 }
 
-/**
- * SummaryCell — 1 cell ในตารางสรุป
- * ทุกช่องเป็นเส้นว่างให้การเงินกรอก
- */
-function SummaryCell({ left, countUnit, rateUnit, totalOnly = false }) {
-  if (totalOnly) {
-    return (
-      <td style={{
-        border: '1px solid black', padding: '4px 8px',
-        width: '50%', verticalAlign: 'middle',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
-          <span style={{ fontWeight: 'bold' }}>{left}</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <BlankLine w={85} />
-            <span>{rateUnit}</span>
-          </span>
-        </div>
-      </td>
-    )
-  }
-
-  return (
-    <td style={{
-      border: '1px solid black', padding: '4px 8px',
-      width: '50%', verticalAlign: 'middle',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
-        <span>{left}</span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', whiteSpace: 'nowrap' }}>
-          {/* จำนวน */}
-          <BlankLine w={28} />
-          <span>{countUnit}</span>
-          {/* อัตรา */}
-          <BlankLine w={45} />
-          <span>{rateUnit}</span>
-        </span>
-      </div>
-    </td>
-  )
-}
-
-/** กล่องลายเซ็น */
+/** กล่องลายเซ็น (ปรับให้ข้อความอยู่ข้างนอกกรอบแล้ว) */
 function SignBox({ label }) {
   return (
-    <div style={{
-      flex: 1, border: '1px solid black',
-      height: '58px', display: 'flex',
-      alignItems: 'flex-end', justifyContent: 'center',
-      paddingBottom: '4px', fontSize: '10pt',
-    }}>
-      {label}
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{
+        width: '100%', 
+        border: '1px solid black',
+        height: '58px',
+      }}></div>
+      <div style={{ fontSize: '10pt', marginTop: '4px' }}>
+        {label}
+      </div>
     </div>
   )
-}
-
-/** style สำหรับ td ในตารางยอดรวม */
-function sumTd({ bold, right } = {}) {
-  return {
-    border: '1px solid black', padding: '3px 8px',
-    fontWeight: bold ? 'bold' : 'normal',
-    textAlign: right ? 'right' : 'left',
-  }
 }

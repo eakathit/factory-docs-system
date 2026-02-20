@@ -100,12 +100,15 @@ const History = () => {
         ...item,
         doc_type: "order",
         display_title: item.contractor_name,
-        display_subtitle: `ใบสั่งจ้าง: ${item.payment_type === "daily" ? "รายวัน" : "เหมา"}`,
+        // ปรับเป็น wage_type ให้ตรงกับ Database ใหม่
+        display_subtitle: `ใบสั่งจ้าง: ${item.wage_type === "daily" ? "รายวัน" : "เหมา"}`,
         display_amount: item.wage_rate,
         display_person: item.supervisor_name,
         display_status: item.status || "รอดำเนินการ",
-        link_print: `/print/${item.id}`,
-        item_state: null // ไม่ใช้ state
+        // ชี้ไปที่ Route ของหน้า Print ใหม่ที่คุณเพิ่มใน App.jsx
+        link_print: '/contractor-print',
+        // ส่งข้อมูลทั้งหมดไปให้หน้า Print แสดงผลและใช้สำหรับการกดปุ่ม "แก้ไข"
+        item_state: item 
       }));
 
       const receipts = (resReceipts.data || []).map((item) => ({

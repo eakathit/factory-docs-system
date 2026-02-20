@@ -34,6 +34,7 @@ import CompletionReportPrint from './CompletionReportPrint'
 import OperationReportForm from './OperationReportForm'
 import OperationReportPrint from './OperationReportPrint'
 import DashboardPanel from './DashboardPanel'
+import ContractorPrint from './ContractorPrint'
 
 // --- 1. Component ใหม่: AlertModal (แจ้งเตือนตรงกลางจอ) ---
 const AlertModal = ({ isOpen, onClose, onConfirm }) => {
@@ -439,6 +440,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home user={user} onUserClick={() => setIsLoginModalOpen(true)} />} />
             <Route path="/contractor-order" element={<ContractorForm />} />
+            <Route path="/contractor-print" element={<ContractorPrint />} />
             <Route path="/history" element={<History />} />
             <Route path="/factory-portal" element={<FactoryPortal />} />
             <Route path="/print/:orderId" element={<OrderPrint />} />

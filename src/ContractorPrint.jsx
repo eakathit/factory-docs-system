@@ -84,15 +84,15 @@ export default function ContractorPrint() {
           
           {/* Header แบบฟอร์ม A4 */}
           <div style={{ textAlign: 'center', marginBottom: '4px' }}>
-            <div style={{ fontWeight: 'bold', fontSize: '12pt' }}>HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</div>
+            <div style={{ fontSize: '9pt' }}>HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.</div>
             <div style={{ fontSize: '9pt', color: '#444' }}>47/20 M.1, KLONGPRAWET, BANPHO, CHACHOENGSAO 24140</div>
           </div>
-          <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14pt', margin: '6px 0 8px' }}>
+          <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12pt', margin: '6px 0 8px' }}>
             ใบสั่งจ้างผู้รับเหมา / Technician supporter record
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginBottom: '8px' }}>
-            <span style={{ fontWeight: 'bold' }}>วันที่ / Date</span>
-            <span style={{ borderBottom: '1px dotted black', minWidth: '120px', textAlign: 'center' }}>{formatDate(data.created_at)}</span>
+            <span style={{ fontSize: '12pt' }}>วันที่ / Date</span>
+            <span style={{ fontSize: '12pt', borderBottom: '1px dotted black', minWidth: '120px', textAlign: 'center' }}>{formatDate(data.created_at)}</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', marginBottom: '6px' }}>

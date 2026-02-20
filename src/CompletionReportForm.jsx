@@ -116,7 +116,7 @@ const CompletionReportForm = () => {
       {/* Breadcrumbs: ปรับขนาดตัวอักษรและซ่อนไอคอนในจอเล็กมากเพื่อประหยัดพื้นที่ */}
       <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium">
         <Link to="/" className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors whitespace-nowrap">
-          <Home size={14} className="hidden xs:block" /> หน้าแรก
+          <Home size={14} /> หน้าแรก
         </Link>
         <ChevronRight size={12} className="text-slate-300" />
         <span className="text-slate-800 truncate max-w-[150px] sm:max-w-none">

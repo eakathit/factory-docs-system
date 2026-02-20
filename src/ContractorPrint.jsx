@@ -60,7 +60,7 @@ export default function ContractorPrint() {
   const totalDays = items.filter(i => i.date).length
 
   return (
-    <div className="min-h-screen bg-gray-200 p-4 md:p-8 print:bg-white print:p-0 print:m-0">
+    <div className="min-h-screen bg-gray-200 p-4 md:p-8 print:bg-white print:p-0 print:m-0 print:min-h-0 print:h-auto print:block">
 
       {/* ── Toolbar (ซ่อนตอนพิมพ์) ── */}
       <div className="w-full max-w-[210mm] mx-auto mb-6 print:hidden">
@@ -91,9 +91,8 @@ export default function ContractorPrint() {
       {/* ── กระดาษ A4 ── */}
       <div className="overflow-x-auto pb-4 print:overflow-visible print:pb-0">
         <div
-          className="mx-auto bg-white shadow-2xl print:shadow-none"
+          className="mx-auto bg-white shadow-2xl w-[210mm] min-w-[210mm] min-h-[297mm] print:shadow-none print:min-h-0 print:h-[290mm] print:overflow-hidden"
           style={{
-            width: '210mm', minWidth: '210mm', minHeight: '297mm',
             padding: '10mm 13mm',
             fontFamily: 'Sarabun, TH Sarabun New, sans-serif',
             fontSize: '10.5pt', lineHeight: '1.45',
@@ -103,7 +102,7 @@ export default function ContractorPrint() {
 
           {/* ════ HEADER ════ */}
           <div style={{ textAlign: 'center', marginBottom: '3px' }}>
-            <div style={{ fontSize: '10pt', fontWeight: 'bold', letterSpacing: '0.3px' }}>
+            <div style={{ fontSize: '8.5pt' , letterSpacing: '0.3px' }}>
               HARU SYSTEM DEVELOPMENT (THAILAND) CO.,LTD.
             </div>
             <div style={{ fontSize: '8.5pt', color: '#333' }}>
@@ -117,7 +116,7 @@ export default function ContractorPrint() {
 
           {/* วันที่ — ชิดขวา */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: '6px', marginBottom: '8px' }}>
-            <span style={{ fontWeight: 'bold' }}>วันที่/ Date</span>
+            <span>วันที่/ Date</span>
             <span style={{ borderBottom: '1px solid black', minWidth: '130px', textAlign: 'center', display: 'inline-block', paddingBottom: '1px' }}>
               {formatDate(data.created_at)}
             </span>
@@ -128,7 +127,7 @@ export default function ContractorPrint() {
             <span style={{ whiteSpace: 'nowrap' }}>ผู้รับเหมาชื่อ (นาย/นาง/นางสาว)</span>
             <span style={{
               borderBottom: '1px solid black', flex: 1, minWidth: '120px',
-              textAlign: 'center', fontWeight: 'bold', color: '#1e3a8a',
+              textAlign: 'center',
               display: 'inline-block', paddingBottom: '1px',
             }}>
               {data.contractor_name || ''}
@@ -136,7 +135,7 @@ export default function ContractorPrint() {
             <span style={{ whiteSpace: 'nowrap', marginLeft: '8px' }}>เลขบัตรประชาชน</span>
             <span style={{
               borderBottom: '1px solid black', minWidth: '140px',
-              textAlign: 'center', letterSpacing: '3px',
+              textAlign: 'center',
               display: 'inline-block', paddingBottom: '1px',
             }}>
               {data.id_card || ''}
@@ -145,10 +144,10 @@ export default function ContractorPrint() {
 
           {/* ════ ข้อ 1: โปรเจ็ค + ผู้ดูแล ════ */}
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-            <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>1. จ้างทำงานโปรเจ็คเลขที่</span>
+            <span style={{ whiteSpace: 'nowrap' }}>1. จ้างทำงานโปรเจ็คเลขที่</span>
             <span style={{
               borderBottom: '1px solid black', minWidth: '150px',
-              textAlign: 'center', fontWeight: 'bold',
+              textAlign: 'center',
               display: 'inline-block', paddingBottom: '1px',
             }}>
               {data.doc_no || ''}
@@ -166,7 +165,7 @@ export default function ContractorPrint() {
           <div style={{ marginBottom: '3px' }}>
             {/* บรรทัด 1 — ประเภทค่าจ้าง */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap', marginBottom: '3px' }}>
-              <span style={{ fontWeight: 'bold' }}>2 . ค่าจ้างเป็นแบบ</span>
+              <span>2 . ค่าจ้างเป็นแบบ</span>
 
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                 <CB checked={data.wage_type === 'daily'} />
@@ -181,7 +180,7 @@ export default function ContractorPrint() {
               <span style={{ marginLeft: '10px' }}>เป็นจำนวนเงิน (เรทปกติ)</span>
               <span style={{
                 borderBottom: '1px solid black', minWidth: '70px',
-                textAlign: 'center', fontWeight: 'bold',
+                textAlign: 'center',
                 display: 'inline-block', paddingBottom: '1px',
               }}>
                 {data.wage_rate || ''}
@@ -229,7 +228,7 @@ export default function ContractorPrint() {
 
           {/* ════ ข้อ 3: ตารางลงเวลา ════ */}
           <div style={{ margin: '6px 0 5px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '3px' }}>
+            <div style={{ marginBottom: '3px' }}>
               3. ตารางลงเวลา กรณีจ้างแบบรายวัน
             </div>
 
@@ -241,8 +240,8 @@ export default function ContractorPrint() {
                   <TH w="7%">สิ้นสุด</TH>
                   <TH w="6%">รวม</TH>
                   <TH w="7%">โอทีเริ่ม</TH>
-                  <TH w="7%">โอทีสิ้นสุด</TH>
-                  <TH w="6%">รวมโอที</TH>
+                  <TH w="8%">โอทีสิ้นสุด</TH>
+                  <TH w="7%">รวมโอที</TH>
                   <TH w="9%">ลงชื่อ</TH>
                   <TH>รายละเอียดงาน</TH>
                   <TH w="10%">ผู้รับผิดชอบ</TH>
@@ -284,7 +283,7 @@ export default function ContractorPrint() {
 
           {/* ════ ข้อ 4: ค่าใช้จ่ายนอกจากค่าจ้าง ════ */}
           <div style={{ marginBottom: '6px', fontSize: '10pt' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>4. ค่าใช้จ่ายนอกจาก ค่าจ้าง</div>
+            <div style={{ marginBottom: '4px' }}>4. ค่าใช้จ่ายนอกจาก ค่าจ้าง</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
               <CB checked={!!data.has_accom} />
               <span>ค่าที่พัก เป็นเงิน</span>
@@ -332,8 +331,7 @@ export default function ContractorPrint() {
           <div style={{ fontSize: '10pt' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '3px' }}>ตารางสรุปค่าจ้างงาน</div>
             <div style={{ marginBottom: '4px', fontSize: '9.5pt' }}>จำนวนวันทำงาน</div>
-
-            {/* ── แบ่ง 2 ฝั่ง ซ้าย-ขวา ห่างกัน ── */}
+{/* ── แบ่ง 2 ฝั่ง ซ้าย-ขวา ห่างกัน ── */}
             <div style={{ display: 'flex', gap: '24px', marginBottom: '8px' }}>
               
               {/* ฝั่งซ้าย: วันธรรมดา */}
@@ -347,7 +345,8 @@ export default function ContractorPrint() {
                           <BlankLine w={28} />
                           <span style={{ width: '45px', textAlign: 'center' }}>วันๆละ</span>
                           <BlankLine w={40} />
-                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท</span>
+                          {/* ปรับเป็น 75px เท่ากันทั้งหมด */}
+                          <span style={{ width: '75px', paddingLeft: '4px', whiteSpace: 'nowrap' }}>บาท</span>
                         </span>
                       </div>
                     </td>
@@ -360,7 +359,7 @@ export default function ContractorPrint() {
                           <BlankLine w={28} />
                           <span style={{ width: '45px', textAlign: 'center' }}>ชม.ๆละ</span>
                           <BlankLine w={40} />
-                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท (*1.5)</span>
+                          <span style={{ width: '75px', paddingLeft: '4px', whiteSpace: 'nowrap' }}>บาท (*1.5)</span>
                         </span>
                       </div>
                     </td>
@@ -368,11 +367,10 @@ export default function ContractorPrint() {
                   <tr>
                     <td style={{ border: '1px solid black', padding: '4px 8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 'bold' }}>รวมทั้งสิ้น</span>
+                        <span>รวมทั้งสิ้น</span>
                         <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                          {/* 113 มาจาก 28 + 45 + 40 เพื่อให้เส้นยาวพอดีกับบรรทัดบน */}
                           <BlankLine w={113} />
-                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท</span>
+                          <span style={{ width: '75px', paddingLeft: '4px', whiteSpace: 'nowrap' }}>บาท</span>
                         </span>
                       </div>
                     </td>
@@ -391,7 +389,7 @@ export default function ContractorPrint() {
                           <BlankLine w={28} />
                           <span style={{ width: '45px', textAlign: 'center' }}>วันๆละ</span>
                           <BlankLine w={40} />
-                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท (*2)</span>
+                          <span style={{ width: '75px', paddingLeft: '4px', whiteSpace: 'nowrap' }}>บาท (*2)</span>
                         </span>
                       </div>
                     </td>
@@ -404,7 +402,7 @@ export default function ContractorPrint() {
                           <BlankLine w={28} />
                           <span style={{ width: '45px', textAlign: 'center' }}>ชม.ๆละ</span>
                           <BlankLine w={40} />
-                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท (*3)</span>
+                          <span style={{ width: '75px', paddingLeft: '4px', whiteSpace: 'nowrap' }}>บาท (*3)</span>
                         </span>
                       </div>
                     </td>
@@ -412,10 +410,10 @@ export default function ContractorPrint() {
                   <tr>
                     <td style={{ border: '1px solid black', padding: '4px 8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 'bold' }}>รวมทั้งสิ้น</span>
+                        <span>รวมทั้งสิ้น</span>
                         <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                           <BlankLine w={113} />
-                          <span style={{ width: '60px', paddingLeft: '4px' }}>บาท</span>
+                          <span style={{ width: '75px', paddingLeft: '4px', whiteSpace: 'nowrap' }}>บาท</span>
                         </span>
                       </div>
                     </td>
@@ -431,7 +429,7 @@ export default function ContractorPrint() {
               {/* ฝั่งซ้าย: รายการยอดเงิน */}
               <div style={{ width: '60%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <span style={{ fontWeight: 'bold' }}>ยอดรวมทั้งสิ้น</span>
+                  <span>ยอดรวมทั้งสิ้น</span>
                   <span style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
                     <BlankLine w={150} /> <span style={{ width: '30px' }}>บาท</span>
                   </span>
@@ -443,7 +441,7 @@ export default function ContractorPrint() {
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <span style={{ fontWeight: 'bold' }}>ยอดสุทธิ</span>
+                  <span>ยอดสุทธิ</span>
                   <span style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
                     <BlankLine w={150} /> <span style={{ width: '30px' }}>บาท</span>
                   </span>

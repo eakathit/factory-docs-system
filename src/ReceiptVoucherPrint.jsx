@@ -67,23 +67,33 @@ export default function ReceiptVoucherPrint() {
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-6 sm:py-8 print:p-0 print:bg-white print:block print:min-h-0 print:h-auto">
       
       {/* --- Toolbar --- */}
-      <div className="w-full max-w-[210mm] flex flex-col sm:flex-row justify-between items-center mb-6 px-4 print:hidden gap-4">
-        
-        {/* ปุ่มกลับไปแก้ไข */}
-        <button 
-          onClick={() => navigate('/receipt-voucher', { state: doc })}
-          className="flex items-center justify-center w-full sm:w-auto gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-all font-medium"
-        >
-          <Edit3 size={18} /> กลับไปแก้ไข
-        </button>
-
-        <div className="flex gap-3 w-full sm:w-auto">
-          <button 
-            onClick={() => window.print()} 
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 transition-all"
+      <div className="w-full max-w-[210mm] mx-auto mb-6 print:hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-4">
+          <Link 
+            to="/history" 
+            className="inline-flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 rounded-lg transition-all font-medium text-sm sm:text-base"
           >
-            <Printer size={18} /> สั่งพิมพ์เอกสาร
-          </button>
+            <ArrowLeft size={18} /> 
+            <span>กลับหน้าประวัติ</span>
+          </Link>
+
+          <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
+            <button 
+              // ชี้กลับไปหน้าฟอร์ม Receipt Voucher
+              onClick={() => navigate('/receipt-voucher', { state: doc })}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-all font-medium text-sm"
+            >
+              <Edit3 size={18} /> 
+              <span>แก้ไขข้อมูล</span>
+            </button>
+            <button 
+              onClick={() => window.print()} 
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-bold rounded-xl shadow-md shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all text-sm"
+            >
+              <Printer size={18} /> 
+              <span>สั่งพิมพ์</span>
+            </button>
+          </div>
         </div>
       </div>
 

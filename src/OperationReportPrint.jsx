@@ -1,7 +1,7 @@
 // src/OperationReportPrint.jsx
 import React from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { Printer, Edit3 } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Printer, Edit3 } from 'lucide-react'
 
 const OperationReportPrint = () => {
   const location = useLocation()
@@ -28,22 +28,35 @@ const OperationReportPrint = () => {
     // 1. แก้ไข Outer Div: เพิ่ม print:min-h-0 print:h-auto print:block แก้หน้าว่างแผ่นที่สอง
     <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sarabun print:bg-white print:p-0 print:m-0 print:min-h-0 print:h-auto print:block">
       
-      {/* Toolbar */}
-      <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center print:hidden">
-        {/* 2. เปลี่ยนปุ่มกลับหน้าหลัก เป็นปุ่ม "กลับไปแก้ไข" */}
-        <button 
-          onClick={() => navigate('/operation-report', { state: data })}
-          className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-lg shadow-sm border border-gray-200 hover:bg-slate-50 transition-colors"
-        >
-          <Edit3 size={18} /> กลับไปแก้ไข
-        </button>
+      {/* --- Toolbar --- */}
+      <div className="w-full max-w-[210mm] mx-auto mb-6 print:hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-4">
+          <Link 
+            to="/history" 
+            className="inline-flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 rounded-lg transition-all font-medium text-sm sm:text-base"
+          >
+            <ArrowLeft size={18} /> 
+            <span>กลับหน้าประวัติ</span>
+          </Link>
 
-        <button 
-          onClick={() => window.print()}
-          className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors font-semibold"
-        >
-          <Printer size={18} /> สั่งพิมพ์เอกสาร
-        </button>
+          <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
+            <button 
+              // ชี้กลับไปหน้าฟอร์ม Operation Report
+              onClick={() => navigate('/operation-report', { state: doc })}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-all font-medium text-sm"
+            >
+              <Edit3 size={18} /> 
+              <span>แก้ไขข้อมูล</span>
+            </button>
+            <button 
+              onClick={() => window.print()} 
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-bold rounded-xl shadow-md shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all text-sm"
+            >
+              <Printer size={18} /> 
+              <span>สั่งพิมพ์</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 3. Wrapper สำหรับมือถือ เพื่อให้เลื่อนซ้ายขวาได้ ไม่บีบกระดาษ */}

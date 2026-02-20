@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react' // เพิ่ม useEffect
+import { useNavigate, Link, useLocation } from 'react-router-dom' // เพิ่ม useLocation
 import { supabase } from './supabaseClient'
 import SignatureCanvas from 'react-signature-canvas'
 import toast from 'react-hot-toast'
@@ -7,29 +7,33 @@ import {
   ArrowLeft, Save, Plus, Trash2, FileText, 
   User, CreditCard, Calendar, Briefcase, 
   Hash, DollarSign, PenTool, Eraser,
-  ChevronLeft, Home, ChevronRight, ReceiptText // เพิ่มไอคอนสำหรับ Navbar และ Header
+  ChevronLeft, Home, ChevronRight, ReceiptText 
 } from 'lucide-react'
 
-// --- คง InputGroup เดิมของคุณไว้ ---
-const InputGroup = ({ label, icon: Icon, fullWidth, ...props }) => (
-    <div className={`space-y-1.5 ${fullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
-      <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-        {Icon && <Icon size={16} className="text-blue-500" />}
-        {label}
-      </label>
-      <input
-        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-slate-700"
-        {...props}
-      />
-    </div>
-  )
+// --- InputGroup ปรับแต่งเพื่อรองรับ defaultValue ---
+const InputGroup = ({ label, icon: Icon, fullWidth, defaultValue, ...props }) => (
+  <div className={`space-y-1.5 ${fullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
+    <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+      {Icon && <Icon size={16} className="text-blue-500" />}
+      {label}
+    </label>
+    <input
+      defaultValue={defaultValue} // เพิ่มเพื่อรับค่าเดิม
+      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-slate-700"
+      {...props}
+    />
+  </div>
+)
 
 export default function ReceiptForm() {
   const navigate = useNavigate()
+  const location = useLocation() // รับ state เพื่อเช็คการเข้าผ่านปุ่ม "แก้ไข"
   const sigPad = useRef({})
   const [loading, setLoading] = useState(false)
   
-  const [items, setItems] = useState([
+  const editData = location.state || null // ข้อมูลเก่าที่จะแก้ไข
+  
+  const [items, setItems] = useState(editData?.items || [
     { date: '', detail: '', amount: '', project_no: '' }
   ])
 
@@ -60,7 +64,10 @@ export default function ReceiptForm() {
       const formData = new FormData(e.target)
       const data = Object.fromEntries(formData.entries())
 
-      let signatureUrl = null
+      // จัดการลายเซ็น
+      let signatureUrl = editData?.payer_signature || null // เริ่มต้นด้วยลายเซ็นเดิม
+      
+      // ถ้ายูสเซอร์วาดลายเซ็นใหม่
       if (sigPad.current && !sigPad.current.isEmpty()) {
         const canvas = sigPad.current.getCanvas()
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
@@ -71,25 +78,44 @@ export default function ReceiptForm() {
         signatureUrl = urlData.publicUrl
       }
 
-      const { data: insertedData, error: insertError } = await supabase
-        .from('doc_substitute_receipts')
-        .insert([{
-            doc_no: data.doc_no,
-            payer_name: data.payer_name,
-            position: data.position,
-            items: items,
-            total_amount: totalAmount,
-            total_text: data.total_text,
-            payment_method: data.payment_method,
-            payment_date: data.payment_date || null,
-            payer_signature: signatureUrl
-        }])
-        .select()
+      const dbPayload = {
+        doc_no: data.doc_no,
+        payer_name: data.payer_name,
+        position: data.position,
+        items: items,
+        total_amount: totalAmount,
+        total_text: data.total_text,
+        payment_method: data.payment_method,
+        payment_date: data.payment_date || null,
+        payer_signature: signatureUrl
+      }
 
-      if (insertError) throw insertError
-      const newId = insertedData[0].id
+      let newId = null
+
+      // ถ้าเป็นการแก้ไข (มี ID เดิมส่งมา) ให้ทำ UPDATE
+      if (editData?.id) {
+        const { data: updatedData, error: updateError } = await supabase
+          .from('doc_substitute_receipts')
+          .update(dbPayload)
+          .eq('id', editData.id)
+          .select()
+
+        if (updateError) throw updateError
+        newId = updatedData[0].id
+      } else {
+        // ถ้าเป็นการสร้างใหม่ ให้ทำ INSERT
+        const { data: insertedData, error: insertError } = await supabase
+          .from('doc_substitute_receipts')
+          .insert([dbPayload])
+          .select()
+
+        if (insertError) throw insertError
+        newId = insertedData[0].id
+      }
+
       toast.success('บันทึกข้อมูลเรียบร้อย!')
-      navigate(`/receipt-print/${newId}`) 
+      // ส่ง state กลับไปให้หน้า Print ด้วยเพื่อให้โชว์ค่าใหม่เลยโดยไม่ต้องรอ Query
+      navigate(`/receipt-print/${newId}`, { state: { ...dbPayload, id: newId } }) 
 
     } catch (error) {
       console.error(error)
@@ -102,7 +128,7 @@ export default function ReceiptForm() {
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20 font-sans">
       
-      {/* --- Sticky Navbar (New) --- */}
+      {/* --- Sticky Navbar --- */}
       <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -115,7 +141,7 @@ export default function ReceiptForm() {
                 <Home size={14} /> หน้าแรก
               </Link>
               <ChevronRight size={12} className="text-slate-300" />
-              <span className="text-slate-800 font-bold">ใบรับรองแทนใบเสร็จ</span>
+              <span className="text-slate-800 font-bold">ใบรับรองแทนใบเสร็จ {editData && "(แก้ไข)"}</span>
             </div>
           </div>
         </div>
@@ -123,20 +149,18 @@ export default function ReceiptForm() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         
-        {/* --- Header Section (New) --- */}
         <div className="flex items-center gap-5 mb-10">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white shadow-xl shadow-orange-500/20 rotate-3">
             <ReceiptText size={32} />
           </div>
           <div>
             <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Substitute Receipt</h1>
-            <p className="text-slate-500 text-sm font-medium">ใบรับรองแทนใบเสร็จรับเงิน / เอกสารเบิกจ่าย</p>
+            <p className="text-slate-500 text-sm font-medium">{editData ? 'แก้ไขเอกสารใบรับรองแทนใบเสร็จ' : 'ใบรับรองแทนใบเสร็จรับเงิน / เอกสารเบิกจ่าย'}</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           
-          {/* Card 1: ข้อมูลเอกสาร & ผู้เบิก (ใช้สไตล์เดิมของคุณ) */}
           <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
             <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg border-b border-slate-100 pb-4">
               <FileText className="text-blue-600" />
@@ -150,6 +174,7 @@ export default function ReceiptForm() {
                 required 
                 icon={Hash}
                 placeholder="เช่น 65/001"
+                defaultValue={editData?.doc_no}
               />
               
               <div className="space-y-1.5">
@@ -169,6 +194,7 @@ export default function ReceiptForm() {
                 required 
                 icon={User}
                 placeholder="ระบุชื่อ-นามสกุล"
+                defaultValue={editData?.payer_name}
               />
 
               <InputGroup 
@@ -177,11 +203,11 @@ export default function ReceiptForm() {
                 required 
                 icon={Briefcase}
                 placeholder="ระบุตำแหน่งงาน"
+                defaultValue={editData?.position}
               />
             </div>
           </div>
 
-          {/* Card 2: รายการค่าใช้จ่าย (ใช้สไตล์เดิมของคุณ) */}
           <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
             <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2 text-slate-800 font-bold text-lg">
@@ -198,7 +224,6 @@ export default function ReceiptForm() {
             </div>
 
             <div className="space-y-4">
-              {/* Header Row for Desktop */}
               <div className="hidden md:grid grid-cols-12 gap-4 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 <div className="col-span-2">วันที่บิล</div>
                 <div className="col-span-5">รายละเอียด</div>
@@ -241,7 +266,7 @@ export default function ReceiptForm() {
             <div className="mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col md:flex-row gap-6 items-center justify-between">
               <div className="w-full md:w-2/3">
                 <label className="text-sm font-semibold text-slate-600 mb-1.5 block">จำนวนเงินรวม (ตัวอักษร) <span className="text-red-500">*</span></label>
-                <input type="text" name="total_text" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-blue-500 outline-none text-slate-700" placeholder="เช่น ห้าร้อยบาทถ้วน" required />
+                <input type="text" name="total_text" defaultValue={editData?.total_text} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-blue-500 outline-none text-slate-700" placeholder="เช่น ห้าร้อยบาทถ้วน" required />
               </div>
               <div className="w-full md:w-1/3 text-right">
                 <p className="text-sm text-slate-500 font-medium mb-1">ยอดรวมทั้งสิ้น</p>
@@ -252,7 +277,6 @@ export default function ReceiptForm() {
             </div>
           </div>
 
-          {/* Card 3: วิธีจ่าย & ลายเซ็น (ใช้สไตล์เดิมของคุณ) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
               <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
@@ -261,15 +285,15 @@ export default function ReceiptForm() {
               </h3>
               <div className="space-y-3">
                 <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                  <input type="radio" name="payment_method" value="cash" defaultChecked className="w-5 h-5 text-blue-600 accent-blue-600" />
+                  <input type="radio" name="payment_method" value="cash" defaultChecked={!editData || editData?.payment_method === 'cash'} className="w-5 h-5 text-blue-600 accent-blue-600" />
                   <span className="font-medium text-slate-700">เงินสด (Cash)</span>
                 </label>
                 <div className="border border-slate-200 rounded-xl p-3 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-all">
                   <label className="flex items-center gap-3 cursor-pointer mb-2">
-                    <input type="radio" name="payment_method" value="transfer" className="w-5 h-5 text-blue-600 accent-blue-600" />
+                    <input type="radio" name="payment_method" value="transfer" defaultChecked={editData?.payment_method === 'transfer'} className="w-5 h-5 text-blue-600 accent-blue-600" />
                     <span className="font-medium text-slate-700">โอนเงิน (Transfer)</span>
                   </label>
-                  <input type="date" name="payment_date" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-blue-500" />
+                  <input type="date" name="payment_date" defaultValue={editData?.payment_date} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-blue-500" />
                 </div>
               </div>
             </div>
@@ -279,6 +303,14 @@ export default function ReceiptForm() {
                 <PenTool size={20} className="text-purple-500" /> 
                 ลายมือชื่อผู้เบิก
               </h3>
+              
+              {/* ถ้ามีลายเซ็นเดิมให้แสดงให้เห็นด้วย */}
+              {editData?.payer_signature && (
+                <div className="text-xs text-slate-500 mb-2 font-medium">
+                  *มีลายเซ็นเดิมถูกบันทึกไว้แล้ว หากต้องการเปลี่ยนให้เซ็นใหม่ด้านล่าง
+                </div>
+              )}
+
               <div className="flex-1 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-white hover:border-purple-400 transition-colors cursor-crosshair relative overflow-hidden">
                 <SignatureCanvas ref={sigPad} penColor="black" canvasProps={{ className: 'w-full h-full min-h-[160px]' }} />
                 <div className="absolute bottom-2 right-2 text-xs text-slate-300 pointer-events-none select-none font-bold uppercase">Sign Here</div>
@@ -292,7 +324,7 @@ export default function ReceiptForm() {
           <div className="pt-4 flex flex-col-reverse md:flex-row gap-4">
             <Link to="/" className="flex-1 px-6 py-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors text-center">ยกเลิก</Link>
             <button type="submit" disabled={loading} className="flex-[2] px-6 py-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 transform active:scale-[0.99]">
-              {loading ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> กำลังบันทึก...</> : <><Save size={20} /> บันทึกเอกสาร</>}
+              {loading ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> กำลังบันทึก...</> : <><Save size={20} /> {editData ? 'บันทึกการแก้ไข' : 'บันทึกเอกสาร'}</>}
             </button>
           </div>
         </form>

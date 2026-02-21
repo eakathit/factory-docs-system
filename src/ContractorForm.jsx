@@ -138,7 +138,7 @@ export default function ContractorForm() {
               {/* ตรงกับ "จ้างทำงานโปรเจ็คเลขที่" ในฟอร์ม */}
               <Field label="จ้างทำงานโปรเจ็คเลขที่">
                 <input
-                  {...register('doc_no')} placeholder="เช่น PJ-24001"
+                  {...register('doc_no')} placeholder="เช่น 1570"
                   className={inputCls('font-mono')}
                 />
               </Field>

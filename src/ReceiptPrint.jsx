@@ -104,7 +104,7 @@ export default function ReceiptPrint() {
 
           <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
             <button 
-              onClick={() => navigate('/receipt', { state: doc })}
+              onClick={() => navigate('/receipt-form', { state: doc })}
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-all font-medium text-sm"
             >
               <Edit3 size={18} /> 

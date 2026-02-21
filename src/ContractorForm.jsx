@@ -141,7 +141,7 @@ export default function ContractorForm() {
                 <input type="date" {...register('created_at', { required: true })} className={inputCls()} />
               </Field>
               <Field label="จ้างทำงานโปรเจ็คเลขที่">
-                <input {...register('doc_no')} placeholder="เช่น PJ-24001" className={inputCls('font-mono')} />
+                <input {...register('doc_no')} placeholder="เช่น PJ-24001" className={inputCls('font-sens')} />
               </Field>
             </Row2>
             

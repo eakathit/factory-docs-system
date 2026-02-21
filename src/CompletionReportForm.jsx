@@ -140,7 +140,7 @@ export default function CompletionReportForm() {
               </Field>
               <Field label="รหัสโครงการ" hint="Project No. / 工事番号">
                 <input type="text" name="projectNo" value={formData.projectNo} onChange={handleChange} 
-                  className={inp('font-mono')} placeholder="เช่น PRJ-202X-01" />
+                  className={inp('font-sens')} placeholder="เช่น PRJ-202X-01" />
               </Field>
             </Row2>
 

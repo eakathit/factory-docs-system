@@ -125,7 +125,7 @@ export default function ReceiptForm() {
           <h1 className="text-xl font-bold text-stone-800 tracking-tight uppercase">
             Substitute Receipt
           </h1>
-          <p className="text-stone-400 text-sm mt-0.5">ใบรับรองแทนใบเสร็จรับเงิน / เอกสารเบิกจ่าย</p>
+          <p className="text-stone-400 text-sm mt-0.5">ใบรับรองแทนใบเสร็จรับเงิน</p>
           <div className="mt-3 h-px bg-stone-200" />
         </div>
 

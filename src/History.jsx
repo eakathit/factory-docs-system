@@ -146,6 +146,7 @@ const History = () => {
         display_status: item.status || "Pending",
         link_print: '/completion-report-print',
         item_state: {
+            ...item,
             date: item.date,
             projectName: item.project_name,
             projectNo: item.project_no,
@@ -172,6 +173,7 @@ const History = () => {
           link_print: '/operation-report-print',
           // ต้องแปลง field จาก DB (snake_case) เป็น State (camelCase) เพื่อให้หน้า Print รับค่าได้ถูกต้อง
           item_state: {
+            ...item,
             id: item.id,
             jobNo: item.job_no,
             issuedDate: item.issued_date,

@@ -210,10 +210,25 @@ const CompletionReportPrint = () => {
                 </h3>
               </div>
               <div className="w-[40%]">
-                <div className="border border-black h-16 relative bg-white"></div>
+                <div className="border border-black h-16 relative bg-white flex items-center justify-center overflow-hidden">
+                  
+                  {/* 🟢 ส่วนที่เพิ่มเข้ามาเพื่อแสดงลายเซ็น */}
+                  {location.state?.approver_signature ? (
+                    <img 
+                      src={location.state.approver_signature} 
+                      alt="ลายเซ็นอนุมัติ" 
+                      className="max-w-full max-h-full object-contain mix-blend-multiply"
+                    />
+                  ) : (
+                    <span className="text-stone-300 text-xs italic">
+                      ยังไม่ได้อนุมัติ
+                    </span>
+                  )}
+                  {/* 🟢 สิ้นสุดส่วนที่เพิ่ม */}
+
+                </div>
               </div>
             </div>
-
             {/* Row 5 */}
             <div className="mb-4">
               <div className="text-[13px] mb-1">備考 / Remark / หมายเหตุ</div>

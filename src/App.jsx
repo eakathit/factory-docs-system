@@ -35,6 +35,7 @@ import OperationReportForm from './OperationReportForm'
 import OperationReportPrint from './OperationReportPrint'
 import DashboardPanel from './DashboardPanel'
 import ContractorPrint from './ContractorPrint'
+import ApprovalPage from './ApprovalPage'
 
 // --- 1. Component ใหม่: AlertModal (แจ้งเตือนตรงกลางจอ) ---
 const AlertModal = ({ isOpen, onClose, onConfirm }) => {
@@ -453,6 +454,7 @@ function App() {
             <Route path="/completion-report-print" element={<CompletionReportPrint />} />
             <Route path="/operation-report" element={<OperationReportForm />} />
             <Route path="/operation-report-print" element={<OperationReportPrint />} />
+            <Route path="/approve/:docType/:docId" element={<ApprovalPage />} />
           </Routes>
         </div>
       </Router>

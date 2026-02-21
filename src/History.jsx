@@ -118,9 +118,9 @@ const History = () => {
         display_subtitle: `ใบรับรองฯ: ${item.doc_no}`,
         display_amount: item.total_amount,
         display_person: item.position,
-        display_status: "เสร็จสิ้น",
+        display_status: item.status || "Pending",
         link_print: `/receipt-print/${item.id}`,
-        item_state: null
+        item_state: item
       }));
 
       const vouchers = (resVouchers.data || []).map((item) => ({
@@ -355,6 +355,19 @@ const History = () => {
 
                     {/* ปุ่ม Print */}
                     <div className="md:col-span-2 flex items-center justify-end gap-2 mt-2 md:mt-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                      
+                      {/* 🟢 ถ้าสถานะเป็น "รออนุมัติ" ให้แสดงปุ่ม "อนุมัติ" สำหรับหัวหน้า */}
+  {doc.display_status === "รออนุมัติ" && (
+    <Link
+      to={`/approve/${doc.doc_type}/${doc.id}`}
+      state={{ title: doc.display_title }} // ส่งข้อมูลหัวข้อไปแสดงในหน้าอนุมัติ
+      className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-all shadow-sm"
+    >
+      <ClipboardCheck size={18} />
+      <span>อนุมัติ</span>
+    </Link>
+  )}
+  
                       <Link
                         to={doc.link_print}
                         state={doc.item_state} 

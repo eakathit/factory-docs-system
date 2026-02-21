@@ -58,7 +58,8 @@ export default function ReceiptForm() {
         total_text: fd.total_text,
         payment_method: fd.payment_method,
         payment_date: fd.payment_date || null,
-        payer_signature: signatureUrl
+        payer_signature: signatureUrl,
+        status: 'pending'
       }
 
       let newId = null

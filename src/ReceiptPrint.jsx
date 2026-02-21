@@ -201,43 +201,33 @@ export default function ReceiptPrint() {
             </p>
           </div>
 
-          {/* ลายเซ็น */}
-          <div className="flex flex-col items-end mt-12 px-8 space-y-8">
-             <div className="flex flex-col items-center w-64">
-                <div className="h-12 flex items-end justify-center mb-1">
-                  {doc.payer_signature && <img src={doc.payer_signature} className="h-10" alt="signature" />}
-                </div>
-                <div className="border-t border-black border-dotted w-full"></div>
-                <div className="mt-1 flex gap-2">
-                   <span>ลงชื่อ</span>
-                   <span>( {doc.payer_name} )</span>
-                </div>
-                <div className="text-sm text-black">(ผู้เบิกจ่าย)</div>
-             </div>
-
-             {/* ลายเซ็นผู้อนุมัติ */}
-<div className="flex flex-col items-center w-64">
-   <div className="h-12 flex items-end justify-center mb-1">
-      {/* 🟢 แสดงรูปภาพลายเซ็นผู้อนุมัติถ้ามีข้อมูลในฐานข้อมูล */}
-      {doc.approver_signature ? (
-         <img 
-            src={doc.approver_signature} 
-            className="h-10 object-contain" 
-            alt="approver signature" 
-         />
-      ) : (
-         <div className="h-10" /> // เว้นที่ว่างไว้ถ้ายังไม่มีลายเซ็น
+         {/* ส่วนของลายเซ็นที่ท้ายเอกสาร */}
+<div className="flex flex-col items-end mt-12 px-8 space-y-8">
+  
+  {/* ลายเซ็นผู้เบิกจ่าย */}
+  <div className="flex flex-col items-center w-64">
+    <div className="h-12 flex items-end justify-center mb-1">
+      {doc.payer_signature && (
+        <img src={doc.payer_signature} className="h-10" alt="signature" />
       )}
-   </div>
-   <div className="border-t border-black border-dotted w-full"></div>
-   <div className="mt-1 flex gap-2">
-      <span>ลงชื่อ</span>
-      {/* 🟢 ถ้ามีชื่อผู้อนุมัติให้แสดงชื่อ ถ้าไม่มีให้แสดงจุดไข่ปลา */}
-      <span>( {doc.approver_name || '...................................................'} )</span>
-   </div>
-   <div className="text-sm text-black">(ผู้อนุมัติ)</div>
+    </div>
+    <div className="border-t border-black border-dotted w-full"></div>
+    <div className="text-sm text-black mt-2">(ผู้เบิกจ่าย)</div>
+  </div>
+
+  {/* ลายเซ็นผู้อนุมัติ (ปรับปรุงให้เหมือนผู้เบิกจ่าย) */}
+  <div className="flex flex-col items-center w-64">
+    <div className="h-12 flex items-end justify-center mb-1">
+      {/* แสดงลายเซ็นผู้อนุมัติถ้ามีการบันทึกข้อมูลแล้ว */}
+      {doc.approver_signature && (
+        <img src={doc.approver_signature} className="h-10" alt="approver signature" />
+      )}
+    </div>
+    <div className="border-t border-black border-dotted w-full"></div>
+    <div className="text-sm text-black mt-2">(ผู้อนุมัติ)</div>
+  </div>
+
 </div>
-          </div>
 
           {/* ส่วนการเงินด้านล่าง */}
           <div className="absolute bottom-[20mm] left-[20mm] right-[20mm] border-t border-black pt-4 flex gap-8 text-sm">

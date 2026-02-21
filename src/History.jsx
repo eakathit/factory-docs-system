@@ -22,15 +22,16 @@ const getStatusColor = (status) => {
     case "อนุมัติแล้ว":
     case "เสร็จสิ้น":
     case "Complete": 
-    case "Recorded": // สถานะสำหรับ Operation Report
+    case "Recorded": 
+    case "approved": // 🟢 เพิ่มเพื่อให้รองรับค่า 'approved' เป็นสีเขียว
       return "bg-emerald-100 text-emerald-700 border-emerald-200";
     case "รออนุมัติ":
+    case "pending":  // 🟢 เพิ่มเพื่อให้รองรับค่า 'pending' เป็นสีส้ม
+    case "Pending":
       return "bg-amber-100 text-amber-700 border-amber-200";
     case "แก้ไข":
     case "Not Complete": 
       return "bg-orange-100 text-orange-700 border-orange-200";
-    case "ยกเลิก":
-      return "bg-slate-100 text-slate-600 border-slate-200";
     default:
       return "bg-blue-100 text-blue-700 border-blue-200";
   }
@@ -356,18 +357,17 @@ const History = () => {
                     {/* ปุ่ม Print */}
                     <div className="md:col-span-2 flex items-center justify-end gap-2 mt-2 md:mt-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
                       
-                      {/* 🟢 ถ้าสถานะเป็น "รออนุมัติ" ให้แสดงปุ่ม "อนุมัติ" สำหรับหัวหน้า */}
-  {doc.display_status === "รออนุมัติ" && (
+  {doc.display_status === "Pending" && (
     <Link
       to={`/approve/${doc.doc_type}/${doc.id}`}
-      state={{ title: doc.display_title }} // ส่งข้อมูลหัวข้อไปแสดงในหน้าอนุมัติ
-      className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-all shadow-sm"
+      state={doc} // ส่งข้อมูล doc ทั้งก้อนไปให้หน้า ApprovalPage
+      className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-all shadow-sm active:scale-95"
     >
-      <ClipboardCheck size={18} />
+      <ClipboardList size={18} />
       <span>อนุมัติ</span>
     </Link>
   )}
-  
+
                       <Link
                         to={doc.link_print}
                         state={doc.item_state} 

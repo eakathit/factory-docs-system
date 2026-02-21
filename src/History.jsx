@@ -133,7 +133,7 @@ const History = () => {
         display_person: "",
         display_status: item.status || "Pending",
         link_print: `/receipt-voucher-print/${item.id}`,
-        item_state: null
+        item_state: item
       }));
 
       const completions = (resCompletions.data || []).map((item) => ({

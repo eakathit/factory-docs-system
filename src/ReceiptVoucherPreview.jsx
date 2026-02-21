@@ -135,12 +135,22 @@ const VoucherContent = ({ data, copyType }) => {
        <div className="flex justify-between items-end px-4 mt-auto mb-1">
           <div className="text-center w-[40%]">
               <div className="border-b border-dotted border-black h-6 mb-1 flex items-end justify-center">
-                  {data?.payer_signature && <img src={data.payer_signature} className="h-8 object-contain" alt="sig" />}
+                  {data?.payer_signature && <img src={data.payer_signature} className="h-8 object-contain mix-blend-multiply" alt="sig" />}
               </div>
               <div className="text-[10px]">ผู้จ่ายเงิน</div>
           </div>
+          
           <div className="text-center w-[40%]">
-              <div className="border-b border-dotted border-black h-6 mb-1"></div>
+              {/* 🟢 แก้ไขตรงนี้: เพิ่ม flex items-end justify-center และเงื่อนไขโชว์ approver_signature */}
+              <div className="border-b border-dotted border-black h-6 mb-1 flex items-end justify-center">
+                  {data?.approver_signature && (
+                      <img 
+                          src={data.approver_signature} 
+                          className="h-8 object-contain mix-blend-multiply" 
+                          alt="approver sig" 
+                      />
+                  )}
+              </div>
               <div className="text-[10px]">ผู้รับเงิน</div>
           </div>
        </div>

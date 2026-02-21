@@ -24,6 +24,7 @@ export default function CompletionReportForm() {
     finishTime: getCurrentTime(),
     isComplete: true,
     remark: "",
+    status: "Pending",
   };
 
   const [formData, setFormData] = useState(initialData);
@@ -54,6 +55,7 @@ export default function CompletionReportForm() {
         finish_time: formData.finishTime,
         is_complete: formData.isComplete,
         remark: formData.remark,
+        status: formData.status || "Pending",
       };
       
       let resultData = null;

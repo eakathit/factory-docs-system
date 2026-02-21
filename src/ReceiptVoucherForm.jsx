@@ -62,6 +62,7 @@ export default function ReceiptVoucherForm() {
           total: parseFloat(r.quantity || 0) * parseFloat(r.price || 0)
         })),
         payer_signature: sig,
+        status: edit?.status || 'Pending',
       }
 
       let newId

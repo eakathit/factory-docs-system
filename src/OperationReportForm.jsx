@@ -34,6 +34,7 @@ export default function OperationReportForm() {
     comment: "",
     place: '',
     project: '',
+    status: "Pending"
   };
 
   const [formData, setFormData] = useState(initialData);
@@ -93,7 +94,8 @@ export default function OperationReportForm() {
         received_info_time: formData.receivedInfoTime,
         reason: formData.reason,
         solution: formData.solution,
-        comment: formData.comment
+        comment: formData.comment,
+        status: formData.status || "Pending",
       };
 
       let newId = location.state?.id;

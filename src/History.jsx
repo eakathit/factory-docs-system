@@ -105,7 +105,7 @@ const History = () => {
         display_subtitle: `ใบสั่งจ้าง: ${item.wage_type === "daily" ? "รายวัน" : "เหมา"}`,
         display_amount: item.wage_rate,
         display_person: item.supervisor_name,
-        display_status: item.status || "รอดำเนินการ",
+        display_status: item.status || "Pending",
         // ชี้ไปที่ Route ของหน้า Print ใหม่ที่คุณเพิ่มใน App.jsx
         link_print: '/contractor-print',
         // ส่งข้อมูลทั้งหมดไปให้หน้า Print แสดงผลและใช้สำหรับการกดปุ่ม "แก้ไข"
@@ -131,7 +131,7 @@ const History = () => {
         display_subtitle: "ใบสำคัญรับเงิน",
         display_amount: item.total_amount,
         display_person: "",
-        display_status: "เสร็จสิ้น",
+        display_status: item.status || "Pending",
         link_print: `/receipt-voucher-print/${item.id}`,
         item_state: null
       }));
@@ -143,7 +143,7 @@ const History = () => {
         display_subtitle: `Completion Report (Project: ${item.project_no || "-"})`,
         display_amount: null, 
         display_person: item.location, 
-        display_status: item.is_complete ? "Complete" : "Not Complete",
+        display_status: item.status || "Pending",
         link_print: '/completion-report-print',
         item_state: {
             date: item.date,
@@ -168,7 +168,7 @@ const History = () => {
           display_subtitle: `Operation Report: ${item.job_no || "-"}`,
           display_amount: null, // ไม่มีจำนวนเงิน
           display_person: item.operation_person,
-          display_status: "Recorded", // หรือเช็คเงื่อนไขอื่น
+          display_status: item.status || "Pending",
           link_print: '/operation-report-print',
           // ต้องแปลง field จาก DB (snake_case) เป็น State (camelCase) เพื่อให้หน้า Print รับค่าได้ถูกต้อง
           item_state: {
@@ -197,7 +197,8 @@ const History = () => {
             solution: item.solution,
             comment: item.comment,
             place: item.place,
-            project: item.project
+            project: item.project,
+            status: item.status
           }
         };
       });

@@ -65,6 +65,7 @@ export default function ContractorForm() {
         travel_rate: parseFloat(data.travel_rate || 0),
         travel_unit: data.travel_unit,
         deduct_tax: data.deduct_tax,
+        status: location.state?.status || 'Pending'
       }
 
       let newId = location.state?.id
@@ -153,7 +154,7 @@ export default function ContractorForm() {
 
             <Row2>
               <Field label="เลขบัตรประชาชน">
-                <input {...register('id_card')} maxLength={13} placeholder="เลขบัตร 13 หลัก" className={inputCls('tracking-widest font-mono')} />
+                <input {...register('id_card')} maxLength={13} placeholder="เลขบัตร 13 หลัก" className={inputCls('tracking-widest font-sens')} />
               </Field>
               <Field label="โดยมีผู้รับผิดชอบดูแลผู้รับเหมา คือ">
                 <input {...register('supervisor_name')} placeholder="ระบุชื่อผู้รับผิดชอบ..." className={inputCls()} />

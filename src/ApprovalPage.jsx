@@ -6,7 +6,9 @@ import {
   CheckCircle, Trash2, ChevronLeft, FileText, User,
   Hash, Calendar, Banknote, ChevronRight, AlertCircle,
   PenLine, Loader2, ShieldCheck, Eye, X, ChevronDown,
-  ChevronUp, ClipboardList, FileCheck, Receipt, Wrench
+  ChevronUp, ClipboardList, FileCheck, Receipt, Wrench,
+  MapPin, Clock, Phone, Tag, AlertTriangle, Wallet,
+  CheckSquare, XSquare, Users, CreditCard, Home, Briefcase
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -22,8 +24,6 @@ const TABLE_MAP = {
   completion: 'doc_completion_reports',
 };
 
-// long: true  → ปุ่ม "ดูเอกสารเต็ม" + Bottom Sheet
-// long: false → Inline Expandable
 const DOC_META = {
   order:      { label: 'ใบสั่งจ้างผู้รับเหมา',  icon: Wrench,        color: 'blue',    long: true  },
   receipt:    { label: 'ใบรับรองแทนใบเสร็จ',     icon: Receipt,       color: 'emerald', long: false },
@@ -44,7 +44,7 @@ const fmt = (d) =>
   d ? new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '—';
 
 const fmtMoney = (n) =>
-  n != null ? `฿${Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2 })}` : null;
+  n != null && n !== '' ? `฿${Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2 })}` : null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared small UI
@@ -92,161 +92,364 @@ const StepBar = ({ step }) => (
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DocDetail — renders content per docType (used in both inline & Bottom Sheet)
+// DocDetail sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
-const Section = ({ title, children }) => (
+/** Section wrapper */
+const Sec = ({ title, icon: Icon, children }) => (
   <div>
-    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">{title}</p>
+    <div className="flex items-center gap-2 mb-2 px-1">
+      {Icon && <Icon size={12} className="text-slate-400" />}
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</p>
+    </div>
     <div className="bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">{children}</div>
   </div>
 );
 
-const DocRow = ({ label, value, mono }) => (
-  <div className="flex items-start justify-between gap-4 px-4 py-2.5 border-b border-slate-100 last:border-0">
-    <span className="text-xs text-slate-500 flex-shrink-0">{label}</span>
-    <span className={`text-xs font-semibold text-slate-800 text-right break-all ${mono ? 'font-mono' : ''}`}>{value ?? '—'}</span>
+/** Key-value row inside Sec */
+const KV = ({ label, value, mono, highlight }) => {
+  if (value == null || value === '' || value === '—') return null;
+  return (
+    <div className="flex items-start justify-between gap-4 px-4 py-2.5 border-b border-slate-100 last:border-0">
+      <span className="text-xs text-slate-500 flex-shrink-0 min-w-[90px]">{label}</span>
+      <span className={`text-xs font-semibold text-right break-all
+        ${highlight ? 'text-emerald-600 font-bold' : 'text-slate-800'}
+        ${mono ? 'font-mono' : ''}`}>
+        {value}
+      </span>
+    </div>
+  );
+};
+
+/** Badge row for tags/chips */
+const BadgeRow = ({ items }) => (
+  <div className="flex flex-wrap gap-1.5 px-4 py-3">
+    {items.map((item, i) => (
+      <span key={i} className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${item.active
+        ? 'bg-violet-100 text-violet-700 border border-violet-200'
+        : 'bg-slate-100 text-slate-400 line-through'}`}>
+        {item.label}
+      </span>
+    ))}
   </div>
 );
 
-const DocDetail = ({ docType, docData }) => {
-  if (!docData) return <p className="text-sm text-slate-400 text-center py-8">ไม่มีข้อมูล</p>;
+// ─────────────────────────────────────────────────────────────────────────────
+// DocDetail — renders per docType (real fields from actual forms)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  // receipt & voucher
-  if (docType === 'receipt' || docType === 'voucher') {
+const DocDetail = ({ docType, docData: d }) => {
+  if (!d) return <p className="text-sm text-slate-400 text-center py-8">ไม่มีข้อมูล</p>;
+
+  // ══════════════════════════════════════════════════════════════════════
+  // RECEIPT — doc_substitute_receipts
+  // fields: doc_no, payer_name, position, items[], total_amount,
+  //         total_text, payment_method, payment_date
+  // ══════════════════════════════════════════════════════════════════════
+  if (docType === 'receipt') {
     return (
-      <Section title={`รายการค่าใช้จ่าย · ${docData.items?.length ?? 0} รายการ`}>
-        {docData.items?.map((item, i) => (
-          <div key={i} className="flex items-start justify-between gap-3 px-4 py-3 border-b border-slate-100 last:border-0">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-800 leading-snug">{item.detail}</p>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {item.date && <span className="text-[10px] text-slate-400">{fmt(item.date)}</span>}
-                {item.project_no && (
-                  <span className="text-[10px] font-bold bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded">
-                    #{item.project_no}
-                  </span>
-                )}
+      <div className="space-y-4">
+        <Sec title="ข้อมูลผู้เบิก" icon={User}>
+          <KV label="ชื่อผู้เบิก"   value={d.payer_name} />
+          <KV label="ตำแหน่ง"       value={d.position} />
+          <KV label="เลขที่เอกสาร"  value={d.doc_no} />
+        </Sec>
+
+        <Sec title={`รายการค่าใช้จ่าย · ${d.items?.length ?? 0} รายการ`} icon={ClipboardList}>
+          {d.items?.map((item, i) => (
+            <div key={i} className="flex items-start justify-between gap-3 px-4 py-3 border-b border-slate-100 last:border-0">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-slate-800 leading-snug">{item.detail}</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {item.date    && <span className="text-[10px] text-slate-400">{fmt(item.date)}</span>}
+                  {item.project_no && (
+                    <span className="text-[10px] font-bold bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded">
+                      #{item.project_no}
+                    </span>
+                  )}
+                </div>
               </div>
+              <span className="text-sm font-bold text-slate-800 tabular-nums flex-shrink-0">
+                {fmtMoney(item.amount) ?? '—'}
+              </span>
             </div>
-            <span className="text-sm font-bold text-slate-800 tabular-nums flex-shrink-0">
-              {fmtMoney(item.amount) ?? '—'}
+          ))}
+          <div className="flex justify-between items-center px-4 py-3 bg-emerald-50 border-t border-emerald-100">
+            <div>
+              <span className="text-xs font-bold text-emerald-700">รวมทั้งสิ้น</span>
+              {d.total_text && <p className="text-[10px] text-emerald-600 mt-0.5">({d.total_text})</p>}
+            </div>
+            <span className="text-base font-black text-emerald-700 tabular-nums">
+              {fmtMoney(d.total_amount) ?? '—'}
             </span>
           </div>
-        ))}
-        <div className="flex justify-between items-center px-4 py-3 bg-emerald-50 border-t border-emerald-100">
-          <span className="text-xs font-bold text-emerald-700">รวมทั้งสิ้น</span>
-          <span className="text-base font-black text-emerald-700 tabular-nums">
-            {fmtMoney(docData.total_amount) ?? '—'}
-          </span>
-        </div>
-      </Section>
+        </Sec>
+
+        <Sec title="การชำระเงิน" icon={Wallet}>
+          <KV label="วิธีชำระ"   value={d.payment_method === 'cash' ? '💵 เงินสด' : d.payment_method === 'transfer' ? '🏦 โอนเงิน' : d.payment_method} />
+          <KV label="วันที่ชำระ" value={fmt(d.payment_date)} />
+        </Sec>
+      </div>
     );
   }
 
-  // order
+  // ══════════════════════════════════════════════════════════════════════
+  // VOUCHER — doc_receipt_vouchers
+  // fields: created_at, receiver_name, id_card_number, address,
+  //         payment_method, total_amount, total_text,
+  //         items[] { name, quantity, unit, price, total }
+  // ══════════════════════════════════════════════════════════════════════
+  if (docType === 'voucher') {
+    return (
+      <div className="space-y-4">
+        <Sec title="ข้อมูลผู้รับเงิน" icon={User}>
+          <KV label="ชื่อผู้รับเงิน" value={d.receiver_name} />
+          <KV label="เลขบัตรประชาชน" value={d.id_card_number} mono />
+          <KV label="ที่อยู่"         value={d.address} />
+          <KV label="วันที่เอกสาร"   value={fmt(d.created_at)} />
+        </Sec>
+
+        <Sec title={`รายการ · ${d.items?.length ?? 0} รายการ`} icon={ClipboardList}>
+          {/* header */}
+          <div className="grid px-4 py-2 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase"
+            style={{ gridTemplateColumns: '1fr 48px 52px 80px' }}>
+            <span>รายการ</span>
+            <span className="text-center">จำนวน</span>
+            <span className="text-center">หน่วย</span>
+            <span className="text-right">รวม</span>
+          </div>
+          {d.items?.map((item, i) => (
+            <div key={i} className="grid items-center px-4 py-2.5 border-b border-slate-100 last:border-0 gap-2"
+              style={{ gridTemplateColumns: '1fr 48px 52px 80px' }}>
+              <p className="text-xs font-semibold text-slate-800 truncate">{item.name}</p>
+              <p className="text-xs text-slate-600 text-center">{item.quantity}</p>
+              <p className="text-xs text-slate-500 text-center">{item.unit}</p>
+              <p className="text-xs font-bold text-slate-800 text-right tabular-nums">
+                {fmtMoney(item.total ?? (item.quantity * item.price)) ?? '—'}
+              </p>
+            </div>
+          ))}
+          <div className="flex justify-between items-center px-4 py-3 bg-emerald-50 border-t border-emerald-100">
+            <div>
+              <span className="text-xs font-bold text-emerald-700">รวมทั้งสิ้น</span>
+              {d.total_text && <p className="text-[10px] text-emerald-600 mt-0.5">({d.total_text})</p>}
+            </div>
+            <span className="text-base font-black text-emerald-700 tabular-nums">
+              {fmtMoney(d.total_amount) ?? '—'}
+            </span>
+          </div>
+        </Sec>
+
+        <Sec title="การชำระเงิน" icon={Wallet}>
+          <KV label="วิธีชำระ" value={d.payment_method === 'cash' ? '💵 เงินสด' : d.payment_method === 'transfer' ? '🏦 โอนเงิน' : d.payment_method} />
+        </Sec>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // ORDER — doc_contractor_orders
+  // fields: created_at, doc_no, contractor_name, id_card, supervisor_name,
+  //         wage_type, wage_rate, has_ot, start_date, end_date,
+  //         daily_items[] { date, start_time, end_time, ot_start, ot_end, detail }
+  //         has_accom, accom_rate, accom_unit,
+  //         has_travel, travel_rate, travel_unit, deduct_tax
+  // ══════════════════════════════════════════════════════════════════════
   if (docType === 'order') {
+    const wageLabel = d.wage_type === 'daily' ? 'รายวัน' : 'เหมาโปรเจ็ค';
+    const totalDays = d.daily_items?.length ?? 0;
+
+    // คำนวณค่าจ้างรวม (ถ้ามี)
+    let totalWage = null;
+    if (d.wage_type === 'daily' && d.wage_rate && totalDays) {
+      totalWage = parseFloat(d.wage_rate) * totalDays;
+      if (d.has_accom && d.accom_rate) totalWage += parseFloat(d.accom_rate) * (d.accom_unit === 'day' ? totalDays : 1);
+      if (d.has_travel && d.travel_rate) totalWage += parseFloat(d.travel_rate) * (d.travel_unit === 'day' ? totalDays : 1);
+    } else if (d.wage_type === 'project' && d.wage_rate) {
+      totalWage = parseFloat(d.wage_rate);
+    }
+
     return (
       <div className="space-y-4">
-        <Section title="ข้อมูลผู้รับจ้าง">
-          <DocRow label="ชื่อผู้รับจ้าง"    value={docData.contractor_name} />
-          <DocRow label="ประเภทงาน"         value={docData.work_type} />
-          <DocRow label="วันที่เริ่มงาน"     value={fmt(docData.start_date)} />
-          <DocRow label="วันที่สิ้นสุด"      value={fmt(docData.end_date)} />
-          <DocRow label="มูลค่างาน"          value={fmtMoney(docData.total_amount)} mono />
-        </Section>
-        {docData.items?.length > 0 && (
-          <Section title={`รายการงาน · ${docData.items.length} รายการ`}>
-            {docData.items.map((item, i) => (
-              <div key={i} className="flex items-start justify-between gap-3 px-4 py-3 border-b border-slate-100 last:border-0">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800">{item.description ?? item.detail}</p>
-                  {item.unit && <p className="text-[10px] text-slate-400 mt-0.5">{item.quantity} {item.unit}</p>}
+        <Sec title="ข้อมูลผู้รับเหมา" icon={User}>
+          <KV label="ชื่อผู้รับเหมา"    value={d.contractor_name} />
+          <KV label="เลขบัตรประชาชน"    value={d.id_card} mono />
+          <KV label="ผู้รับผิดชอบดูแล"  value={d.supervisor_name} />
+          <KV label="เลขที่เอกสาร"      value={d.doc_no} />
+          <KV label="วันที่เอกสาร"      value={fmt(d.created_at)} />
+        </Sec>
+
+        <Sec title="ค่าจ้างและการทำงาน" icon={Briefcase}>
+          <KV label="ประเภทค่าจ้าง"  value={wageLabel} />
+          <KV label="อัตราค่าจ้าง"   value={fmtMoney(d.wage_rate) + (d.wage_type === 'daily' ? ' / วัน' : ' / งาน')} highlight />
+          <KV label="โอที"           value={d.has_ot ? '✅ มีโอที' : '—'} />
+          <KV label="ตั้งแต่วันที่"   value={fmt(d.start_date)} />
+          <KV label="ถึงวันที่"       value={fmt(d.end_date)} />
+          {totalWage && <KV label="ค่าจ้างรวม (ประเมิน)" value={fmtMoney(totalWage)} highlight />}
+        </Sec>
+
+        {/* ตารางลงเวลา */}
+        {d.daily_items?.length > 0 && (
+          <Sec title={`ตารางลงเวลา · ${totalDays} วัน`} icon={Clock}>
+            {/* header */}
+            <div className="grid px-4 py-2 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase"
+              style={{ gridTemplateColumns: '90px 1fr 1fr' }}>
+              <span>วันที่</span>
+              <span className="text-center">เวลาทำงาน</span>
+              <span className="text-center">โอที</span>
+            </div>
+            {d.daily_items.map((row, i) => (
+              <div key={i} className="border-b border-slate-100 last:border-0">
+                <div className="grid items-center px-4 py-2.5 gap-2"
+                  style={{ gridTemplateColumns: '90px 1fr 1fr' }}>
+                  <p className="text-xs font-semibold text-slate-800">{fmt(row.date)}</p>
+                  <p className="text-xs text-slate-600 text-center">
+                    {row.start_time && row.end_time ? `${row.start_time} – ${row.end_time}` : '—'}
+                  </p>
+                  <p className="text-xs text-slate-500 text-center">
+                    {row.ot_start && row.ot_end ? `${row.ot_start} – ${row.ot_end}` : '—'}
+                  </p>
                 </div>
-                <span className="text-xs font-bold text-slate-800 tabular-nums flex-shrink-0">
-                  {fmtMoney(item.amount ?? item.price) ?? '—'}
-                </span>
+                {row.detail && (
+                  <p className="text-[11px] text-slate-500 px-4 pb-2 -mt-1">{row.detail}</p>
+                )}
               </div>
             ))}
-          </Section>
+          </Sec>
         )}
-        {docData.remark && (
-          <Section title="หมายเหตุ">
-            <p className="text-xs text-slate-600 px-4 py-3 leading-relaxed">{docData.remark}</p>
-          </Section>
+
+        {/* ค่าใช้จ่ายเพิ่มเติม */}
+        {(d.has_accom || d.has_travel || d.deduct_tax) && (
+          <Sec title="ค่าใช้จ่ายและข้อกำหนด" icon={Wallet}>
+            {d.has_accom  && <KV label="ค่าที่พัก"  value={`${fmtMoney(d.accom_rate)} / ${d.accom_unit === 'day' ? 'วัน' : 'งาน'}`} />}
+            {d.has_travel && <KV label="ค่าเดินทาง" value={`${fmtMoney(d.travel_rate)} / ${d.travel_unit === 'day' ? 'วัน' : 'งาน'}`} />}
+            {d.deduct_tax && <KV label="ภาษี ณ ที่จ่าย" value="หัก 3%" />}
+          </Sec>
         )}
       </div>
     );
   }
 
-  // operation report
+  // ══════════════════════════════════════════════════════════════════════
+  // OPERATION — doc_operation_reports
+  // fields: job_no, issued_date, service_type{warranty,urgent,after_service,other},
+  //         expense, customer_name, contact_name, place, project,
+  //         start_time, finish_time, operation_person,
+  //         problem, received_info_from, received_info_date, received_info_time,
+  //         reason, solution, comment
+  // ══════════════════════════════════════════════════════════════════════
   if (docType === 'operation') {
+    // service_type อาจมาเป็น object หรือ string
+    const st = typeof d.service_type === 'object' ? d.service_type : {};
+    const serviceTypes = [
+      { label: 'Warranty',      active: !!st.warranty },
+      { label: 'Urgent',        active: !!st.urgent },
+      { label: 'After Service', active: !!st.after_service },
+      { label: 'Other',         active: !!st.other },
+    ];
+    const hasAnyService = serviceTypes.some(s => s.active);
+
     return (
       <div className="space-y-4">
-        <Section title="ข้อมูลทั่วไป">
-          <DocRow label="วันที่รายงาน"      value={fmt(docData.report_date ?? docData.created_at)} />
-          <DocRow label="ผู้จัดทำ"           value={docData.prepared_by ?? docData.payer_name} />
-          <DocRow label="สถานที่ปฏิบัติงาน"  value={docData.location ?? docData.site} />
-          <DocRow label="โปรเจ็ค"            value={docData.project_no ?? docData.project_name} />
-        </Section>
-        {docData.activities?.length > 0 && (
-          <Section title={`กิจกรรม · ${docData.activities.length} รายการ`}>
-            {docData.activities.map((a, i) => (
-              <div key={i} className="px-4 py-3 border-b border-slate-100 last:border-0">
-                <p className="text-xs font-semibold text-slate-800">{a.activity ?? a.description}</p>
-                {a.remark && <p className="text-[10px] text-slate-500 mt-1">{a.remark}</p>}
-              </div>
-            ))}
-          </Section>
+        <Sec title="ข้อมูลเอกสาร" icon={FileText}>
+          <KV label="Job No."      value={d.job_no} mono />
+          <KV label="วันที่ออก"   value={fmt(d.issued_date)} />
+          <KV label="Expense"      value={d.expense} />
+        </Sec>
+
+        <Sec title="ข้อมูลลูกค้า" icon={Users}>
+          <KV label="ชื่อลูกค้า"     value={d.customer_name} />
+          <KV label="ผู้ติดต่อ"       value={d.contact_name} />
+          <KV label="โปรเจ็ค"        value={d.project} />
+          <KV label="สถานที่"         value={d.place} />
+        </Sec>
+
+        <Sec title="เวลาปฏิบัติงาน" icon={Clock}>
+          <KV label="เริ่มงาน"       value={d.start_time} />
+          <KV label="สิ้นสุดงาน"     value={d.finish_time} />
+          {d.operation_person && (
+            <KV label="ผู้ปฏิบัติงาน"
+              value={d.operation_person.split(',').filter(Boolean).join(', ')} />
+          )}
+        </Sec>
+
+        {hasAnyService && (
+          <Sec title="ประเภทงานบริการ" icon={Tag}>
+            <BadgeRow items={serviceTypes} />
+          </Sec>
         )}
-        {docData.items?.length > 0 && (
-          <Section title={`รายการ · ${docData.items.length} รายการ`}>
-            {docData.items.map((item, i) => (
-              <div key={i} className="flex items-start justify-between gap-3 px-4 py-3 border-b border-slate-100 last:border-0">
-                <p className="text-xs font-semibold text-slate-800 flex-1">{item.detail ?? item.description}</p>
-                {item.amount && <span className="text-xs font-bold text-slate-800 tabular-nums">{fmtMoney(item.amount)}</span>}
-              </div>
-            ))}
-          </Section>
+
+        {/* ข้อมูลการแจ้ง */}
+        {(d.received_info_from || d.received_info_date) && (
+          <Sec title="ได้รับแจ้งจาก" icon={Phone}>
+            <KV label="ชื่อผู้แจ้ง"  value={d.received_info_from} />
+            <KV label="วันที่แจ้ง"   value={fmt(d.received_info_date)} />
+            <KV label="เวลาที่แจ้ง"  value={d.received_info_time} />
+          </Sec>
         )}
-        {docData.remark && (
-          <Section title="หมายเหตุ / ปัญหาที่พบ">
-            <p className="text-xs text-slate-600 px-4 py-3 leading-relaxed">{docData.remark}</p>
-          </Section>
+
+        {/* รายละเอียดงาน */}
+        {d.problem && (
+          <Sec title="ปัญหาที่พบ" icon={AlertTriangle}>
+            <p className="text-xs text-slate-700 px-4 py-3 leading-relaxed">{d.problem}</p>
+          </Sec>
+        )}
+        {d.reason && (
+          <Sec title="สาเหตุ" icon={AlertCircle}>
+            <p className="text-xs text-slate-700 px-4 py-3 leading-relaxed">{d.reason}</p>
+          </Sec>
+        )}
+        {d.solution && (
+          <Sec title="วิธีแก้ไข / รายละเอียดการปฏิบัติงาน" icon={CheckCircle}>
+            <p className="text-xs text-slate-700 px-4 py-3 leading-relaxed">{d.solution}</p>
+          </Sec>
+        )}
+        {d.comment && (
+          <Sec title="Comment / หมายเหตุ" icon={FileText}>
+            <p className="text-xs text-slate-700 px-4 py-3 leading-relaxed">{d.comment}</p>
+          </Sec>
         )}
       </div>
     );
   }
 
-  // completion report
+  // ══════════════════════════════════════════════════════════════════════
+  // COMPLETION — doc_completion_reports
+  // fields: date, project_name, project_no, location, finish_time,
+  //         is_complete, remark
+  // ══════════════════════════════════════════════════════════════════════
   if (docType === 'completion') {
     return (
       <div className="space-y-4">
-        <Section title="ข้อมูลโครงการ">
-          <DocRow label="ชื่อโครงการ"      value={docData.project_name ?? docData.display_title} />
-          <DocRow label="ผู้รับผิดชอบ"     value={docData.responsible_person ?? docData.payer_name} />
-          <DocRow label="วันที่เสร็จสิ้น"   value={fmt(docData.completion_date ?? docData.created_at)} />
-          <DocRow label="มูลค่าโครงการ"     value={fmtMoney(docData.total_amount)} mono />
-        </Section>
-        {docData.items?.length > 0 && (
-          <Section title={`รายการงานเสร็จสิ้น · ${docData.items.length} รายการ`}>
-            {docData.items.map((item, i) => (
-              <div key={i} className="flex items-start justify-between gap-3 px-4 py-3 border-b border-slate-100 last:border-0">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800">{item.detail ?? item.description}</p>
-                  {item.date && <p className="text-[10px] text-slate-400 mt-0.5">{fmt(item.date)}</p>}
-                </div>
-                {item.amount && <span className="text-xs font-bold text-slate-800 tabular-nums">{fmtMoney(item.amount)}</span>}
-              </div>
-            ))}
-          </Section>
-        )}
-        {(docData.summary || docData.remark) && (
-          <Section title={docData.summary ? 'สรุปผลการดำเนินงาน' : 'หมายเหตุ'}>
-            <p className="text-xs text-slate-600 px-4 py-3 leading-relaxed">
-              {docData.summary ?? docData.remark}
-            </p>
-          </Section>
+        <Sec title="ข้อมูลโครงการ" icon={Briefcase}>
+          <KV label="ชื่อโครงการ"  value={d.project_name} />
+          <KV label="รหัสโครงการ"  value={d.project_no} mono />
+          <KV label="สถานที่"       value={d.location} />
+          <KV label="วันที่"        value={fmt(d.date)} />
+          <KV label="เวลาเสร็จสิ้น" value={d.finish_time} />
+        </Sec>
+
+        <Sec title="สถานะ" icon={d.is_complete ? CheckSquare : XSquare}>
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+              ${d.is_complete ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
+              {d.is_complete
+                ? <CheckSquare size={18} />
+                : <XSquare size={18} />}
+            </div>
+            <div>
+              <p className={`text-sm font-bold ${d.is_complete ? 'text-emerald-700' : 'text-red-600'}`}>
+                {d.is_complete ? 'Complete — เสร็จสมบูรณ์' : 'Not Complete — ยังไม่เสร็จ'}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">สถานะการดำเนินงาน</p>
+            </div>
+          </div>
+        </Sec>
+
+        {d.remark && (
+          <Sec title="หมายเหตุ" icon={FileText}>
+            <p className="text-xs text-slate-700 px-4 py-3 leading-relaxed">{d.remark}</p>
+          </Sec>
         )}
       </div>
     );
@@ -256,7 +459,7 @@ const DocDetail = ({ docType, docData }) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Inline Expandable  (short docs: receipt, voucher)
+// Inline Expandable (short docs: receipt, voucher)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const InlineDetail = ({ docType, docData }) => {
@@ -292,11 +495,12 @@ const InlineDetail = ({ docType, docData }) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Bottom Sheet  (long docs: order, operation, completion)
+// Bottom Sheet (long docs: order, operation, completion)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BottomSheet = ({ isOpen, onClose, docType, docData, meta }) => {
   const c = COLOR[meta?.color ?? 'blue'];
+  const DocIcon = meta?.icon ?? FileText;
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
@@ -310,25 +514,25 @@ const BottomSheet = ({ isOpen, onClose, docType, docData, meta }) => {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div
         className="relative bg-white rounded-t-3xl shadow-2xl flex flex-col"
-        style={{ maxHeight: '88vh', animation: 'sheetUp .32s cubic-bezier(.32,.72,0,1) both' }}
+        style={{ maxHeight: '90vh', animation: 'sheetUp .32s cubic-bezier(.32,.72,0,1) both' }}
       >
         {/* Handle + header */}
-        <div className="flex-shrink-0 pt-3 pb-0 flex flex-col items-center">
+        <div className="flex-shrink-0 pt-3 flex flex-col items-center">
           <div className="w-10 h-1 bg-slate-200 rounded-full mb-3" />
-          <div className="w-full px-5 pb-3 flex items-start justify-between border-b border-slate-100">
+          <div className="w-full px-5 pb-3.5 flex items-start justify-between border-b border-slate-100">
             <div className="flex items-center gap-3">
               <div className={`p-2 ${c.bg} ${c.text} rounded-xl`}>
-                {meta?.icon && React.createElement(meta.icon, { size: 18 })}
+                <DocIcon size={18} />
               </div>
               <div>
                 <p className={`text-[10px] font-bold uppercase tracking-wider ${c.text}`}>{meta?.label}</p>
                 <h3 className="text-base font-bold text-slate-800 leading-snug">
-                  {docData?.display_title ?? docData?.doc_no ?? 'รายละเอียดเอกสาร'}
+                  {docData?.display_title ?? docData?.doc_no ?? docData?.job_no ?? docData?.project_name ?? 'รายละเอียดเอกสาร'}
                 </h3>
               </div>
             </div>
             <button onClick={onClose}
-              className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors flex-shrink-0 mt-0.5">
+              className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors flex-shrink-0">
               <X size={17} />
             </button>
           </div>
@@ -339,7 +543,7 @@ const BottomSheet = ({ isOpen, onClose, docType, docData, meta }) => {
           <DocDetail docType={docType} docData={docData} />
         </div>
 
-        {/* Footer CTA */}
+        {/* Footer */}
         <div className="flex-shrink-0 p-4 border-t border-slate-100 bg-white/95 backdrop-blur-sm">
           <button onClick={onClose}
             className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold text-sm
@@ -362,17 +566,17 @@ const ApprovalPage = () => {
   const navigate  = useNavigate();
   const sigCanvas = useRef(null);
 
-  const [step,          setStep]          = useState('review');
-  const [isSubmitting,  setIsSubmitting]  = useState(false);
-  const [sigEmpty,      setSigEmpty]      = useState(true);
-  const [sheetOpen,     setSheetOpen]     = useState(false);
+  const [step,         setStep]         = useState('review');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sigEmpty,     setSigEmpty]     = useState(true);
+  const [sheetOpen,    setSheetOpen]    = useState(false);
 
-  const docData    = location.state;
-  const meta       = DOC_META[docType] ?? { label: docType, icon: FileText, color: 'blue', long: false };
-  const c          = COLOR[meta.color];
-  const DocIcon    = meta.icon;
+  const docData     = location.state;
+  const meta        = DOC_META[docType] ?? { label: docType, icon: FileText, color: 'blue', long: false };
+  const c           = COLOR[meta.color];
+  const DocIcon     = meta.icon;
   const totalAmount = docData?.total_amount
-    ?? docData?.items?.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    ?? docData?.items?.reduce((s, i) => s + (parseFloat(i.amount || (i.quantity * i.price) || 0)), 0);
 
   const handleApprove = async () => {
     if (sigCanvas.current?.isEmpty()) { toast.error('กรุณาลงลายมือชื่อก่อนอนุมัติ'); return; }
@@ -394,6 +598,16 @@ const ApprovalPage = () => {
     }
   };
 
+  // Title to show in summary card — fallback chain per docType
+  const docTitle = docData?.display_title
+    ?? docData?.project_name
+    ?? docData?.job_no
+    ?? docData?.contractor_name
+    ?? docData?.payer_name
+    ?? docData?.receiver_name
+    ?? docData?.doc_no
+    ?? '—';
+
   return (
     <div className="min-h-screen bg-slate-50 pb-16" style={{ fontFamily: "'Prompt', sans-serif" }}>
       <style>{`
@@ -409,10 +623,8 @@ const ApprovalPage = () => {
         .anim-up-2 { animation: fadeSlideUp .3s .06s ease both; }
         .anim-up-3 { animation: fadeSlideUp .3s .12s ease both; }
         .anim-up-4 { animation: fadeSlideUp .3s .18s ease both; }
-        .anim-up-5 { animation: fadeSlideUp .3s .24s ease both; }
       `}</style>
 
-      {/* Bottom Sheet (long docs) */}
       <BottomSheet
         isOpen={sheetOpen}
         onClose={() => setSheetOpen(false)}
@@ -431,9 +643,7 @@ const ApprovalPage = () => {
             <ChevronLeft size={22} />
           </button>
           <div className="flex-1 min-w-0">
-            <p className={`text-[10px] font-bold uppercase tracking-widest leading-none ${c.text}`}>
-              {meta.label}
-            </p>
+            <p className={`text-[10px] font-bold uppercase tracking-widest leading-none ${c.text}`}>{meta.label}</p>
             <h1 className="text-sm font-bold text-slate-800">
               {step === 'review' ? 'ตรวจสอบเอกสาร' : 'ลงนามอนุมัติ'}
             </h1>
@@ -462,24 +672,46 @@ const ApprovalPage = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${c.text}`}>{meta.label}</p>
-                    <h2 className="text-base font-bold text-slate-800 leading-snug">
-                      {docData?.display_title ?? docData?.doc_no ?? 'ไม่มีหัวข้อ'}
-                    </h2>
+                    <h2 className="text-base font-bold text-slate-800 leading-snug">{docTitle}</h2>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-3.5 pt-4 border-t border-slate-50">
-                  <InfoRow icon={User}     label="ผู้ยื่นเอกสาร" value={docData?.payer_name} />
-                  <InfoRow icon={Hash}     label="เลขที่เอกสาร"  value={docData?.doc_no} />
-                  <InfoRow icon={Calendar} label="วันที่สร้าง"    value={fmt(docData?.created_at)} />
-                  {totalAmount != null && (
-                    <InfoRow icon={Banknote} label="ยอดรวมทั้งสิ้น"
-                      value={fmtMoney(totalAmount)} highlight />
-                  )}
+                  {/* Per-type key info */}
+                  {docType === 'receipt' && <>
+                    <InfoRow icon={User}     label="ผู้เบิก"        value={docData?.payer_name} />
+                    <InfoRow icon={Hash}     label="เลขที่เอกสาร"   value={docData?.doc_no} />
+                    <InfoRow icon={Calendar} label="วันที่"          value={fmt(docData?.created_at)} />
+                    <InfoRow icon={Banknote} label="ยอดรวม"         value={fmtMoney(totalAmount)} highlight />
+                  </>}
+                  {docType === 'voucher' && <>
+                    <InfoRow icon={User}     label="ผู้รับเงิน"      value={docData?.receiver_name} />
+                    <InfoRow icon={Calendar} label="วันที่"          value={fmt(docData?.created_at)} />
+                    <InfoRow icon={Banknote} label="ยอดรวม"         value={fmtMoney(totalAmount)} highlight />
+                    <InfoRow icon={Wallet}   label="วิธีชำระ"        value={docData?.payment_method === 'cash' ? 'เงินสด' : 'โอนเงิน'} />
+                  </>}
+                  {docType === 'order' && <>
+                    <InfoRow icon={User}     label="ผู้รับเหมา"      value={docData?.contractor_name} />
+                    <InfoRow icon={User}     label="ผู้ดูแล"         value={docData?.supervisor_name} />
+                    <InfoRow icon={Calendar} label="ช่วงเวลา"       value={`${fmt(docData?.start_date)} – ${fmt(docData?.end_date)}`} />
+                    <InfoRow icon={Banknote} label="อัตราค่าจ้าง"   value={fmtMoney(docData?.wage_rate)} highlight />
+                  </>}
+                  {docType === 'operation' && <>
+                    <InfoRow icon={Hash}     label="Job No."         value={docData?.job_no} />
+                    <InfoRow icon={User}     label="ลูกค้า"          value={docData?.customer_name} />
+                    <InfoRow icon={MapPin}   label="สถานที่"         value={docData?.place} />
+                    <InfoRow icon={Calendar} label="วันที่"          value={fmt(docData?.issued_date)} />
+                  </>}
+                  {docType === 'completion' && <>
+                    <InfoRow icon={Briefcase} label="โครงการ"        value={docData?.project_name} />
+                    <InfoRow icon={Hash}      label="รหัสโครงการ"    value={docData?.project_no} />
+                    <InfoRow icon={MapPin}    label="สถานที่"        value={docData?.location} />
+                    <InfoRow icon={Calendar}  label="วันที่"         value={fmt(docData?.date)} />
+                  </>}
                 </div>
               </div>
             </div>
 
-            {/* Content: inline expandable (short) */}
+            {/* Content: inline (short) */}
             {!meta.long && <InlineDetail docType={docType} docData={docData} />}
 
             {/* Content: Bottom Sheet button (long) */}
@@ -496,17 +728,14 @@ const ApprovalPage = () => {
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-bold text-slate-800">ดูรายละเอียดเอกสาร</p>
-                    <p className="text-xs text-slate-400 mt-0.5">กดเพื่อเปิดดูเนื้อหาทั้งหมด</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {docType === 'order'      && `ตารางลงเวลา ${docData?.daily_items?.length ?? 0} วัน · ค่าจ้าง + ค่าใช้จ่าย`}
+                      {docType === 'operation'  && `ปัญหา · สาเหตุ · วิธีแก้ไข`}
+                      {docType === 'completion' && `สถานะ · รายละเอียดโครงการ`}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {(docData?.items?.length ?? 0) > 0 && (
-                    <span className="text-[11px] font-bold bg-slate-100 text-slate-500 rounded-full px-2 py-0.5">
-                      {docData.items.length} รายการ
-                    </span>
-                  )}
-                  <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
-                </div>
+                <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
               </button>
             )}
 
@@ -546,9 +775,7 @@ const ApprovalPage = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">กำลังอนุมัติ</p>
-                <p className="text-sm font-bold text-slate-800 truncate">
-                  {docData?.display_title ?? docData?.doc_no ?? '—'}
-                </p>
+                <p className="text-sm font-bold text-slate-800 truncate">{docTitle}</p>
               </div>
               {totalAmount != null && (
                 <p className="text-sm font-black text-emerald-600 flex-shrink-0 tabular-nums">
@@ -572,8 +799,7 @@ const ApprovalPage = () => {
               </div>
               <div className="p-4">
                 <div className={`relative rounded-xl overflow-hidden border-2 transition-all duration-200
-                  ${sigEmpty
-                    ? 'border-dashed border-slate-300 bg-slate-50/80'
+                  ${sigEmpty ? 'border-dashed border-slate-300 bg-slate-50/80'
                     : 'border-solid border-violet-400 bg-white shadow-inner shadow-violet-50'}`}>
                   {sigEmpty && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none gap-1.5">
@@ -597,7 +823,7 @@ const ApprovalPage = () => {
                 <div className="flex items-center justify-between mt-2.5">
                   <span className={`text-xs font-semibold flex items-center gap-1.5 transition-colors
                     ${sigEmpty ? 'text-slate-400' : 'text-violet-600'}`}>
-                    <span className={`w-2 h-2 rounded-full inline-block transition-colors
+                    <span className={`w-2 h-2 rounded-full inline-block
                       ${sigEmpty ? 'bg-slate-300' : 'bg-violet-500 animate-pulse'}`} />
                     {sigEmpty ? 'ยังไม่ได้ลงนาม' : 'ลงนามแล้ว'}
                   </span>

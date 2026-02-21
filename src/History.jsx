@@ -171,6 +171,7 @@ const History = () => {
           link_print: '/operation-report-print',
           // ต้องแปลง field จาก DB (snake_case) เป็น State (camelCase) เพื่อให้หน้า Print รับค่าได้ถูกต้อง
           item_state: {
+            id: item.id,
             jobNo: item.job_no,
             issuedDate: item.issued_date,
             // Checkboxes
@@ -188,12 +189,14 @@ const History = () => {
             operationPerson: item.operation_person,
             // Details
             problem: item.problem,
+            receivedInfoFrom: item.received_info_from,
             receivedInfoDate: item.received_info_date,
             receivedInfoTime: item.received_info_time,
             reason: item.reason,
             solution: item.solution,
             comment: item.comment,
-            placeProject: item.place_project
+            place: item.place,
+            project: item.project
           }
         };
       });

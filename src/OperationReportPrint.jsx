@@ -24,6 +24,13 @@ const OperationReportPrint = () => {
     </div>
   )
 
+  const rawOps = data.operationPerson || data.operation_person || "";
+  const opsList = rawOps.split(',');
+  const op1 = opsList[0]?.trim() || "";
+  const op2 = opsList[1]?.trim() || "";
+  const op3 = opsList[2]?.trim() || "";
+  const op4 = opsList[3]?.trim() || "";
+  
   return (
     // 1. แก้ไข Outer Div: เพิ่ม print:min-h-0 print:h-auto print:block แก้หน้าว่างแผ่นที่สอง
     <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sarabun print:bg-white print:p-0 print:m-0 print:min-h-0 print:h-auto print:block">
@@ -42,7 +49,7 @@ const OperationReportPrint = () => {
           <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
             <button 
               // ชี้กลับไปหน้าฟอร์ม Operation Report
-              onClick={() => navigate('/operation-report', { state: doc })}
+              onClick={() => navigate('/operation-report', { state: data })}
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-all font-medium text-sm"
             >
               <Edit3 size={18} /> 
@@ -226,12 +233,22 @@ const OperationReportPrint = () => {
                    OPERATION<br/>PERSON
                 </div>
                 <div className="flex-1 grid grid-cols-2 grid-rows-2">
+                   {/* ช่องที่ 1 (ซ้ายบน) */}
                    <div className="border-r border-b border-black flex items-center justify-center p-0.5 print:text-black text-[13px] text-center overflow-hidden break-words leading-tight">
-                      {data.operationPerson}
+                      {op1}
                    </div>
-                   <div className="border-b border-black"></div>
-                   <div className="border-r border-black"></div>
-                   <div></div>
+                   {/* ช่องที่ 2 (ขวาบน) */}
+                   <div className="border-b border-black flex items-center justify-center p-0.5 print:text-black text-[13px] text-center overflow-hidden break-words leading-tight">
+                      {op2}
+                   </div>
+                   {/* ช่องที่ 3 (ซ้ายล่าง) */}
+                   <div className="border-r border-black flex items-center justify-center p-0.5 print:text-black text-[13px] text-center overflow-hidden break-words leading-tight">
+                      {op3}
+                   </div>
+                   {/* ช่องที่ 4 (ขวาล่าง) */}
+                   <div className="flex items-center justify-center p-0.5 print:text-black text-[13px] text-center overflow-hidden break-words leading-tight">
+                      {op4}
+                   </div>
                 </div>
              </div>
           </div>
@@ -242,19 +259,30 @@ const OperationReportPrint = () => {
           <div className="border border-black text-xs">
             
             <div className="border-b border-black min-h-[110px] flex flex-col">
-              <div className="p-1 px-2 flex justify-start gap-1 items-center">
-                <span className="text-[13px]">PROBLEM</span>
-                <div className="text-[13px] flex gap-3">
-                   <span>(Received Info. From)</span>
-                   <span>Date: <span className="ml-1 text-[13px]">{formatDate(data.receivedInfoDate)}</span></span>
-                   <span>Time: <span className="ml-1 text-[13px]">{data.receivedInfoTime}</span></span>
-                </div>
-              </div>
-              <div className="flex-1 p-2 print:text-black whitespace-pre-wrap leading-relaxed text-[13px]">
-                {data.problem}
-              </div>
-            </div>
-
+  <div className="p-1 px-2 flex flex-wrap items-baseline gap-2">
+    <span className="text-[13px]">PROBLEM</span>
+    <div className="text-[13px]">
+      (Received Info. From 
+      <span className="mx-1 px-1 border-b border-dotted border-black min-w-[120px] inline-block text-center print:text-black">
+        {/* รองรับทั้งตัวแปร camelCase จาก State และ snake_case จาก Database */}
+        {(data.receivedInfoFrom || data.received_info_from) ? (data.receivedInfoFrom || data.received_info_from) : '............................'}
+      </span> 
+      
+      Date <span className="mx-1 px-1 border-b border-dotted border-black min-w-[80px] inline-block text-center print:text-black">
+        {(data.receivedInfoDate || data.received_info_date) ? formatDate(data.receivedInfoDate || data.received_info_date) : '........................'}
+      </span> 
+      
+      Time <span className="mx-1 px-1 border-b border-dotted border-black min-w-[60px] inline-block text-center print:text-black">
+        {(data.receivedInfoTime || data.received_info_time) ? (data.receivedInfoTime || data.received_info_time) : '.........................'}
+      </span> 
+      And Detail as below)
+    </div>
+  </div>
+  
+  <div className="flex-1 p-2 print:text-black whitespace-pre-wrap leading-relaxed text-[13px]">
+    {data.problem}
+  </div>
+</div>
             <div className="border-b border-black min-h-[70px] flex flex-col">
               <div className="p-1 px-2 text-[13px]">REASON</div>
               <div className="flex-1 p-2 print:text-black whitespace-pre-wrap leading-relaxed text-[13px]">

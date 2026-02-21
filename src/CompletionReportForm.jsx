@@ -1,22 +1,15 @@
 // src/CompletionReportForm.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import {
-  ChevronLeft,
-  Printer,
-  Loader2,
-  FileCheck,
-  Home,
-  ChevronRight,
-} from "lucide-react"; // เพิ่มไอคอน
+import { ChevronLeft, Printer, Loader2, Home, ChevronRight, Save } from "lucide-react";
 import { supabase } from "./supabaseClient";
+import toast from "react-hot-toast";
 
-const CompletionReportForm = () => {
+export default function CompletionReportForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ... (ฟังก์ชัน getCurrentTime และ state ต่างๆ เหมือนเดิม) ...
   const getCurrentTime = () => {
     const now = new Date();
     return now.toTimeString().slice(0, 5);
@@ -62,7 +55,9 @@ const CompletionReportForm = () => {
         is_complete: formData.isComplete,
         remark: formData.remark,
       };
+      
       let resultData = null;
+      
       if (formData.id) {
         const { data, error } = await supabase
           .from("doc_completion_reports")
@@ -79,6 +74,8 @@ const CompletionReportForm = () => {
         if (error) throw error;
         resultData = data[0];
       }
+
+      toast.success('บันทึกข้อมูลเรียบร้อยแล้ว!');
       navigate("/completion-report-print", {
         state: {
           ...formData,
@@ -86,216 +83,177 @@ const CompletionReportForm = () => {
           created_at: resultData.created_at,
         },
       });
+
     } catch (error) {
       console.error("Error saving report:", error);
-      alert("เกิดข้อผิดพลาดในการบันทึก: " + error.message);
+      toast.error("เกิดข้อผิดพลาดในการบันทึก: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const FormLabel = ({ label, subLabel, required }) => (
-    <label className="block mb-1.5">
-      <span className="text-slate-800 font-medium text-base mr-2">
-        {label} {required && <span className="text-red-500">*</span>}
-      </span>
-      <span className="text-slate-400 text-xs font-normal font-mono">
-        {subLabel}
-      </span>
-    </label>
-  );
-
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
-      {/* --- New Sticky Navbar --- */}
-      <nav className="relative sm:sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div className="min-h-screen bg-stone-50 pb-20" style={{ fontFamily: "'Prompt', sans-serif" }}>
+      
+      {/* --- Sticky Navbar --- */}
+      <nav className="relative sm:sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              to="/"
-              className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
-            >
+            <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors">
               <ChevronLeft size={18} />
             </Link>
-            <div className="h-5 sm:h-6 w-[1px] bg-slate-200 mx-1" />
-
-            {/* Breadcrumbs: ปรับขนาดตัวอักษรและซ่อนไอคอนในจอเล็กมากเพื่อประหยัดพื้นที่ */}
+            <div className="h-5 sm:h-6 w-[1px] bg-stone-200 mx-1" />
             <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium">
-              <Link
-                to="/"
-                className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors whitespace-nowrap"
-              >
+              <Link to="/" className="text-stone-400 hover:text-emerald-600 flex items-center gap-1 transition-colors whitespace-nowrap">
                 <Home size={14} /> หน้าแรก
               </Link>
-              <ChevronRight size={12} className="text-slate-300" />
-              <span className="text-slate-800 truncate max-w-[150px] sm:max-w-none">
-                Completion Report
+              <ChevronRight size={12} className="text-stone-300" />
+              <span className="text-stone-800 truncate max-w-[190px] sm:max-w-none font-bold">
+                Completion Report {formData.id && "(แก้ไข)"}
               </span>
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="w-full max-w-3xl mx-auto px-6 py-10">
-        {/* --- Improved Header Section --- */}
-        <div className="flex items-center gap-5 mb-10 fade-in">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white shadow-xl rotate-3">
-            <FileCheck size={32} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-800 tracking-tight">
-              Completion Report
-            </h1>
-            <p className="text-slate-500 text-sm">รายงานเสร็จสิ้นโครงการ</p>
-          </div>
+      <div className="max-w-3xl mx-auto px-4 pt-8">
+        
+        {/* ── Page heading (Minimalist Style) ── */}
+        <div className="mb-7">
+          <h1 className="text-xl font-bold text-stone-800 tracking-tight uppercase">
+            COMPLETION REPORT
+          </h1>
+          <p className="text-stone-400 text-sm mt-0.5">รายงานเสร็จสิ้นโครงการ</p>
+          <div className="mt-3 h-px bg-stone-200" />
         </div>
 
-        {/* Form Card */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 p-8 sm:p-10 fade-in-up"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            {/* วันที่ */}
-            <div>
-              <FormLabel label="วันที่" subLabel="Date / 記入日" required />
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
-                required
-              />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* ════════════════════════════════════════════════
+               Section 1 — Project Information
+          ════════════════════════════════════════════════ */}
+          <Card title="ข้อมูลโครงการ (Project Info)">
+            <Row2>
+              <Field label="ชื่อโครงการ" hint="Project Name / 工事名" required>
+                <input type="text" name="projectName" value={formData.projectName} onChange={handleChange} 
+                  className={inp()} placeholder="ระบุชื่อโครงการ..." required />
+              </Field>
+              <Field label="รหัสโครงการ" hint="Project No. / 工事番号">
+                <input type="text" name="projectNo" value={formData.projectNo} onChange={handleChange} 
+                  className={inp('font-mono')} placeholder="เช่น PRJ-202X-01" />
+              </Field>
+            </Row2>
+
+            <Row2>
+              <Field label="วันที่" hint="Date / 記入日" required>
+                <input type="date" name="date" value={formData.date} onChange={handleChange} 
+                  className={inp()} required />
+              </Field>
+              <Field label="เวลาที่เสร็จสิ้น" hint="Time / 終わた時間">
+                <input type="time" name="finishTime" value={formData.finishTime} onChange={handleChange} 
+                  className={inp()} />
+              </Field>
+            </Row2>
+
+            <div className="mt-4 sm:mt-5">
+              <Field label="สถานที่" hint="Place / 工事場所">
+                <input type="text" name="location" value={formData.location} onChange={handleChange} 
+                  className={inp()} placeholder="ระบุสถานที่ปฏิบัติงาน..." />
+              </Field>
+            </div>
+          </Card>
+
+          {/* ════════════════════════════════════════════════
+               Section 2 — Status & Remarks
+          ════════════════════════════════════════════════ */}
+          <Card title="สถานะและหมายเหตุ (Status & Remarks)">
+            
+            <div className="mb-6">
+              <Field label="สถานะ" hint="Status / 状態">
+                <div className="flex bg-stone-100 p-1.5 rounded-xl border border-stone-200 gap-1.5 mt-2 max-w-md">
+                  <button type="button" onClick={() => setFormData((prev) => ({ ...prev, isComplete: true }))}
+                    className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${
+                      formData.isComplete ? "bg-white text-emerald-600 shadow-sm ring-1 ring-stone-200" : "text-stone-400 hover:text-stone-600"
+                    }`}>
+                    Complete
+                  </button>
+                  <button type="button" onClick={() => setFormData((prev) => ({ ...prev, isComplete: false }))}
+                    className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${
+                      !formData.isComplete ? "bg-white text-red-500 shadow-sm ring-1 ring-stone-200" : "text-stone-400 hover:text-stone-600"
+                    }`}>
+                    Not Complete
+                  </button>
+                </div>
+              </Field>
             </div>
 
-            {/* เวลา */}
-            <div>
-              <FormLabel label="เวลา" subLabel="Time / 終わた時間" />
-              <input
-                type="time"
-                name="finishTime"
-                value={formData.finishTime}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
-              />
-            </div>
+            <Field label="หมายเหตุ" hint="Remark / 備考">
+              <textarea name="remark" value={formData.remark} onChange={handleChange} rows="3"
+                className={txtInp()} placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea>
+            </Field>
 
-            {/* ชื่อโครงการ */}
-            <div className="md:col-span-2">
-              <FormLabel
-                label="ชื่อโครงการ"
-                subLabel="Project Name / 工事名"
-                required
-              />
-              <input
-                type="text"
-                name="projectName"
-                value={formData.projectName}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-300"
-                placeholder="ระบุชื่อโครงการ"
-                required
-              />
-            </div>
+          </Card>
 
-            {/* รหัสโครงการ */}
-            <div>
-              <FormLabel
-                label="รหัสโครงการ"
-                subLabel="Project No. / 工事番号"
-              />
-              <input
-                type="text"
-                name="projectNo"
-                value={formData.projectNo}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-300"
-                placeholder="ระบุรหัส (ถ้ามี)"
-              />
-            </div>
-
-            {/* สถานที่ */}
-            <div>
-              <FormLabel label="สถานที่" subLabel="Place / 工事場所" />
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-300"
-                placeholder="ระบุสถานที่"
-              />
-            </div>
-
-            {/* สถานะความสำเร็จ */}
-            <div className="md:col-span-2 pt-2">
-              <FormLabel label="สถานะงาน" subLabel="Status / 状態" />
-              <div className="flex w-full bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, isComplete: true }))
-                  }
-                  className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${formData.isComplete ? "bg-white text-green-600 shadow-md ring-1 ring-black/5" : "text-slate-500 hover:text-slate-700"}`}
-                >
-                  Complete
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, isComplete: false }))
-                  }
-                  className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${!formData.isComplete ? "bg-white text-red-500 shadow-md ring-1 ring-black/5" : "text-slate-500 hover:text-slate-700"}`}
-                >
-                  Not Complete
-                </button>
-              </div>
-            </div>
-
-            {/* หมายเหตุ */}
-            <div className="md:col-span-2">
-              <FormLabel label="หมายเหตุ" subLabel="Remark / 備考" />
-              <textarea
-                name="remark"
-                value={formData.remark}
-                onChange={handleChange}
-                rows="3"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-300 resize-none"
-                placeholder="ระบุรายละเอียดเพิ่มเติม..."
-              ></textarea>
-            </div>
-          </div>
-
-          {/* ปุ่ม Action */}
-          <div className="flex items-center justify-end gap-4 mt-10 pt-8 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="px-6 py-2.5 text-sm text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors"
-            >
+          {/* ── Buttons ── */}
+          <div className="flex gap-3 pt-4 pb-10">
+            <button type="button" onClick={() => navigate(-1)} 
+              className="flex-1 py-3.5 rounded-xl border border-stone-200 text-stone-500 text-sm font-bold text-center hover:bg-stone-100 transition-colors">
               ยกเลิก
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20 hover:bg-black hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" /> บันทึก...
-                </>
-              ) : (
-                <>
-                  <Printer size={20} /> บันทึกและพิมพ์
-                </>
-              )}
+            <button type="submit" disabled={isSubmitting} 
+              className="flex-[3] py-3.5 rounded-xl bg-emerald-600 text-white text-sm font-black flex items-center justify-center gap-2 hover:bg-emerald-700 transition-colors disabled:opacity-50 shadow-lg shadow-emerald-600/20">
+              {isSubmitting 
+                ? <><Loader2 size={16} className="animate-spin" /> กำลังบันทึก...</> 
+                : <><Save size={16} /> {formData.id ? 'บันทึกการแก้ไข' : 'บันทึกและพิมพ์'}</>}
             </button>
           </div>
+
         </form>
       </div>
     </div>
   );
-};
+}
 
-export default CompletionReportForm;
+// ── UI Helpers ──────────────────────────────────────────────────────────────
+
+function Card({ title, children }) {
+  return (
+    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100 bg-stone-50/80">
+        <span className="text-xs sm:text-sm font-extrabold text-stone-500 uppercase tracking-widest">
+          {title}
+        </span>
+      </div>
+      <div className="p-5 sm:p-6">{children}</div>
+    </div>
+  )
+}
+
+function Row2({ children }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-5 sm:mb-6">
+      {children}
+    </div>
+  )
+}
+
+function Field({ label, hint, required, children }) {
+  return (
+    <div>
+      <label className="block text-xs sm:text-sm font-extrabold text-stone-500 uppercase tracking-widest mb-3">
+        {label}
+        {hint && <span className="ml-1.5 normal-case text-xs font-normal text-stone-400">{hint}</span>}
+        {required && <span className="text-red-400 ml-1">*</span>}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+function inp(extra = '') {
+  return `w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-base text-stone-800 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${extra}`
+}
+
+function txtInp(extra = '') {
+  return `w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-base text-stone-800 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none ${extra}`
+}

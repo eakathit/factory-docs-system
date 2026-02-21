@@ -165,7 +165,7 @@ export default function ReceiptVoucherForm() {
                 <input type="text" name="id_card_number" maxLength={13}
                   placeholder="_ _ _ _ _ _ _ _ _ _ _ _ _"
                   defaultValue={edit?.id_card_number}
-                  className={inp('font-mono tracking-widest')} required />
+                  className={inp('font-sens tracking-widest')} required />
               </Field>
             </Row2>
 
@@ -205,7 +205,6 @@ export default function ReceiptVoucherForm() {
               ))}
             </div>
 
-            <p className="mt-2 text-[13.5px] text-stone-500">ดังรายการต่อไปนี้</p>
           </Card>
 
           {/* ════════════════════════════════════════════════

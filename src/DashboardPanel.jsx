@@ -16,7 +16,7 @@ const DOC_CONFIGS = [
   {
     key: 'order',
     table: 'doc_contractor_orders',
-    label: 'ใบสั่งจ้าง',
+    label: 'Technicial Record',
     labelEn: 'Orders',
     icon: FileText,
     color: 'text-blue-600',
@@ -30,7 +30,7 @@ const DOC_CONFIGS = [
   {
     key: 'receipt',
     table: 'doc_substitute_receipts',
-    label: 'ใบรับรองเเทนใบเสร็จ',
+    label: 'Substitute Receipt',
     labelEn: 'Receipts',
     icon: Receipt,
     color: 'text-emerald-600',
@@ -44,7 +44,7 @@ const DOC_CONFIGS = [
   {
     key: 'voucher',
     table: 'doc_receipt_vouchers',
-    label: 'ใบสำคัญรับเงิน',
+    label: 'Receipt Voucher',
     labelEn: 'Vouchers',
     icon: Banknote,
     color: 'text-pink-600',

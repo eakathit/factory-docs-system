@@ -154,7 +154,7 @@ export default function ContractorForm() {
 
             <Row2>
               <Field label="เลขบัตรประชาชน">
-                <input {...register('id_card')} maxLength={13} placeholder="เลขบัตร 13 หลัก" className={inputCls('tracking-widest font-sens')} />
+                <input {...register('id_card')} maxLength={13} placeholder="_ _ _ _ _ _ _ _ _ _ _ _ _" className={inputCls('tracking-widest font-sens')} />
               </Field>
               <Field label="โดยมีผู้รับผิดชอบดูแลผู้รับเหมา คือ">
                 <input {...register('supervisor_name')} placeholder="ระบุชื่อผู้รับผิดชอบ..." className={inputCls()} />

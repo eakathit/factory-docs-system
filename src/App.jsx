@@ -340,8 +340,8 @@ const Home = ({ user, onUserClick }) => {
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               <MenuCard 
                 to="/contractor-order"
-                title="ใบสั่งจ้างผู้รับเหมา"
-                subtitle="ออกใบสั่งจ้าง / Technicial Record"
+                title="Technicial Record"
+                subtitle="ใบสั่งจ้างผู้รับเหมา"
                 icon={FileText}
                 gradient="from-blue-500 to-indigo-600"
                 delay="100"
@@ -349,7 +349,7 @@ const Home = ({ user, onUserClick }) => {
 
               <MenuCard 
                 to="/receipt-form"
-                title="ใบรับรองเเทนใบเสร็จ"
+                title="Substitute Receipt"
                 subtitle="ใบรับรองแทนใบเสร็จรับเงิน"
                 icon={Receipt}
                 gradient="from-emerald-500 to-teal-500"
@@ -358,8 +358,8 @@ const Home = ({ user, onUserClick }) => {
 
               <MenuCard 
                 to="/ReceiptVoucherForm"
-                title="ใบสำคัญรับเงิน"
-                subtitle="ใบสำคัญรับเงิน / Receipt Voucher"
+                title="Receipt Voucher"
+                subtitle="ใบสำคัญรับเงิน"
                 icon={Banknote}
                 gradient="from-pink-500 to-rose-500"
                 delay="200"
@@ -377,7 +377,7 @@ const Home = ({ user, onUserClick }) => {
               <MenuCard 
                 to="/completion-report"
                 title="Completion Report"
-                subtitle="รายงานเสร็จสิ้นโครงการ / Completion Report"
+                subtitle="รายงานเสร็จสิ้นโครงการ"
                 icon={FileCheck}
                 gradient="from-orange-400 to-amber-500"
                 delay="300"
@@ -385,7 +385,7 @@ const Home = ({ user, onUserClick }) => {
 
               <MenuCard 
                 to="/history"
-                title="ประวัติเอกสาร"
+                title="History"
                 subtitle="ตรวจสอบ / ย้อนดูรายการเก่า"
                 icon={Calendar}
                 gradient="from-cyan-500 to-blue-500"
@@ -395,7 +395,7 @@ const Home = ({ user, onUserClick }) => {
 
               <MenuCard 
                 to="/factory-portal"
-                title="รวมเว็บแอปฯ (Portal)"
+                title="Portal Application"
                 subtitle="ทางเข้าสู่ระบบอื่นๆ ของบริษัท"
                 icon={LayoutGrid}
                 gradient="from-slate-600 to-slate-800"

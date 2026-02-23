@@ -17,7 +17,7 @@ const VoucherContent = ({ data, copyType }) => {
        {/* --- Header --- */}
        <div>
           <div className="text-right mb-2">
-            <h1 className="text-center text-lg">RECEIPT VOUCHER / ใบสำคัญรับเงิน</h1>
+            <h1 className="text-center text-lg">Receipt Voucher / ใบสำคัญรับเงิน</h1>
           </div>
 
           {/* Date */}

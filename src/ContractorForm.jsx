@@ -5,6 +5,7 @@ import { ChevronLeft, Home, ChevronRight, Plus, Trash2, Save, Loader2, FileText,
 import { supabase } from './supabaseClient'
 import toast from 'react-hot-toast'
 import ContractorDocumentView from './ContractorDocumentView'
+import FormHeader from './FormHeader'
 
 export default function ContractorForm() {
   const navigate = useNavigate()
@@ -101,49 +102,13 @@ export default function ContractorForm() {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-stone-50" style={{ fontFamily: "'Prompt', sans-serif" }}>
-
-      {/* --- Sticky Navbar --- */}
-      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
-        <div className="w-full px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors">
-              <ChevronLeft size={18} />
-            </Link>
-            <div className="hidden sm:block h-5 sm:h-6 w-[1px] bg-stone-200 mx-1" />
-            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium">
-              <Link to="/" className="hidden sm:flex text-stone-400 hover:text-blue-600 items-center gap-1 transition-colors whitespace-nowrap">
-                <Home size={14} /> หน้าแรก
-              </Link>
-              <ChevronRight size={12} className="hidden sm:block text-stone-300" />
-              <span className="text-stone-800 truncate max-w-[180px] sm:max-w-none font-bold">
-                Contractor Order {location.state?.id && "(แก้ไข)"}
-              </span>
-            </div>
-          </div>
-          <div className="xl:hidden flex items-center bg-stone-100 rounded-full p-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => setActiveTab('form')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold transition-all ${
-                activeTab === 'form' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400'
-              }`}
-            >
-              <FileText size={14} />
-              <span className="hidden min-[430px]:inline">กรอกข้อมูล</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('preview')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold transition-all ${
-                activeTab === 'preview' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400'
-              }`}
-            >
-              <Eye size={14} />
-              <span className="hidden min-[430px]:inline">ดูตัวอย่าง</span>
-            </button>
-          </div>
-        </div>
-      </nav>
+      <FormHeader
+        title="Contractor Order"
+        isEditing={!!location.state?.id}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        accent="blue"
+      />
 
       <div className="min-w-0 xl:flex xl:h-[calc(100vh-64px)]">
       <div className={`min-w-0 xl:w-[45%] xl:overflow-y-auto pb-20 ${activeTab === 'preview' ? 'hidden xl:block' : ''}`}>

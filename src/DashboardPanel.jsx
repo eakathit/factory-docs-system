@@ -23,9 +23,9 @@ const DOC_CONFIGS = [
     bg: 'bg-blue-50',
     ring: 'ring-blue-200',
     gradient: 'from-blue-500 to-indigo-600',
-    printPath: (id) => `/print/${id}`,
+    printPath: () => `/contractor-print`,
     titleField: 'contractor_name',
-    subtitleFn: (item) => item.payment_type === 'daily' ? 'รายวัน' : 'เหมา',
+    subtitleFn: (item) => item.wage_type === 'daily' ? 'รายวัน' : 'เหมา',
   },
   {
     key: 'receipt',
@@ -111,20 +111,20 @@ const timeAgo = (dateStr) => {
 const StatCard = ({ config, count, loading }) => {
   const Icon = config.icon
   return (
-    <div className={`
-      flex items-center gap-3 p-4 rounded-2xl border transition-all duration-300
-      bg-white hover:shadow-md hover:-translate-y-0.5 cursor-default
-      ring-1 ${config.ring} border-transparent
-    `}>
-      <div className={`w-10 h-10 rounded-xl ${config.bg} flex items-center justify-center flex-shrink-0`}>
-        <Icon size={20} className={config.color} />
+    <div className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/80 px-3.5 py-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white hover:shadow-sm">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className={`w-10 h-10 rounded-xl ${config.bg} flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105`}>
+          <Icon size={18} className={config.color} />
+        </div>
+        <p className="text-xs font-semibold text-slate-500 truncate">{config.label}</p>
       </div>
-      <div className="min-w-0">
-        <p className="text-xs font-semibold text-slate-400 truncate">{config.label}</p>
+      <div className="flex-shrink-0 text-right">
         {loading ? (
           <div className="h-5 w-8 bg-slate-100 animate-pulse rounded mt-0.5" />
         ) : (
-          <p className="text-xl font-black text-slate-800 leading-none mt-0.5">{count}</p>
+          <span className="inline-flex min-w-7 items-center justify-center rounded-full bg-slate-50 px-2 py-1 text-sm font-semibold leading-none text-slate-500">
+            {count}
+          </span>
         )}
       </div>
     </div>
@@ -141,10 +141,10 @@ const RecentDocRow = ({ doc, config, onRestrictedClick }) => {
       to={config.printPath(doc.id)}
       state={doc._state}
       onClick={onRestrictedClick}
-      className="flex items-center gap-3 py-3 px-1 rounded-xl hover:bg-slate-50 transition-colors group cursor-pointer"
+      className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 transition-all duration-200 hover:border-slate-100 hover:bg-slate-50/80"
     >
       {/* Icon */}
-      <div className={`w-9 h-9 rounded-xl ${config.bg} flex items-center justify-center flex-shrink-0`}>
+      <div className={`w-9 h-9 rounded-xl ${config.bg} flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-105`}>
         <Icon size={16} className={config.color} />
       </div>
 
@@ -157,8 +157,8 @@ const RecentDocRow = ({ doc, config, onRestrictedClick }) => {
       </div>
 
       {/* Time + Arrow */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <span className="text-xs text-slate-400 hidden sm:block">{timeAgo(doc.created_at)}</span>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <span className="hidden rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-400 sm:block">{timeAgo(doc.created_at)}</span>
         <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
       </div>
     </Link>
@@ -206,11 +206,13 @@ const DashboardPanel = ({ onRestrictedClick }) => {
             _config: cfg,
             _title: item[cfg.titleField] || 'ไม่ระบุ',
             _subtitle: cfg.subtitleFn(item),
-            _state: cfg.key === 'completion' ? {
+            _state: cfg.key === 'order' ? item : cfg.key === 'completion' ? {
+              ...item,
               date: item.date, projectName: item.project_name,
               projectNo: item.project_no, location: item.location,
               finishTime: item.finish_time, isComplete: item.is_complete, remark: item.remark
             } : cfg.key === 'operation' ? {
+              ...item,
               jobNo: item.job_no, issuedDate: item.issued_date,
               customerName: item.customer_name, contactName: item.contact_name,
               problem: item.problem, solution: item.solution,
@@ -222,6 +224,7 @@ const DashboardPanel = ({ onRestrictedClick }) => {
               isUrgent: item.service_type?.urgent,
               isAfterService: item.service_type?.after_service,
               isOther: item.service_type?.other,
+              otherDetail: item.service_type?.other_detail,
             } : null
           })
         })
@@ -245,15 +248,20 @@ const DashboardPanel = ({ onRestrictedClick }) => {
   const totalDocs = Object.values(counts).reduce((a, b) => a + b, 0)
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-start justify-between gap-3 rounded-3xl border border-slate-100 bg-white/90 p-4 shadow-sm shadow-slate-200/40">
         <div>
-          <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
-            <TrendingUp size={18} className="text-blue-500" />
+          <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <TrendingUp size={17} />
+            </span>
             ภาพรวมเอกสาร
           </h3>
+          <p className="text-xs font-medium text-slate-400 mt-1">
+            {loading ? 'กำลังโหลดข้อมูล' : `รวม ${totalDocs} เอกสาร`}
+          </p>
           {lastUpdated && (
             <p className="text-xs text-slate-400 mt-0.5">
               อัปเดต {timeAgo(lastUpdated)}
@@ -263,7 +271,7 @@ const DashboardPanel = ({ onRestrictedClick }) => {
         <button
           onClick={() => fetchData(true)}
           disabled={refreshing}
-          className="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-90"
+          className="rounded-xl border border-slate-100 bg-white p-2 text-slate-400 shadow-sm transition-all hover:border-blue-100 hover:bg-blue-50 hover:text-blue-600 active:scale-95"
           title="รีเฟรช"
         >
           <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
@@ -271,7 +279,7 @@ const DashboardPanel = ({ onRestrictedClick }) => {
       </div>
 
       {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-2.5">
         {DOC_CONFIGS.map(cfg => (
           <StatCard key={cfg.key} config={cfg} count={counts[cfg.key] ?? 0} loading={loading} />
         ))}
@@ -280,16 +288,18 @@ const DashboardPanel = ({ onRestrictedClick }) => {
       {/* ── Total Badge ── */}
 
       {/* ── Recent 5 Docs ── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
-            <Clock size={16} className="text-blue-500" />
+      <div className="rounded-3xl border border-slate-100 bg-white/90 p-4 shadow-sm shadow-slate-200/40">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-50 text-blue-600">
+              <Clock size={16} />
+            </span>
             ล่าสุด 5 รายการ
           </h4>
           <Link
             to="/history"
             onClick={onRestrictedClick}
-            className="text-xs text-blue-600 hover:text-blue-700 font-semibold bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full transition-colors"
+            className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700"
           >
             ดูทั้งหมด
           </Link>
@@ -313,7 +323,7 @@ const DashboardPanel = ({ onRestrictedClick }) => {
             <p className="text-sm">ยังไม่มีเอกสาร</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-50">
+          <div className="space-y-1">
             {recentDocs.map((doc) => (
               <RecentDocRow
                 key={`${doc._docType}-${doc.id}`}

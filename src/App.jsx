@@ -23,7 +23,6 @@ import { supabase } from './supabaseClient'
 // นำเข้าไฟล์หน้าต่างๆ
 import ContractorForm from './ContractorForm'
 import History from './History'
-import OrderPrint from './OrderPrint'
 import ReceiptForm from './ReceiptForm'
 import ReceiptPrint from './ReceiptPrint'
 import FactoryPortal from './FactoryPortal'
@@ -280,7 +279,6 @@ const StatWidget = ({ icon: Icon, label, value, color }) => (
 const MenuCard = ({ to, title, subtitle, icon: Icon, gradient, delay, disabled, onClick }) => {
   const CardContent = (
     <div className={`h-full rounded-3xl p-6 border relative overflow-hidden fade-in-up transition-all duration-300 ${disabled ? 'bg-slate-50 border-slate-200 opacity-70 grayscale cursor-not-allowed' : 'bg-white border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1'}`} style={{ animationDelay: `${delay}ms` }}>
-      {!disabled && <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${gradient} opacity-10 rounded-bl-[100px] -mr-10 -mt-10 group-hover:scale-110 transition-transform duration-500`} />}
       <div className="relative z-10 flex flex-col h-full justify-between">
         <div>
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg transition-transform duration-300 ${disabled ? 'bg-slate-400 shadow-none' : `bg-gradient-to-br ${gradient} transform group-hover:rotate-6`}`}>
@@ -290,7 +288,7 @@ const MenuCard = ({ to, title, subtitle, icon: Icon, gradient, delay, disabled, 
           <p className="text-slate-500 text-sm leading-relaxed">{subtitle}</p>
         </div>
         <div className={`mt-6 flex items-center text-sm font-semibold transition-colors ${disabled ? 'text-slate-400' : 'text-slate-400 group-hover:text-blue-600'}`}>
-          <span>{disabled ? 'เร็วๆ นี้ (Coming Soon)' : 'เข้าสู่เมนู'}</span>
+          <span>{disabled ? 'เร็วๆ นี้ (Coming Soon)' : 'เปิดเอกสาร'}</span>
           {!disabled && <ChevronRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />}
         </div>
       </div>
@@ -327,24 +325,26 @@ const Home = ({ user, onUserClick }) => {
       <div className="w-full max-w-[96%] mx-auto px-4 sm:px-6 lg:px-12">
         
         {/* --- Header --- */}
-        <header className="pt-8 pb-8 flex justify-between items-end">
+        <header className="relative pt-8 pb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">
-              ยินดีต้อนรับ, {user?.displayName || 'Guest'} 👋
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">
+              HARU Document System
             </h1>
             <p className="text-slate-500 mt-2 text-base">
-              ระบบจัดการเอกสารโรงงาน {user?.role && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full ml-2">{user.role}</span>}
+              เลือกประเภทเอกสารที่ต้องการดำเนินการ
             </p>
           </div>
-          
-          <div onClick={onUserClick} className="group cursor-pointer relative">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-105
-              ${user?.displayName 
-                ? 'bg-gradient-to-tr from-blue-500 to-indigo-600 shadow-blue-500/30' 
-                : 'bg-slate-300 hover:bg-slate-400'
+
+          <div onClick={onUserClick} className="group cursor-pointer absolute right-0 top-7">
+            <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md
+              ${user?.displayName
+                ? 'border-blue-100 bg-white text-blue-600 shadow-blue-100/70'
+                : 'border-slate-200 bg-white text-slate-400 hover:text-blue-500 hover:border-blue-100'
               }
             `}>
-              <User size={24} />
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors duration-300 ${user?.displayName ? 'bg-blue-50' : 'bg-slate-50 group-hover:bg-blue-50'}`}>
+                <User size={19} strokeWidth={2.2} />
+              </div>
             </div>
             <div className="absolute top-full right-0 mt-2 px-3 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
               {user?.displayName ? 'จัดการบัญชี' : 'คลิกเพื่อเข้าสู่ระบบ'}
@@ -474,7 +474,6 @@ function App() {
             <Route path="/contractor-print" element={<ContractorPrint />} />
             <Route path="/history" element={<History />} />
             <Route path="/factory-portal" element={<FactoryPortal />} />
-            <Route path="/print/:orderId" element={<OrderPrint />} />
             <Route path="/receipt-form" element={<ReceiptForm />} />
             <Route path="/receipt-print/:id" element={<ReceiptPrint />} />
             <Route path="/receipt-voucher" element={<ReceiptVoucherForm />} />

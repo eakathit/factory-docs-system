@@ -24,16 +24,16 @@ const getStatusColor = (status) => {
     case "Complete": 
     case "Recorded": 
     case "approved": // 🟢 เพิ่มเพื่อให้รองรับค่า 'approved' เป็นสีเขียว
-      return "bg-emerald-100 text-emerald-700 border-emerald-200";
+      return "bg-emerald-50 text-emerald-700 border-emerald-100";
     case "รออนุมัติ":
     case "pending":  // 🟢 เพิ่มเพื่อให้รองรับค่า 'pending' เป็นสีส้ม
     case "Pending":
-      return "bg-amber-100 text-amber-700 border-amber-200";
+      return "bg-amber-50 text-amber-700 border-amber-100";
     case "แก้ไข":
     case "Not Complete": 
-      return "bg-orange-100 text-orange-700 border-orange-200";
+      return "bg-orange-50 text-orange-700 border-orange-100";
     default:
-      return "bg-blue-100 text-blue-700 border-blue-200";
+      return "bg-blue-50 text-blue-700 border-blue-100";
   }
 };
 
@@ -236,43 +236,45 @@ const History = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-slate-50/80 pb-20">
       
       {/* Header Bar */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+      <div className="sticky top-0 z-10 border-b border-slate-200/70 bg-slate-50/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Link to="/" className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
-                <ChevronLeft size={28} />
+              <Link to="/" className="flex h-10 w-10 -ml-2 items-center justify-center rounded-2xl border border-transparent text-slate-400 transition-all hover:border-slate-200 hover:bg-white hover:text-slate-700 hover:shadow-sm">
+                <ChevronLeft size={24} />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                  <FileCheck className="text-blue-600" />
+                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                    <FileCheck size={20} />
+                  </span>
                   ประวัติเอกสาร
                 </h1>
-                <p className="text-slate-500 text-sm mt-1">
+                <p className="text-slate-500 text-sm mt-1 ml-11">
                   รายการเอกสารทั้งหมด {docs.length} รายการ
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <div className="relative flex-grow md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+              <div className="relative flex-grow md:w-72">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   type="text"
                   placeholder="ค้นหาชื่อ, เลขที่..."
-                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+                  className="w-full rounded-2xl border border-slate-200 bg-white/90 py-3 pl-11 pr-4 text-sm shadow-sm shadow-slate-200/40 transition-all placeholder:text-slate-400 focus:border-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-100"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
-              <div className="relative md:w-48">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <div className="relative md:w-52">
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
                 <select
-                  className="w-full pl-10 pr-8 py-2 rounded-xl border border-slate-200 appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  className="w-full cursor-pointer appearance-none rounded-2xl border border-slate-200 bg-white/90 py-3 pl-11 pr-9 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/40 transition-all focus:border-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-100"
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                 >
@@ -283,7 +285,7 @@ const History = () => {
                   <option value="Completion">Completion Report</option>
                   <option value="Operation">Operation Report</option> {/* เพิ่มตัวเลือก */}
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-slate-400">▼</div>
               </div>
             </div>
           </div>
@@ -293,17 +295,17 @@ const History = () => {
       {/* --- Content Section --- */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {loading ? (
-          <div className="text-center py-20 text-slate-400 animate-pulse">กำลังโหลดข้อมูล...</div>
+          <div className="rounded-3xl border border-slate-100 bg-white/80 py-20 text-center text-slate-400 shadow-sm animate-pulse">กำลังโหลดข้อมูล...</div>
         ) : filteredDocs.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="rounded-3xl border border-slate-100 bg-white/80 py-20 text-center shadow-sm">
+            <div className="bg-slate-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4">
               <FileText className="text-slate-400" size={32} />
             </div>
             <h3 className="text-lg font-medium text-slate-600">ไม่พบเอกสาร</h3>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="hidden md:grid grid-cols-12 gap-4 bg-slate-50 px-6 py-4 border-b border-slate-100 text-sm font-semibold text-slate-600">
+          <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white/90 shadow-sm shadow-slate-200/50">
+            <div className="hidden md:grid grid-cols-12 gap-4 bg-slate-50/70 px-6 py-4 border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-400">
               <div className="col-span-2">วันที่</div>
               <div className="col-span-3">ชื่อ / หัวข้อ</div>
               <div className="col-span-3">รายละเอียด</div>
@@ -311,24 +313,26 @@ const History = () => {
               <div className="col-span-2 text-right">จัดการ</div>
             </div>
 
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100/80">
               {filteredDocs.map((doc) => (
                 <div
                   key={`${doc.doc_type}-${doc.id}`}
-                  className="group hover:bg-slate-50 transition-colors duration-200"
+                  className="group transition-colors duration-200 hover:bg-blue-50/20"
                 >
-                  <div className="p-4 md:px-6 md:py-4 flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center">
+                  <div className="p-4 md:px-6 md:py-5 flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center">
                     
                     {/* วันที่ & ไอคอน */}
                     <div className="flex justify-between md:block md:col-span-2 mb-2 md:mb-0">
-                      <div className="flex items-center gap-2 text-slate-500 text-sm">
-                        {doc.doc_type === "order" && <FileText size={16} className="text-blue-500" />}
-                        {doc.doc_type === "receipt" && <Receipt size={16} className="text-emerald-500" />}
-                        {doc.doc_type === "voucher" && <Banknote size={16} className="text-pink-500" />}
-                        {doc.doc_type === "completion" && <ClipboardCheck size={16} className="text-orange-500" />} 
-                        {doc.doc_type === "operation" && <ClipboardList size={16} className="text-violet-500" />} 
+                      <div className="flex items-center gap-3 text-slate-500 text-sm">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-50 transition-transform duration-200 group-hover:scale-105">
+                          {doc.doc_type === "order" && <FileText size={16} className="text-blue-500" />}
+                          {doc.doc_type === "receipt" && <Receipt size={16} className="text-emerald-500" />}
+                          {doc.doc_type === "voucher" && <Banknote size={16} className="text-pink-500" />}
+                          {doc.doc_type === "completion" && <ClipboardCheck size={16} className="text-orange-500" />} 
+                          {doc.doc_type === "operation" && <ClipboardList size={16} className="text-violet-500" />} 
+                        </span>
                         
-                        <span className="font-medium text-slate-700">
+                        <span className="font-semibold text-slate-700">
                           {new Date(doc.created_at).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "2-digit" })}
                         </span>
                       </div>
@@ -336,7 +340,7 @@ const History = () => {
 
                     {/* ชื่อ / หัวข้อ */}
                     <div className="md:col-span-3 mb-1 md:mb-0">
-                      <h4 className="font-bold text-slate-800 text-base md:text-sm truncate">
+                      <h4 className="font-bold text-slate-900 text-base md:text-sm truncate">
                         {doc.display_title || "ไม่ระบุชื่อ"}
                       </h4>
                       <div className="flex items-center gap-1 text-xs text-slate-500 md:hidden">
@@ -346,13 +350,13 @@ const History = () => {
 
                     {/* รายละเอียด */}
                     <div className="md:col-span-3 mb-3 md:mb-0">
-                      <p className="text-sm text-slate-600 line-clamp-1">{doc.display_subtitle}</p>
+                      <p className="text-sm text-slate-500 line-clamp-1">{doc.display_subtitle}</p>
                       
                     </div>
 
                     {/* สถานะ */}
                     <div className="md:col-span-2 flex md:justify-center mb-3 md:mb-0">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(doc.display_status)}`}>
+                      <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getStatusColor(doc.display_status)}`}>
                         {doc.display_status}
                       </span>
                     </div>
@@ -364,7 +368,7 @@ const History = () => {
     <Link
       to={`/approve/${doc.doc_type}/${doc.id}`}
       state={doc} // ส่งข้อมูล doc ทั้งก้อนไปให้หน้า ApprovalPage
-      className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-all shadow-sm active:scale-95"
+      className="flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700 transition-all hover:bg-emerald-100 active:scale-95"
     >
       <ClipboardList size={18} />
       <span>อนุมัติ</span>
@@ -374,7 +378,7 @@ const History = () => {
                       <Link
                         to={doc.link_print}
                         state={doc.item_state} 
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm active:scale-95"
+                        className="flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700 transition-all hover:bg-blue-100 active:scale-95"
                       >
                         <Printer size={18} />
                         <span>พิมพ์</span>

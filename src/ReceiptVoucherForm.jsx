@@ -5,6 +5,7 @@ import SignatureCanvas from 'react-signature-canvas'
 import toast from 'react-hot-toast'
 import { ChevronLeft, Home, ChevronRight, Plus, Trash2, Save, Eraser, FileText, Eye } from 'lucide-react'
 import ReceiptVoucherDocumentView from './ReceiptVoucherDocumentView'
+import FormHeader from './FormHeader'
 
 export default function ReceiptVoucherForm() {
   const navigate = useNavigate()
@@ -123,50 +124,16 @@ export default function ReceiptVoucherForm() {
 
   return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'Prompt', sans-serif" }}>
-
-      {/* ── Navbar ── */}
-      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-[1400px] mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <Link to="/" className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500 transition-colors shrink-0">
-              <ChevronLeft size={18} />
-            </Link>
-            <div className="h-5 w-[1px] bg-slate-200 shrink-0" />
-            <div className="flex items-center gap-1.5 text-sm font-medium min-w-0">
-              <Link to="/" className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors whitespace-nowrap shrink-0">
-                <Home size={14} /> หน้าแรก
-              </Link>
-              <ChevronRight size={12} className="text-slate-300 shrink-0" />
-              <span className="text-slate-800 font-bold truncate">Receipt Voucher</span>
-            </div>
-          </div>
-
-          {/* Tab toggle — mobile only */}
-          <div className="xl:hidden flex items-center bg-slate-100 rounded-xl p-1 gap-1 shrink-0 ml-3">
-            <button type="button"
-              onClick={() => setActiveTab('form')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                activeTab === 'form'
-                  ? 'bg-white text-stone-800 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}>
-              <FileText size={13} /> กรอกข้อมูล
-            </button>
-            <button type="button"
-              onClick={() => setActiveTab('preview')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                activeTab === 'preview'
-                  ? 'bg-white text-stone-800 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}>
-              <Eye size={13} /> ดูตัวอย่าง
-            </button>
-          </div>
-        </div>
-      </nav>
+      <FormHeader
+        title="Receipt Voucher"
+        isEditing={!!edit?.id}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        accent="rose"
+      />
 
       {/* ── Split layout ── */}
-      <div className="xl:flex xl:h-[calc(100vh-56px)]">
+      <div className="xl:flex xl:h-[calc(100vh-64px)]">
 
         {/* ─── Form panel ─── */}
         <div className={`xl:w-[45%] xl:overflow-y-auto ${

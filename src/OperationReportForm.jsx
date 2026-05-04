@@ -5,6 +5,7 @@ import { ChevronLeft, Loader2, Save, Home, ChevronRight, FileText, Eye } from "l
 import { supabase } from "./supabaseClient";
 import toast from "react-hot-toast";
 import OperationReportDocumentView from "./OperationReportDocumentView";
+import FormHeader from "./FormHeader";
 
 export default function OperationReportForm() {
   const navigate = useNavigate();
@@ -145,52 +146,13 @@ export default function OperationReportForm() {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-stone-50" style={{ fontFamily: "'Prompt', sans-serif" }}>
-      
-      {/* --- Sticky Navbar --- */}
-      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
-        <div className="px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 min-w-0">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors shrink-0">
-              <ChevronLeft size={18} />
-            </Link>
-            <div className="h-5 sm:h-6 w-[1px] bg-stone-200 mx-1 shrink-0" />
-            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium min-w-0">
-              <Link to="/" className="text-stone-400 hover:text-teal-600 hidden sm:flex items-center gap-1 transition-colors whitespace-nowrap shrink-0">
-                <Home size={14} /> Home
-              </Link>
-              <ChevronRight size={12} className="text-stone-300 hidden sm:block shrink-0" />
-              <span className="text-stone-800 truncate max-w-[126px] sm:max-w-[320px] font-bold">
-                Operation Report {location.state && "(Edit)"}
-              </span>
-            </div>
-          </div>
-
-          <div className="xl:hidden flex items-center bg-stone-100 rounded-xl p-1 gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => setActiveTab("form")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeTab === "form"
-                  ? "bg-white text-stone-900 shadow-sm"
-                  : "text-stone-400 hover:text-stone-600"
-              }`}
-            >
-              <FileText size={13} className="shrink-0" /> <span className="hidden min-[430px]:inline">กรอกข้อมูล</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("preview")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeTab === "preview"
-                  ? "bg-white text-stone-900 shadow-sm"
-                  : "text-stone-400 hover:text-stone-600"
-              }`}
-            >
-              <Eye size={13} className="shrink-0" /> <span className="hidden min-[430px]:inline">ดูตัวอย่าง</span>
-            </button>
-          </div>
-        </div>
-      </nav>
+      <FormHeader
+        title="Operation Report"
+        isEditing={!!location.state}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        accent="violet"
+      />
 
       <div className="min-w-0 xl:flex xl:h-[calc(100vh-64px)]">
         <div className={`min-w-0 xl:w-[45%] xl:overflow-y-auto pb-20 ${activeTab === "preview" ? "hidden xl:block" : ""}`}>

@@ -5,6 +5,7 @@ import SignatureCanvas from 'react-signature-canvas'
 import toast from 'react-hot-toast'
 import { ChevronLeft, Home, ChevronRight, Plus, Trash2, Save, Eraser, FileText, Eye } from 'lucide-react'
 import ReceiptDocumentView from './ReceiptDocumentView'
+import FormHeader from './FormHeader'
 
 export default function ReceiptForm() {
   const navigate = useNavigate()
@@ -126,54 +127,13 @@ export default function ReceiptForm() {
 
   return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'Prompt', sans-serif" }}>
-
-      {/* ════ Sticky Navbar (full width) ════ */}
-      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
-        <div className="px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          {/* breadcrumb */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors shrink-0">
-              <ChevronLeft size={18} />
-            </Link>
-            <div className="h-5 sm:h-6 w-[1px] bg-stone-200 mx-1 shrink-0" />
-            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium min-w-0">
-              <Link to="/" className="text-stone-400 hover:text-stone-800 flex items-center gap-1 transition-colors whitespace-nowrap shrink-0">
-                <Home size={14} /> หน้าแรก
-              </Link>
-              <ChevronRight size={12} className="text-stone-300 shrink-0" />
-              <span className="text-stone-800 truncate font-bold">
-                Substitute Receipt {editData && "(แก้ไข)"}
-              </span>
-            </div>
-          </div>
-
-          {/* Tab toggle — มือถือ/tablet เท่านั้น, ซ่อนที่ xl+ เพราะมี split-view แล้ว */}
-          <div className="xl:hidden flex items-center bg-stone-100 rounded-xl p-1 gap-1 shrink-0 ml-3">
-            <button
-              type="button"
-              onClick={() => setActiveTab('form')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeTab === 'form'
-                  ? 'bg-white text-stone-900 shadow-sm'
-                  : 'text-stone-400 hover:text-stone-600'
-              }`}
-            >
-              <FileText size={13} /> กรอกข้อมูล
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('preview')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeTab === 'preview'
-                  ? 'bg-white text-stone-900 shadow-sm'
-                  : 'text-stone-400 hover:text-stone-600'
-              }`}
-            >
-              <Eye size={13} /> ดูตัวอย่าง
-            </button>
-          </div>
-        </div>
-      </nav>
+      <FormHeader
+        title="Substitute Receipt"
+        isEditing={!!editData}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        accent="emerald"
+      />
 
       {/* ════ Split-view body ════ */}
       <div className="xl:flex xl:h-[calc(100vh-64px)]">

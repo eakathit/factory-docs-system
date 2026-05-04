@@ -2,11 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { 
   ChevronLeft, 
-  ExternalLink, 
-  Clock, 
-  Wrench, 
-  ShieldCheck, 
-  Database 
+  ExternalLink
 } from 'lucide-react'
 
 const FactoryPortal = () => {
@@ -18,7 +14,8 @@ const FactoryPortal = () => {
       title: "ระบบลงเวลาทำงาน (Time Tracking)", // โปรเจกต์ Firebase 1
       description: "ระบบบันทึกเวลาเข้า-ออกงาน",
       url: "https://timetracker-f1e11.web.app/?openExternalBrowser=1", // 🔴 ใส่ Link จริงตรงนี้
-      icon: Clock,
+      iconSrc: "/portal-icons/time-tracker.png",
+      iconAlt: "Time Tracking app icon",
       color: "bg-orange-300",
       gradient: "from-orange-400 to-red-400"
     },
@@ -27,9 +24,20 @@ const FactoryPortal = () => {
       title: "ระบบสต๊อกสินค้า (StockCheck)", // โปรเจกต์ Firebase 2
       description: "ระะบบเช็คสต๊อกสินค้าในโรงงาน",
       url: "https://stockapppwa.web.app/", // 🔴 ใส่ Link จริงตรงนี้
-      icon: Wrench,
+      iconSrc: "/portal-icons/stock-check.png",
+      iconAlt: "StockCheck app icon",
       color: "bg-blue-600",
       gradient: "from-blue-600 to-indigo-600"
+    },
+    {
+      id: 3,
+      title: "ระบบจองรถบริษัท (Car Booking)",
+      description: "ระบบจองและจัดการการใช้งานรถบริษัท",
+      url: "https://haru-carbooking.web.app/?openExternalBrowser=1",
+      iconSrc: "/portal-icons/car-booking.svg",
+      iconAlt: "Car Booking app icon",
+      color: "bg-sky-500",
+      gradient: "from-sky-500 to-blue-600"
     },
 
   ]
@@ -64,14 +72,16 @@ const FactoryPortal = () => {
               rel="noopener noreferrer" // เพื่อความปลอดภัย
               className="group relative bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col min-h-[200px]"
             >
-              {/* Decorative Background */}
-              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${app.gradient} opacity-5 rounded-bl-[100px] -mr-10 -mt-10 group-hover:opacity-10 transition-opacity`} />
-
               {/* Icon & Title */}
               <div className="relative z-10 flex-1">
                 <div className="flex justify-between items-start mb-4">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${app.gradient} flex items-center justify-center text-white shadow-lg shadow-gray-200`}>
-                    <app.icon size={28} />
+                  <div className="w-16 h-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shadow-lg shadow-slate-200/80 overflow-hidden">
+                    <img
+                      src={app.iconSrc}
+                      alt={app.iconAlt}
+                      className="h-14 w-14 object-contain"
+                      loading="lazy"
+                    />
                   </div>
                   <div className="p-2 bg-slate-50 rounded-full text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                     <ExternalLink size={20} />

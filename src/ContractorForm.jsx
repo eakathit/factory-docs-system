@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { ChevronLeft, Home, ChevronRight, Plus, Trash2, Save, Loader2 } from 'lucide-react'
+import { ChevronLeft, Home, ChevronRight, Plus, Trash2, Save, Loader2, FileText, Eye } from 'lucide-react'
 import { supabase } from './supabaseClient'
 import toast from 'react-hot-toast'
+import ContractorDocumentView from './ContractorDocumentView'
 
 export default function ContractorForm() {
   const navigate = useNavigate()
   const location = useLocation()
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('form')
 
   const { register, control, watch, handleSubmit, reset } = useForm({
     defaultValues: {
@@ -23,7 +25,7 @@ export default function ContractorForm() {
       start_date: '',
       end_date: '',
       daily_items: [
-        { date: '', start_time: '08:00', end_time: '17:00', ot_start: '', ot_end: '', detail: '' }
+        { date: '', start_time: '08:00', end_time: '17:00', ot_start: '', ot_end: '', detail: '', responsible_person: '' }
       ],
       has_accom: false,
       accom_rate: '',
@@ -41,6 +43,7 @@ export default function ContractorForm() {
   }, [location.state, reset])
 
   const { fields, append, remove } = useFieldArray({ control, name: 'daily_items' })
+  const formValues = watch()
   const [hasAccom, hasTravel, wageType] = watch(['has_accom', 'has_travel', 'wage_type'])
 
   const onSubmit = async (data) => {
@@ -97,30 +100,54 @@ export default function ContractorForm() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-20" style={{ fontFamily: "'Prompt', sans-serif" }}>
+    <div className="min-h-screen overflow-x-hidden bg-stone-50" style={{ fontFamily: "'Prompt', sans-serif" }}>
 
       {/* --- Sticky Navbar --- */}
-      <nav className="relative sm:sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
+        <div className="w-full px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors">
               <ChevronLeft size={18} />
             </Link>
-            <div className="h-5 sm:h-6 w-[1px] bg-stone-200 mx-1" />
+            <div className="hidden sm:block h-5 sm:h-6 w-[1px] bg-stone-200 mx-1" />
             <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium">
-              <Link to="/" className="text-stone-400 hover:text-blue-600 flex items-center gap-1 transition-colors whitespace-nowrap">
+              <Link to="/" className="hidden sm:flex text-stone-400 hover:text-blue-600 items-center gap-1 transition-colors whitespace-nowrap">
                 <Home size={14} /> หน้าแรก
               </Link>
-              <ChevronRight size={12} className="text-stone-300" />
-              <span className="text-stone-800 truncate max-w-[190px] sm:max-w-none font-bold">
+              <ChevronRight size={12} className="hidden sm:block text-stone-300" />
+              <span className="text-stone-800 truncate max-w-[180px] sm:max-w-none font-bold">
                 Contractor Order {location.state?.id && "(แก้ไข)"}
               </span>
             </div>
           </div>
+          <div className="xl:hidden flex items-center bg-stone-100 rounded-full p-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('form')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold transition-all ${
+                activeTab === 'form' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400'
+              }`}
+            >
+              <FileText size={14} />
+              <span className="hidden min-[430px]:inline">กรอกข้อมูล</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('preview')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold transition-all ${
+                activeTab === 'preview' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400'
+              }`}
+            >
+              <Eye size={14} />
+              <span className="hidden min-[430px]:inline">ดูตัวอย่าง</span>
+            </button>
+          </div>
         </div>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8">
+      <div className="min-w-0 xl:flex xl:h-[calc(100vh-64px)]">
+      <div className={`min-w-0 xl:w-[45%] xl:overflow-y-auto pb-20 ${activeTab === 'preview' ? 'hidden xl:block' : ''}`}>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 min-w-0">
         
         {/* ── Page heading (Minimalist Style) ── */}
         <div className="mb-7">
@@ -141,8 +168,8 @@ export default function ContractorForm() {
               <Field label="วันที่เอกสาร" required>
                 <input type="date" {...register('created_at', { required: true })} className={inputCls()} />
               </Field>
-              <Field label="จ้างทำงานโปรเจ็คเลขที่">
-                <input {...register('doc_no')} placeholder="เช่น PJ-24001" className={inputCls('font-sens')} />
+              <Field label="จ้างทำงานโปรเจ็คเลขที่" required>
+                <input {...register('doc_no', { required: true })} placeholder="เช่น PJ-24001" className={inputCls('font-sens')} />
               </Field>
             </Row2>
             
@@ -153,11 +180,11 @@ export default function ContractorForm() {
             </div>
 
             <Row2>
-              <Field label="เลขบัตรประชาชน">
-                <input {...register('id_card')} maxLength={13} placeholder="_ _ _ _ _ _ _ _ _ _ _ _ _" className={inputCls('tracking-widest font-sens')} />
+              <Field label="เลขบัตรประชาชน" required>
+                <input {...register('id_card', { required: true })} maxLength={13} placeholder="_ _ _ _ _ _ _ _ _ _ _ _ _" className={inputCls('tracking-widest font-sens')} />
               </Field>
-              <Field label="โดยมีผู้รับผิดชอบดูแลผู้รับเหมา คือ">
-                <input {...register('supervisor_name')} placeholder="ระบุชื่อผู้รับผิดชอบ..." className={inputCls()} />
+              <Field label="โดยมีผู้รับผิดชอบดูแลผู้รับเหมา คือ" required>
+                <input {...register('supervisor_name', { required: true })} placeholder="ระบุชื่อผู้รับผิดชอบ..." className={inputCls()} />
               </Field>
             </Row2>
           </Section>
@@ -197,11 +224,11 @@ export default function ContractorForm() {
               </Row2>
 
               <Row2>
-                <Field label="ตั้งแต่วันที่">
-                  <input type="date" {...register('start_date')} className={inputCls()} />
+                <Field label="ตั้งแต่วันที่" required>
+                  <input type="date" {...register('start_date', { required: true })} className={inputCls()} />
                 </Field>
-                <Field label="จนถึงวันที่">
-                  <input type="date" {...register('end_date')} className={inputCls()} />
+                <Field label="จนถึงวันที่" required>
+                  <input type="date" {...register('end_date', { required: true })} className={inputCls()} />
                 </Field>
               </Row2>
             </div>
@@ -213,7 +240,7 @@ export default function ContractorForm() {
           <Section
             title="3. ตารางลงเวลา (กรณีจ้างแบบรายวัน)"
             action={
-              <button type="button" onClick={() => append({ date: '', start_time: '08:00', end_time: '17:00', ot_start: '', ot_end: '', detail: '' })}
+              <button type="button" onClick={() => append({ date: '', start_time: '08:00', end_time: '17:00', ot_start: '', ot_end: '', detail: '', responsible_person: '' })}
                 className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
                 <Plus size={14} /> เพิ่มวัน
               </button>
@@ -235,16 +262,16 @@ export default function ContractorForm() {
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
                     <div className="sm:col-span-3">
                       <label className="sm:hidden text-[10px] font-bold text-stone-400 uppercase block mb-1">วันที่ทำงาน</label>
-                      <input type="date" {...register(`daily_items.${idx}.date`)} className={rowInp()} />
+                      <input type="date" {...register(`daily_items.${idx}.date`, { required: true })} className={rowInp()} />
                     </div>
                     <div className="grid grid-cols-2 gap-2 sm:col-span-4">
                       <div>
                         <label className="sm:hidden text-[10px] font-bold text-stone-400 uppercase block mb-1">เริ่ม</label>
-                        <input type="time" {...register(`daily_items.${idx}.start_time`)} className={rowInp()} />
+                        <input type="time" {...register(`daily_items.${idx}.start_time`, { required: true })} className={rowInp()} />
                       </div>
                       <div>
                         <label className="sm:hidden text-[10px] font-bold text-stone-400 uppercase block mb-1">สิ้นสุด</label>
-                        <input type="time" {...register(`daily_items.${idx}.end_time`)} className={rowInp()} />
+                        <input type="time" {...register(`daily_items.${idx}.end_time`, { required: true })} className={rowInp()} />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 sm:col-span-4">
@@ -264,7 +291,10 @@ export default function ContractorForm() {
                       </button>
                     </div>
                   </div>
-                  <input type="text" placeholder="รายละเอียดงาน..." {...register(`daily_items.${idx}.detail`)} className={rowInp('w-full')} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input type="text" placeholder="รายละเอียดงาน..." {...register(`daily_items.${idx}.detail`, { required: true })} className={rowInp('w-full')} />
+                    <input type="text" placeholder="ผู้รับผิดชอบ..." {...register(`daily_items.${idx}.responsible_person`, { required: true })} className={rowInp('w-full')} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -342,6 +372,28 @@ export default function ContractorForm() {
           </div>
 
         </form>
+      </div>
+      </div>
+
+      <div className={`flex-1 bg-gray-200 overflow-y-auto xl:flex ${activeTab === 'preview' ? 'flex' : 'hidden xl:flex'}`}>
+        <div className="w-full py-6 flex flex-col items-center">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Live Preview</p>
+          <style>{`@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap'); .font-sarabun { font-family: 'Sarabun', sans-serif; }`}</style>
+          <div className="xl:hidden w-full overflow-x-auto px-2">
+            <ContractorDocumentView doc={formValues} />
+          </div>
+          <div
+            className="hidden xl:block"
+            style={{
+              transform: 'scale(0.62)',
+              transformOrigin: 'top center',
+              marginBottom: 'calc((0.62 - 1) * 297mm)',
+            }}
+          >
+            <ContractorDocumentView doc={formValues} />
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   )

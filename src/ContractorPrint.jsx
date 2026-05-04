@@ -232,24 +232,24 @@ export default function ContractorPrint() {
               3. ตารางลงเวลา กรณีจ้างแบบรายวัน
             </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8pt' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: '9pt' }}>
               <thead>
-                <tr style={{ background: '#f0f0f0', textAlign: 'center' }}>
-                  <TH w="11%">วันที่ทำงาน</TH>
-                  <TH w="7%">เริ่ม</TH>
-                  <TH w="7%">สิ้นสุด</TH>
-                  <TH w="6%">รวม</TH>
-                  <TH w="7%">โอทีเริ่ม</TH>
-                  <TH w="8%">โอทีสิ้นสุด</TH>
-                  <TH w="7%">รวมโอที</TH>
+                <tr style={{ textAlign: 'center' }}>
+                  <TH w="10.5%">วันที่ทำงาน</TH>
+                  <TH w="8.5%">เริ่ม</TH>
+                  <TH w="8.5%">สิ้นสุด</TH>
+                  <TH w="8.5%">รวม</TH>
+                  <TH w="9%">โอทีเริ่ม</TH>
+                  <TH w="9%">โอทีสิ้นสุด</TH>
+                  <TH w="8.5%">รวมโอที</TH>
                   <TH w="9%">ลงชื่อ</TH>
-                  <TH>รายละเอียดงาน</TH>
-                  <TH w="10%">ผู้รับผิดชอบ</TH>
+                  <TH w="20%">รายละเอียดงาน</TH>
+                  <TH w="8.5%">ผู้รับผิดชอบ</TH>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item, i) => (
-                  <tr key={i} style={{ height: '22px', textAlign: 'center' }}>
+                  <tr key={i} style={{ height: '29px', textAlign: 'center' }}>
                     <TD>{formatDate(item.date)}</TD>
                     <TD>{item.start_time}</TD>
                     <TD>{item.end_time}</TD>
@@ -259,22 +259,24 @@ export default function ContractorPrint() {
                     <TD>{calcHours(item.ot_start, item.ot_end)}</TD>
                     <TD></TD>
                     <TD left>{item.detail}</TD>
-                    <TD></TD>
+                    <TD>{item.responsible_person}</TD>
                   </tr>
                 ))}
                 {Array.from({ length: emptyRows }).map((_, i) => (
-                  <tr key={`empty-${i}`} style={{ height: '22px' }}>
+                  <tr key={`empty-${i}`} style={{ height: '29px' }}>
                     {Array.from({ length: 10 }).map((__, j) => <TD key={j}></TD>)}
                   </tr>
                 ))}
-                <tr style={{ background: '#f8f8f8' }}>
-                  <td colSpan={2} style={tdSt({ center: true, bold: true })}>รวม</td>
-                  <td colSpan={2} style={tdSt({ center: true, bold: true })}>
-                    {totalDays > 0 ? `${totalDays} วัน` : ''}
+                <tr style={{ height: '30px' }}>
+                  <td colSpan={3} style={tdSt({ center: true })}>รวม</td>
+                  <td colSpan={1} style={tdSt({ center: true })}>
+                    {totalDays > 0 ? totalDays : ''}
                   </td>
-                  <td colSpan={3} style={tdSt()}></td>
-                  <td colSpan={3} style={tdSt({ small: true })}>
-                    หมายเหตุ : ค่าจ้างและค่าใช้จ่ายทั้งหมด จะถูกหัก ณ ที่จ่าย 3%
+                  <td colSpan={2} style={tdSt({ center: true })}>วัน</td>
+                  <td colSpan={1} style={tdSt()}></td>
+                  <td colSpan={3} style={tdSt({ note: true })}>
+                    หมายเหตุ : ค่าจ้างและค่าใช้จ่ายทั้งหมด จะถูกหัก ณ<br />
+                    ที่จ่าย 3%
                   </td>
                 </tr>
               </tbody>
@@ -487,9 +489,10 @@ export default function ContractorPrint() {
 function TH({ children, w }) {
   return (
     <th style={{
-      border: '1px solid black', padding: '2px 3px',
-      textAlign: 'center', fontWeight: 'bold',
-      width: w || 'auto', lineHeight: '1.3', fontSize: '8pt',
+      border: '1px solid black', padding: '3px 3px',
+      textAlign: 'center', fontWeight: 'normal',
+      width: w || 'auto', lineHeight: '1.25', fontSize: '9pt',
+      height: '27px', verticalAlign: 'middle',
     }}>
       {children}
     </th>
@@ -500,8 +503,9 @@ function TH({ children, w }) {
 function TD({ children, left }) {
   return (
     <td style={{
-      border: '1px solid black', padding: '1px 3px',
-      textAlign: left ? 'left' : 'center', fontSize: '8pt',
+      border: '1px solid black', padding: '2px 4px',
+      textAlign: left ? 'left' : 'center', fontSize: '8.5pt',
+      verticalAlign: 'middle', lineHeight: '1.25', wordBreak: 'break-word',
     }}>
       {children}
     </td>
@@ -509,12 +513,15 @@ function TD({ children, left }) {
 }
 
 /** tdStyle สำหรับตารางลงเวลา */
-function tdSt({ center, bold, small } = {}) {
+function tdSt({ center, bold, small, note, dayLabel } = {}) {
   return {
-    border: '1px solid black', padding: '2px 4px',
-    textAlign: center ? 'center' : 'left',
+    border: '1px solid black', padding: note ? '1px 4px' : '2px 4px',
+    textAlign: dayLabel ? 'left' : center || note ? 'center' : 'left',
     fontWeight: bold ? 'bold' : 'normal',
-    fontSize: small ? '7.5pt' : '8pt',
+    fontSize: note ? '8.5pt' : small ? '7.5pt' : '9pt',
+    lineHeight: note ? '1.25' : '1.2',
+    verticalAlign: 'middle',
+    paddingLeft: dayLabel ? '10px' : note ? '4px' : '4px',
   }
 }
 

@@ -1,14 +1,16 @@
 // src/OperationReportForm.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { ChevronLeft, Loader2, Save, Home, ChevronRight } from "lucide-react";
+import { ChevronLeft, Loader2, Save, Home, ChevronRight, FileText, Eye } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import toast from "react-hot-toast";
+import OperationReportDocumentView from "./OperationReportDocumentView";
 
 export default function OperationReportForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("form");
 
   // เตรียมข้อมูลเริ่มต้น
   const initialData = {
@@ -38,6 +40,15 @@ export default function OperationReportForm() {
   };
 
   const [formData, setFormData] = useState(initialData);
+
+  const operationPerson = [formData.op1, formData.op2, formData.op3, formData.op4]
+    .filter(Boolean)
+    .join(",");
+
+  const previewDoc = {
+    ...formData,
+    operationPerson,
+  };
 
   useEffect(() => {
   if (location.state) {
@@ -133,30 +144,57 @@ export default function OperationReportForm() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-20" style={{ fontFamily: "'Prompt', sans-serif" }}>
+    <div className="min-h-screen overflow-x-hidden bg-stone-50" style={{ fontFamily: "'Prompt', sans-serif" }}>
       
       {/* --- Sticky Navbar --- */}
-      <nav className="relative sm:sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors">
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
+        <div className="px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors shrink-0">
               <ChevronLeft size={18} />
             </Link>
-            <div className="h-5 sm:h-6 w-[1px] bg-stone-200 mx-1" />
-            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium">
-              <Link to="/" className="text-stone-400 hover:text-teal-600 flex items-center gap-1 transition-colors whitespace-nowrap">
+            <div className="h-5 sm:h-6 w-[1px] bg-stone-200 mx-1 shrink-0" />
+            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium min-w-0">
+              <Link to="/" className="text-stone-400 hover:text-teal-600 hidden sm:flex items-center gap-1 transition-colors whitespace-nowrap shrink-0">
                 <Home size={14} /> Home
               </Link>
-              <ChevronRight size={12} className="text-stone-300" />
-              <span className="text-stone-800 truncate max-w-[190px] sm:max-w-none font-bold">
+              <ChevronRight size={12} className="text-stone-300 hidden sm:block shrink-0" />
+              <span className="text-stone-800 truncate max-w-[126px] sm:max-w-[320px] font-bold">
                 Operation Report {location.state && "(Edit)"}
               </span>
             </div>
           </div>
+
+          <div className="xl:hidden flex items-center bg-stone-100 rounded-xl p-1 gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab("form")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === "form"
+                  ? "bg-white text-stone-900 shadow-sm"
+                  : "text-stone-400 hover:text-stone-600"
+              }`}
+            >
+              <FileText size={13} className="shrink-0" /> <span className="hidden min-[430px]:inline">กรอกข้อมูล</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("preview")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === "preview"
+                  ? "bg-white text-stone-900 shadow-sm"
+                  : "text-stone-400 hover:text-stone-600"
+              }`}
+            >
+              <Eye size={13} className="shrink-0" /> <span className="hidden min-[430px]:inline">ดูตัวอย่าง</span>
+            </button>
+          </div>
         </div>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-4 pt-8">
+      <div className="min-w-0 xl:flex xl:h-[calc(100vh-64px)]">
+        <div className={`min-w-0 xl:w-[45%] xl:overflow-y-auto pb-20 ${activeTab === "preview" ? "hidden xl:block" : ""}`}>
+          <div className="max-w-2xl mx-auto px-4 pt-8 min-w-0">
         
         {/* ── Page heading (Minimalist Style like Receipt Form) ── */}
         <div className="mb-7">
@@ -243,20 +281,20 @@ export default function OperationReportForm() {
                 <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} 
                   className={inp()} placeholder="Enter customer name..." />
               </Field>
-              <Field label="Contact Name" hint="Contact Person">
-                <input type="text" name="contactName" value={formData.contactName} onChange={handleChange} 
-                  className={inp()} placeholder="Enter contact name..." />
+              <Field label="Place" hint="Work Location">
+                <input type="text" name="place" value={formData.place} onChange={handleChange} 
+                  className={inp()} placeholder="Enter location..." />
               </Field>
             </Row2>
             
             <Row2>
+              <Field label="Contact Name" hint="Contact Person">
+                <input type="text" name="contactName" value={formData.contactName} onChange={handleChange} 
+                  className={inp()} placeholder="Enter contact name..." />
+              </Field>
               <Field label="Project" hint="Project Name">
                 <input type="text" name="project" value={formData.project} onChange={handleChange} 
                   className={inp()} placeholder="Enter project name..." />
-              </Field>
-              <Field label="Place" hint="Work Location">
-                <input type="text" name="place" value={formData.place} onChange={handleChange} 
-                  className={inp()} placeholder="Enter location..." />
               </Field>
             </Row2>
 
@@ -353,6 +391,35 @@ export default function OperationReportForm() {
           </div>
 
         </form>
+          </div>
+        </div>
+
+        <div className={`flex-1 bg-gray-200 overflow-y-auto xl:flex ${
+          activeTab === "preview" ? "flex" : "hidden xl:flex"
+        }`}>
+          <div className="w-full py-6 flex flex-col items-center">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">● Live Preview</p>
+            <style>{`
+              @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+              .font-sarabun { font-family: 'Sarabun', sans-serif; }
+            `}</style>
+
+            <div className="xl:hidden w-full overflow-x-auto px-2">
+              <OperationReportDocumentView doc={previewDoc} />
+            </div>
+
+            <div
+              className="hidden xl:block"
+              style={{
+                transform: "scale(0.62)",
+                transformOrigin: "top center",
+                marginBottom: "calc((0.62 - 1) * 297mm)",
+              }}
+            >
+              <OperationReportDocumentView doc={previewDoc} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

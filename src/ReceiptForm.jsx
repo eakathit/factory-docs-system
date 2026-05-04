@@ -3,7 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import SignatureCanvas from 'react-signature-canvas'
 import toast from 'react-hot-toast'
-import { ChevronLeft, Home, ChevronRight, Plus, Trash2, Save, Eraser } from 'lucide-react'
+import { ChevronLeft, Home, ChevronRight, Plus, Trash2, Save, Eraser, FileText, Eye } from 'lucide-react'
+import ReceiptDocumentView from './ReceiptDocumentView'
 
 export default function ReceiptForm() {
   const navigate = useNavigate()
@@ -11,6 +12,14 @@ export default function ReceiptForm() {
   const sigRef = useRef({})
   const [loading, setLoading] = useState(false)
   const editData = location.state || null
+
+  // ── Controlled state สำหรับ live preview ─────────────────────
+  const [docNo, setDocNo] = useState(editData?.doc_no || '')
+  const [payerName, setPayerName] = useState(editData?.payer_name || '')
+  const [position, setPosition] = useState(editData?.position || '')
+  const [totalText, setTotalText] = useState(editData?.total_text || '')
+  const [paymentDate, setPaymentDate] = useState(editData?.payment_date || '')
+  const [shopName, setShopName] = useState(editData?.shop_name || '')
 
   // ── State สำหรับรายการค่าใช้จ่าย ──────────────────────────────
   const [items, setItems] = useState(
@@ -35,29 +44,34 @@ export default function ReceiptForm() {
     e.preventDefault()
     setLoading(true)
     try {
-      const fd = Object.fromEntries(new FormData(e.target).entries())
       let signatureUrl = editData?.payer_signature || null
 
-      if (sigRef.current && !sigRef.current.isEmpty()) {
-        const blob = await new Promise(r => sigRef.current.getCanvas().toBlob(r, 'image/png'))
-        const fileName = `receipt-sig-${Date.now()}.png`
-        const { error: uploadError } = await supabase.storage.from('signatures').upload(fileName, blob)
-        if (uploadError) throw uploadError
-        signatureUrl = supabase.storage.from('signatures').getPublicUrl(fileName).data.publicUrl
+      if (sigRef.current && typeof sigRef.current.isEmpty === 'function' && !sigRef.current.isEmpty()) {
+        try {
+          const blob = await new Promise(r => sigRef.current.getCanvas().toBlob(r, 'image/png'))
+          const fileName = `receipt-sig-${Date.now()}.png`
+          const { error: uploadError } = await supabase.storage.from('signatures').upload(fileName, blob)
+          if (uploadError) throw uploadError
+          signatureUrl = supabase.storage.from('signatures').getPublicUrl(fileName).data.publicUrl
+        } catch (sigError) {
+          console.warn('Signature upload failed, saving document without signature:', sigError.message)
+          toast('บันทึกเอกสารสำเร็จ แต่ลายเซ็นอาจไม่ได้รับการบันทึก', { icon: '⚠️' })
+        }
       }
 
       const dbPayload = {
-        doc_no: fd.doc_no,
-        payer_name: fd.payer_name,
-        position: fd.position,
+        doc_no: docNo,
+        payer_name: payerName,
+        position: position,
+        shop_name: shopName,
         items: items.map(item => ({
           ...item,
           amount: parseFloat(item.amount || 0)
         })),
         total_amount: totalAmount,
-        total_text: fd.total_text,
-        payment_method: fd.payment_method,
-        payment_date: fd.payment_date || null,
+        total_text: totalText,
+        payment_method: paymentMethod,
+        payment_date: paymentDate || null,
         payer_signature: signatureUrl,
         status: 'Pending'
       }
@@ -92,34 +106,81 @@ export default function ReceiptForm() {
     }
   }
 
-  // State เพื่อจัดการการแสดงผลช่องวันที่โอนเงิน
   const [paymentMethod, setPaymentMethod] = useState(editData?.payment_method || 'cash')
+  const [activeTab, setActiveTab] = useState('form')
+
+  // ── Live preview object ───────────────────────────────────────
+  const previewDoc = {
+    doc_no: docNo,
+    payer_name: payerName,
+    position,
+    shop_name: shopName,
+    items,
+    total_amount: totalAmount,
+    total_text: totalText,
+    payment_method: paymentMethod,
+    payment_date: paymentDate,
+    payer_signature: null,
+    approver_signature: null,
+  }
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-20" style={{ fontFamily: "'Prompt', sans-serif" }}>
-      
-      {/* --- Sticky Navbar --- */}
-      <nav className="relative sm:sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors">
+    <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'Prompt', sans-serif" }}>
+
+      {/* ════ Sticky Navbar (full width) ════ */}
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
+        <div className="px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+          {/* breadcrumb */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors shrink-0">
               <ChevronLeft size={18} />
             </Link>
-            <div className="h-5 sm:h-6 w-[1px] bg-stone-200 mx-1" />
-            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium">
-              <Link to="/" className="text-stone-400 hover:text-stone-800 flex items-center gap-1 transition-colors whitespace-nowrap">
+            <div className="h-5 sm:h-6 w-[1px] bg-stone-200 mx-1 shrink-0" />
+            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium min-w-0">
+              <Link to="/" className="text-stone-400 hover:text-stone-800 flex items-center gap-1 transition-colors whitespace-nowrap shrink-0">
                 <Home size={14} /> หน้าแรก
               </Link>
-              <ChevronRight size={12} className="text-stone-300" />
-              <span className="text-stone-800 truncate max-w-[190px] sm:max-w-none font-bold">
+              <ChevronRight size={12} className="text-stone-300 shrink-0" />
+              <span className="text-stone-800 truncate font-bold">
                 Substitute Receipt {editData && "(แก้ไข)"}
               </span>
             </div>
           </div>
+
+          {/* Tab toggle — มือถือ/tablet เท่านั้น, ซ่อนที่ xl+ เพราะมี split-view แล้ว */}
+          <div className="xl:hidden flex items-center bg-stone-100 rounded-xl p-1 gap-1 shrink-0 ml-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab('form')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === 'form'
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-600'
+              }`}
+            >
+              <FileText size={13} /> กรอกข้อมูล
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('preview')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === 'preview'
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-600'
+              }`}
+            >
+              <Eye size={13} /> ดูตัวอย่าง
+            </button>
+          </div>
         </div>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-4 pt-8">
+      {/* ════ Split-view body ════ */}
+      <div className="xl:flex xl:h-[calc(100vh-64px)]">
+
+        {/* ─── Form panel — ซ่อนบนมือถือเมื่อ tab preview active ─── */}
+        <div className={`xl:w-[45%] xl:overflow-y-auto pb-20 ${activeTab === 'preview' ? 'hidden xl:block' : ''}`}>
+          <div className="max-w-2xl mx-auto px-4 pt-8">
         
         {/* ── Page heading ── */}
         <div className="mb-7">
@@ -138,9 +199,10 @@ export default function ReceiptForm() {
           <Card title="ข้อมูลเอกสารและผู้เบิก">
             <Row2>
               <Field label="เลขที่เอกสาร" hint="Doc No." required>
-                <input type="text" name="doc_no" required 
+                <input type="text" required
+                  value={docNo}
+                  onChange={e => setDocNo(e.target.value)}
                   placeholder="เช่น 65/001"
-                  defaultValue={editData?.doc_no}
                   className={inp('font-sens')} />
               </Field>
               <Field label="วันที่ทำรายการ" hint="Date">
@@ -153,18 +215,27 @@ export default function ReceiptForm() {
 
             <Row2>
               <Field label="ข้าพเจ้า (ผู้เบิก)" hint="Name" required>
-                <input type="text" name="payer_name" required 
+                <input type="text" required
+                  value={payerName}
+                  onChange={e => setPayerName(e.target.value)}
                   placeholder="ระบุชื่อ-นามสกุล"
-                  defaultValue={editData?.payer_name}
                   className={inp()} />
               </Field>
               <Field label="ตำแหน่ง" hint="Position" required>
-                <input type="text" name="position" required 
+                <input type="text" required
+                  value={position}
+                  onChange={e => setPosition(e.target.value)}
                   placeholder="ระบุตำแหน่งงาน"
-                  defaultValue={editData?.position}
                   className={inp()} />
               </Field>
             </Row2>
+            <Field label="ชื่อร้านค้า / แพลตฟอร์ม" hint="เช่น Shopee ร้าน ABC, Lazada" required>
+              <input type="text" required
+                value={shopName}
+                onChange={e => setShopName(e.target.value)}
+                placeholder="เช่น Shopee ร้าน ABC, Lazada, TikTok Shop"
+                className={inp()} />
+            </Field>
           </Card>
 
           {/* ════════════════════════════════════════════════
@@ -245,67 +316,18 @@ export default function ReceiptForm() {
 
             <div className="mt-4">
               <Field label="จำนวนเงินรวม (ตัวอักษร)" hint="Total in text" required>
-                <input type="text" name="total_text" required 
-                  defaultValue={editData?.total_text}
-                  placeholder="เช่น ห้าร้อยบาทถ้วน" 
+                <input type="text" required
+                  value={totalText}
+                  onChange={e => setTotalText(e.target.value)}
+                  placeholder="เช่น ห้าร้อยบาทถ้วน"
                   className={inp()} />
               </Field>
             </div>
           </Card>
 
           {/* ════════════════════════════════════════════════
-               ส่วน 3 — วิธีการรับเงิน และ ลายเซ็น
+               ส่วน 3 — ลายเซ็น
           ════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
-            <Card title="วิธีการรับเงิน / จ่ายเงิน">
-    <div className="space-y-3">
-      
-      {/* 🔴 ตัวเลือก: เงินสด */}
-      <div className={`border rounded-xl p-3.5 transition-all ${paymentMethod === 'cash' ? 'border-stone-800 bg-stone-50 shadow-sm' : 'border-stone-200 hover:border-stone-300'}`}>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input type="radio" name="payment_method" value="cash" 
-            checked={paymentMethod === 'cash'}
-            onChange={() => setPaymentMethod('cash')}
-            className="w-4 h-4 accent-stone-800" />
-          <span className="text-[14px] font-medium text-stone-700">เงินสด (Cash)</span>
-        </label>
-        {/* แสดงช่องกรอกวันที่เมื่อเลือกเงินสด */}
-        {paymentMethod === 'cash' && (
-          <div className="pl-7 mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
-            <Field label="วันที่จ่ายเงินสด" hint="Payment Date" required>
-              <input type="date" name="payment_date" 
-                defaultValue={editData?.payment_date} 
-                className={inp('py-2 text-sm')} required />
-            </Field>
-          </div>
-        )}
-      </div>
-      
-      {/* 🔵 ตัวเลือก: โอนเงิน */}
-      <div className={`border rounded-xl p-3.5 transition-all ${paymentMethod === 'transfer' ? 'border-stone-800 bg-stone-50 shadow-sm' : 'border-stone-200 hover:border-stone-300'}`}>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input type="radio" name="payment_method" value="transfer" 
-            checked={paymentMethod === 'transfer'}
-            onChange={() => setPaymentMethod('transfer')}
-            className="w-4 h-4 accent-stone-800" />
-          <span className="text-[14px] font-medium text-stone-700">โอนเงิน (Transfer)</span>
-        </label>
-        {/* แสดงช่องกรอกวันที่เมื่อเลือกโอนเงิน */}
-        {paymentMethod === 'transfer' && (
-          <div className="pl-7 mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
-            <Field label="วันที่โอนเงิน" hint="Transfer Date" required>
-              <input type="date" name="payment_date" 
-                defaultValue={editData?.payment_date} 
-                className={inp('py-2 text-sm')} required />
-            </Field>
-          </div>
-        )}
-      </div>
-
-    </div>
-  </Card>
-
             <Card title="ลายมือชื่อผู้เบิก">
               {editData?.payer_signature && (
                 <p className="text-xs text-stone-400 mb-3">
@@ -323,8 +345,6 @@ export default function ReceiptForm() {
               </button>
             </Card>
 
-          </div>
-
           {/* ── ปุ่มกระทำ ── */}
           <div className="flex gap-3 pt-4 pb-10">
             <button type="button" onClick={() => navigate(-1)} 
@@ -340,7 +360,42 @@ export default function ReceiptForm() {
           </div>
 
         </form>
-      </div>
+          </div>{/* end max-w-2xl */}
+        </div>{/* end form panel */}
+
+        {/* ─── Preview panel — right on xl+, full-screen tab on mobile ─── */}
+        <div className={`flex-1 bg-gray-200 overflow-y-auto xl:flex ${
+          activeTab === 'preview' ? 'flex' : 'hidden xl:flex'
+        }`}>
+          <div className="w-full py-6 flex flex-col items-center">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+              ● Live Preview
+            </p>
+            <style>{`
+              @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+              .font-sarabun { font-family: 'Sarabun', sans-serif; }
+            `}</style>
+
+            {/* Mobile: full-width scrollable, no scale */}
+            <div className="xl:hidden w-full overflow-x-auto px-2">
+              <ReceiptDocumentView doc={previewDoc} />
+            </div>
+
+            {/* Desktop xl+: scaled to fit panel */}
+            <div
+              className="hidden xl:block"
+              style={{
+                transform: 'scale(0.62)',
+                transformOrigin: 'top center',
+                marginBottom: 'calc((0.62 - 1) * 297mm)',
+              }}
+            >
+              <ReceiptDocumentView doc={previewDoc} />
+            </div>
+          </div>
+        </div>
+
+      </div>{/* end split-view */}
     </div>
   )
 }

@@ -37,6 +37,34 @@ import DashboardPanel from './DashboardPanel'
 import ContractorPrint from './ContractorPrint'
 import ApprovalPage from './ApprovalPage'
 
+const LOGIN_STORAGE_KEY = 'factory-docs-login-user'
+
+const getStoredUser = () => {
+  try {
+    const rawUser = window.localStorage.getItem(LOGIN_STORAGE_KEY)
+    if (!rawUser) return { displayName: '', role: '' }
+
+    const parsedUser = JSON.parse(rawUser)
+    if (!parsedUser?.displayName) return { displayName: '', role: '' }
+
+    return {
+      displayName: parsedUser.displayName,
+      role: parsedUser.role || '',
+    }
+  } catch (error) {
+    console.warn('Unable to restore saved login user', error)
+    return { displayName: '', role: '' }
+  }
+}
+
+const saveStoredUser = (userData) => {
+  window.localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(userData))
+}
+
+const clearStoredUser = () => {
+  window.localStorage.removeItem(LOGIN_STORAGE_KEY)
+}
+
 // --- 1. Component ใหม่: AlertModal (แจ้งเตือนตรงกลางจอ) ---
 const AlertModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null
@@ -411,15 +439,17 @@ const Home = ({ user, onUserClick }) => {
 }
 
 function App() {
-  const [user, setUser] = useState({ displayName: '', role: '' })
+  const [user, setUser] = useState(getStoredUser)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
   const handleLogin = (userData) => {
+    saveStoredUser(userData)
     setUser(userData)
     setIsLoginModalOpen(false)
   }
 
   const handleLogout = () => {
+    clearStoredUser()
     setUser({ displayName: '', role: '' })
     toast.success('ออกจากระบบเรียบร้อยแล้ว')
   }

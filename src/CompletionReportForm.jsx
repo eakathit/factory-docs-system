@@ -1,14 +1,16 @@
 // src/CompletionReportForm.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { ChevronLeft, Printer, Loader2, Home, ChevronRight, Save } from "lucide-react";
+import { ChevronLeft, Loader2, Home, ChevronRight, Save, FileText, Eye } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import toast from "react-hot-toast";
+import CompletionReportDocumentView from "./CompletionReportDocumentView";
 
 export default function CompletionReportForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("form");
 
   const getCurrentTime = () => {
     const now = new Date();
@@ -28,6 +30,11 @@ export default function CompletionReportForm() {
   };
 
   const [formData, setFormData] = useState(initialData);
+
+  const previewDoc = {
+    ...formData,
+    approver_signature: formData.approver_signature || null,
+  };
 
   useEffect(() => {
     if (location.state) {
@@ -95,35 +102,62 @@ export default function CompletionReportForm() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-20" style={{ fontFamily: "'Prompt', sans-serif" }}>
+    <div className="min-h-screen overflow-x-hidden bg-stone-50" style={{ fontFamily: "'Prompt', sans-serif" }}>
       
       {/* --- Sticky Navbar --- */}
-      <nav className="relative sm:sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors">
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200">
+        <div className="px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <Link to="/" className="p-1.5 sm:p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors shrink-0">
               <ChevronLeft size={18} />
             </Link>
-            <div className="h-5 sm:h-6 w-[1px] bg-stone-200 mx-1" />
-            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium">
-              <Link to="/" className="text-stone-400 hover:text-emerald-600 flex items-center gap-1 transition-colors whitespace-nowrap">
+            <div className="h-5 sm:h-6 w-[1px] bg-stone-200 mx-1 shrink-0" />
+            <div className="flex items-center gap-1 sm:gap-2 text-[13px] sm:text-sm font-medium min-w-0">
+              <Link to="/" className="text-stone-400 hover:text-emerald-600 hidden xs:flex sm:flex items-center gap-1 transition-colors whitespace-nowrap shrink-0">
                 <Home size={14} /> หน้าแรก
               </Link>
-              <ChevronRight size={12} className="text-stone-300" />
-              <span className="text-stone-800 truncate max-w-[190px] sm:max-w-none font-bold">
-                Completion Report {formData.id && "(แก้ไข)"}
+              <ChevronRight size={12} className="text-stone-300 hidden sm:block shrink-0" />
+              <span className="text-stone-800 truncate max-w-[92px] min-[430px]:max-w-[150px] sm:max-w-[320px] font-bold">
+                Construction Completion Report {formData.id && "(แก้ไข)"}
               </span>
             </div>
+          </div>
+
+          <div className="xl:hidden flex items-center bg-stone-100 rounded-xl p-1 gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab("form")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === "form"
+                  ? "bg-white text-stone-900 shadow-sm"
+                  : "text-stone-400 hover:text-stone-600"
+              }`}
+            >
+              <FileText size={13} className="shrink-0" /> <span className="hidden min-[430px]:inline">กรอกข้อมูล</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("preview")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === "preview"
+                  ? "bg-white text-stone-900 shadow-sm"
+                  : "text-stone-400 hover:text-stone-600"
+              }`}
+            >
+              <Eye size={13} className="shrink-0" /> <span className="hidden min-[430px]:inline">ดูตัวอย่าง</span>
+            </button>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-4 pt-8">
+      <div className="min-w-0 xl:flex xl:h-[calc(100vh-64px)]">
+        <div className={`min-w-0 xl:w-[45%] xl:overflow-y-auto pb-20 ${activeTab === "preview" ? "hidden xl:block" : ""}`}>
+          <div className="max-w-2xl mx-auto px-4 pt-8 min-w-0">
         
         {/* ── Page heading (Minimalist Style) ── */}
         <div className="mb-7">
-          <h1 className="text-xl font-bold text-stone-800 tracking-tight uppercase">
-            COMPLETION REPORT
+          <h1 className="text-lg sm:text-xl font-bold text-stone-800 tracking-normal sm:tracking-tight uppercase leading-snug break-words">
+            CONSTRUCTION COMPLETION REPORT
           </h1>
           <p className="text-stone-400 text-sm mt-0.5">รายงานเสร็จสิ้นโครงการ</p>
           <div className="mt-3 h-px bg-stone-200" />
@@ -134,7 +168,18 @@ export default function CompletionReportForm() {
           {/* ════════════════════════════════════════════════
                Section 1 — Project Information
           ════════════════════════════════════════════════ */}
-          <Card title="ข้อมูลโครงการ (Project Info)">
+          <Card title="ข้อมูลโครงการ (Project Information)">
+            <Row2>
+              <Field label="สถานที่โครงการ" hint="Place / 工事場所">
+                <input type="text" name="location" value={formData.location} onChange={handleChange} 
+                  className={inp()} placeholder="ระบุสถานที่โครงการ..." />
+              </Field>
+              <Field label="วันที่" hint="Date / 記入日" required>
+                <input type="date" name="date" value={formData.date} onChange={handleChange} 
+                  className={inp()} required />
+              </Field>
+            </Row2>
+
             <Row2>
               <Field label="ชื่อโครงการ" hint="Project Name / 工事名" required>
                 <input type="text" name="projectName" value={formData.projectName} onChange={handleChange} 
@@ -147,32 +192,12 @@ export default function CompletionReportForm() {
             </Row2>
 
             <Row2>
-              <Field label="วันที่" hint="Date / 記入日" required>
-                <input type="date" name="date" value={formData.date} onChange={handleChange} 
-                  className={inp()} required />
-              </Field>
               <Field label="เวลาที่เสร็จสิ้น" hint="Time / 終わた時間">
                 <input type="time" name="finishTime" value={formData.finishTime} onChange={handleChange} 
                   className={inp()} />
               </Field>
-            </Row2>
-
-            <div className="mt-4 sm:mt-5">
-              <Field label="สถานที่" hint="Place / 工事場所">
-                <input type="text" name="location" value={formData.location} onChange={handleChange} 
-                  className={inp()} placeholder="ระบุสถานที่ปฏิบัติงาน..." />
-              </Field>
-            </div>
-          </Card>
-
-          {/* ════════════════════════════════════════════════
-               Section 2 — Status & Remarks
-          ════════════════════════════════════════════════ */}
-          <Card title="สถานะและหมายเหตุ (Status & Remarks)">
-            
-            <div className="mb-6">
-              <Field label="สถานะ" hint="Status / 状態">
-                <div className="flex bg-stone-100 p-1.5 rounded-xl border border-stone-200 gap-1.5 mt-2 max-w-md">
+              <Field label="ผลการดำเนินงาน" hint="Complete / Not Complete">
+                <div className="flex bg-stone-100 p-1.5 rounded-xl border border-stone-200 gap-1.5 mt-2">
                   <button type="button" onClick={() => setFormData((prev) => ({ ...prev, isComplete: true }))}
                     className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${
                       formData.isComplete ? "bg-white text-emerald-600 shadow-sm ring-1 ring-stone-200" : "text-stone-400 hover:text-stone-600"
@@ -187,8 +212,13 @@ export default function CompletionReportForm() {
                   </button>
                 </div>
               </Field>
-            </div>
+            </Row2>
+          </Card>
 
+          {/* ════════════════════════════════════════════════
+               Section 2 — Remarks
+          ════════════════════════════════════════════════ */}
+          <Card title="หมายเหตุ (Remark)">
             <Field label="หมายเหตุ" hint="Remark / 備考">
               <textarea name="remark" value={formData.remark} onChange={handleChange} rows="3"
                 className={txtInp()} placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea>
@@ -211,6 +241,35 @@ export default function CompletionReportForm() {
           </div>
 
         </form>
+          </div>
+        </div>
+
+        <div className={`flex-1 bg-gray-200 overflow-y-auto xl:flex ${
+          activeTab === "preview" ? "flex" : "hidden xl:flex"
+        }`}>
+          <div className="w-full py-6 flex flex-col items-center">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">● Live Preview</p>
+            <style>{`
+              @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+              .font-sarabun { font-family: 'Sarabun', sans-serif; }
+            `}</style>
+
+            <div className="xl:hidden w-full overflow-x-auto px-2">
+              <CompletionReportDocumentView doc={previewDoc} />
+            </div>
+
+            <div
+              className="hidden xl:block"
+              style={{
+                transform: "scale(0.62)",
+                transformOrigin: "top center",
+                marginBottom: "calc((0.62 - 1) * 297mm)",
+              }}
+            >
+              <CompletionReportDocumentView doc={previewDoc} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -220,20 +279,20 @@ export default function CompletionReportForm() {
 
 function Card({ title, children }) {
   return (
-    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+    <div className="min-w-0 bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
       <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100 bg-stone-50/80">
-        <span className="text-xs sm:text-sm font-extrabold text-stone-500 uppercase tracking-widest">
+        <span className="min-w-0 text-xs sm:text-sm font-extrabold text-stone-500 uppercase tracking-wide sm:tracking-widest break-words">
           {title}
         </span>
       </div>
-      <div className="p-5 sm:p-6">{children}</div>
+      <div className="min-w-0 p-5 sm:p-6">{children}</div>
     </div>
   )
 }
 
 function Row2({ children }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-5 sm:mb-6">
+    <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-5 sm:mb-6">
       {children}
     </div>
   )
@@ -241,8 +300,8 @@ function Row2({ children }) {
 
 function Field({ label, hint, required, children }) {
   return (
-    <div>
-      <label className="block text-xs sm:text-sm font-extrabold text-stone-500 uppercase tracking-widest mb-3">
+    <div className="min-w-0">
+      <label className="block text-xs sm:text-sm font-extrabold text-stone-500 uppercase tracking-wide sm:tracking-widest mb-3 break-words">
         {label}
         {hint && <span className="ml-1.5 normal-case text-xs font-normal text-stone-400">{hint}</span>}
         {required && <span className="text-red-400 ml-1">*</span>}

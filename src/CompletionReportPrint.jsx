@@ -1,13 +1,12 @@
 // src/CompletionReportPrint.jsx
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Printer, ArrowLeft, ChevronLeft, Edit3 } from "lucide-react";
+import { Printer, ArrowLeft, Edit3 } from "lucide-react";
 
 const CompletionReportPrint = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const formData = location.state;
   const data = location.state || {
     date: "",
     projectName: "",
@@ -45,7 +44,7 @@ const CompletionReportPrint = () => {
           <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
             <button 
               // ชี้กลับไปหน้าฟอร์ม Completion Report
-              onClick={() => navigate('/completion-report', { state: doc })}
+              onClick={() => navigate('/completion-report', { state: data })}
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-all font-medium text-sm"
             >
               <Edit3 size={18} /> 
